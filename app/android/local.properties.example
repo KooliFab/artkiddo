@@ -1,0 +1,2 @@
+# Copy to local.properties and set the path for the developer machine.
+# flutter.sdk=/absolute/path/to/flutter

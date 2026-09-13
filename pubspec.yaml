@@ -1,0 +1,10 @@
+name: artkiddo_workspace
+description: Local candidate workspace for the public artkiddo core and app.
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+workspace:
+  - app
+  - packages/artkiddo_core

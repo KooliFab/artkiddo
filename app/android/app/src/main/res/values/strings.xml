@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nom de l'application. Source : copy-fr.md `common.appName`.
+     Marque translatable="false" : le nom de la marque est identique en
+     francais et en anglais, un fichier values-en/ serait une duplication
+     sans effet. Les textes de justification de permission passent par les
+     catalogues ARB Flutter (permission.camera.reason,
+     permission.photos.reason) : Android n'a pas d'equivalent natif aux
+     cles NS*UsageDescription d'iOS. -->
+<resources>
+    <string name="app_name" translatable="false">ArtKiddo Local</string>
+</resources>

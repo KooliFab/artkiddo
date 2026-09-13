@@ -1,0 +1,28 @@
+.dart_tool/
+**/.dart_tool/
+**/.flutter-plugins-dependencies
+**/.gradle/
+build/
+**/build/
+coverage/
+workspace.log
+packages/artkiddo_core/lib/l10n/generated/
+# Generated localizations are committed because Pub consumers do not run
+# Flutter's package-local code generation when resolving a Git dependency.
+!packages/artkiddo_core/lib/l10n/generated/
+!packages/artkiddo_core/lib/l10n/generated/*.dart
+android/local.properties
+ios/Pods/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+macos/Flutter/GeneratedPluginRegistrant.swift
+app/android/local.properties
+app/ios/Pods/
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Flutter/ephemeral/
+app/macos/Flutter/ephemeral/
+app/ios/Runner/GeneratedPluginRegistrant.*
+app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+.env*
+!.env.example

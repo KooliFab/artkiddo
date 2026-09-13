@@ -1,0 +1,11 @@
+/* Textes de permissions système — français canadien.
+   Source normative : .scratch/aaa-ui-ux/design/copy-fr.md §7.
+   NOTE pour le coordinateur / l'agent mobile : ce fichier doit être ajouté
+   aux ressources de la cible Runner dans Xcode (project.pbxproj) pour être
+   pris en compte au build — hors du périmètre de fichiers du lot 03. */
+
+"NSCameraUsageDescription" = "artkiddo utilise l'appareil photo pour prendre en photo les dessins de votre enfant. Les photos restent sur cet appareil.";
+"NSPhotoLibraryUsageDescription" = "artkiddo accède à vos photos pour ajouter un dessin déjà photographié. Les photos restent sur cet appareil.";
+/* Clé non fournie par copy-fr.md §7 : texte conservé le plus proche possible
+   du texte existant dans Info.plist, à soumettre au lead UX pour arbitrage. */
+"NSPhotoLibraryAddUsageDescription" = "artkiddo a besoin de cette autorisation pour enregistrer les dessins dans votre galerie si vous le souhaitez.";

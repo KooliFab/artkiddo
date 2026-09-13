@@ -1,0 +1,23 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  public-foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: dart format --set-exit-if-changed app packages tool
+      - run: flutter analyze
+      - run: flutter test
+        working-directory: packages/artkiddo_core
+      - run: flutter test
+        working-directory: app
+      - run: dart run tool/generate_inventory.dart --check

@@ -1,0 +1,1763 @@
+{
+  "@@locale": "fr",
+  "commonAppName": "artkiddo",
+  "@commonAppName": {
+    "description": "Localized user-facing copy."
+  },
+  "commonSave": "Enregistrer",
+  "@commonSave": {
+    "description": "Localized user-facing copy."
+  },
+  "commonSaving": "Enregistrement…",
+  "@commonSaving": {
+    "description": "Localized user-facing copy."
+  },
+  "commonCancel": "Annuler",
+  "@commonCancel": {
+    "description": "Localized user-facing copy."
+  },
+  "commonClose": "Fermer",
+  "@commonClose": {
+    "description": "Localized user-facing copy."
+  },
+  "commonBack": "Retour",
+  "@commonBack": {
+    "description": "Localized user-facing copy."
+  },
+  "commonNext": "Suivant",
+  "@commonNext": {
+    "description": "Localized user-facing copy."
+  },
+  "commonSkip": "Passer",
+  "@commonSkip": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDelete": "Supprimer",
+  "@commonDelete": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDeleting": "Suppression…",
+  "@commonDeleting": {
+    "description": "Localized user-facing copy."
+  },
+  "commonEdit": "Modifier",
+  "@commonEdit": {
+    "description": "Localized user-facing copy."
+  },
+  "commonRetry": "Réessayer",
+  "@commonRetry": {
+    "description": "Localized user-facing copy."
+  },
+  "commonCopy": "Copier",
+  "@commonCopy": {
+    "description": "Localized user-facing copy."
+  },
+  "commonCopied": "Lien copié.",
+  "@commonCopied": {
+    "description": "Localized user-facing copy."
+  },
+  "commonSend": "Envoyer",
+  "@commonSend": {
+    "description": "Localized user-facing copy."
+  },
+  "commonOpenSettings": "Ouvrir les réglages",
+  "@commonOpenSettings": {
+    "description": "Localized user-facing copy."
+  },
+  "commonUnderstood": "J'ai compris",
+  "@commonUnderstood": {
+    "description": "Localized user-facing copy."
+  },
+  "commonContinueEditing": "Continuer",
+  "@commonContinueEditing": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDiscard": "Abandonner",
+  "@commonDiscard": {
+    "description": "Localized user-facing copy."
+  },
+  "commonExampleLabel": "Exemple",
+  "@commonExampleLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "commonLoading": "Chargement…",
+  "@commonLoading": {
+    "description": "Localized user-facing copy."
+  },
+  "commonOptional": "facultatif",
+  "@commonOptional": {
+    "description": "Localized user-facing copy."
+  },
+  "commonRequired": "requis",
+  "@commonRequired": {
+    "description": "Localized user-facing copy."
+  },
+  "commonContactUs": "Nous écrire",
+  "@commonContactUs": {
+    "description": "Localized user-facing copy."
+  },
+  "commonOpensBrowser": "Ouvre le navigateur",
+  "@commonOpensBrowser": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDiscardTitle": "Abandonner les modifications ?",
+  "@commonDiscardTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDiscardBody": "Ce que vous avez saisi ne sera pas conservé.",
+  "@commonDiscardBody": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDateFormat": "yMMMMd",
+  "@commonDateFormat": {
+    "description": "Localized user-facing copy."
+  },
+  "commonDateFormatShort": "yMMMd",
+  "@commonDateFormatShort": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage1Title": "Le dessin est rangé, le souvenir reste.",
+  "@onboardingPage1Title": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage1Body": "Prenez le dessin en photo avant qu'il ne s'abîme, et gardez-le sans encombrer la maison.",
+  "@onboardingPage1Body": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage2Title": "Tout reste sur votre appareil.",
+  "@onboardingPage2Title": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage2Body": "Les photos sont enregistrées sur cet appareil. Aucun compte n'est nécessaire pour commencer.",
+  "@onboardingPage2Body": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage3Title": "Prêt à commencer.",
+  "@onboardingPage3Title": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingPage3Body": "Ajoutez un premier dessin quand vous voulez. Vous pourrez présenter l'artiste juste après.",
+  "@onboardingPage3Body": {
+    "description": "Localized user-facing copy."
+  },
+  "onboardingStart": "Commencer mon album",
+  "@onboardingStart": {
+    "description": "Localized user-facing copy."
+  },
+  "a11yOnboardingPageIndicator": "Page {n} sur 3",
+  "@a11yOnboardingPageIndicator": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "navGallery": "Galerie",
+  "@navGallery": {
+    "description": "Localized user-facing copy."
+  },
+  "navChildren": "Enfants",
+  "@navChildren": {
+    "description": "Localized user-facing copy."
+  },
+  "navSettings": "Réglages",
+  "@navSettings": {
+    "description": "Localized user-facing copy."
+  },
+  "a11yNavSelected": "{label}, sélectionné",
+  "@a11yNavSelected": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryTitle": "Galerie",
+  "@galleryTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryCount": "{count, plural, =0{Aucun dessin} =1{1 dessin} other{{count} dessins}}",
+  "@galleryCount": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "galleryCountForChild": "{count, plural, =0{Aucun dessin de {childName}} =1{1 dessin de {childName}} other{{count} dessins de {childName}}}",
+  "@galleryCountForChild": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryFilterAll": "Tous",
+  "@galleryFilterAll": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFilterLabel": "Filtrer par enfant",
+  "@galleryFilterLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryAddArtwork": "Ajouter un dessin",
+  "@galleryAddArtwork": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryAddArtworkFor": "Ajouter un dessin de {childName}",
+  "@galleryAddArtworkFor": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryEmptyNoChildTitle": "Commencez par présenter l'artiste",
+  "@galleryEmptyNoChildTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyNoChildBody": "Ajoutez un enfant : chaque dessin lui sera attribué et son âge s'affichera automatiquement.",
+  "@galleryEmptyNoChildBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyNoChildAction": "Ajouter un enfant",
+  "@galleryEmptyNoChildAction": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyNoArtworkTitle": "Votre galerie est prête",
+  "@galleryEmptyNoArtworkTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyNoArtworkBody": "Ajoutez le premier dessin. Il restera sur cet appareil.",
+  "@galleryEmptyNoArtworkBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyFilteredTitle": "Aucun dessin de {childName} pour l'instant",
+  "@galleryEmptyFilteredTitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryEmptyFilteredBody": "Ajoutez-en un, ou revenez à l'ensemble de la galerie.",
+  "@galleryEmptyFilteredBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyFilteredShowAll": "Voir tous les dessins",
+  "@galleryEmptyFilteredShowAll": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryErrorTitle": "Impossible d'ouvrir votre galerie",
+  "@galleryErrorTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryErrorBody": "Vos dessins sont toujours sur l'appareil.",
+  "@galleryErrorBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFilterReset": "{childName} a été supprimé. La galerie affiche de nouveau tous les dessins.",
+  "@galleryFilterReset": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryImageMissing": "Image introuvable",
+  "@galleryImageMissing": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryArtworkAdded": "Dessin ajouté à la galerie.",
+  "@galleryArtworkAdded": {
+    "description": "Localized user-facing copy."
+  },
+  "a11yGalleryCard": "Dessin de {childName}, ajouté le {date}, {age} lors de l'ajout.",
+  "@a11yGalleryCard": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      },
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yGalleryCardWithStory": "Dessin de {childName}, ajouté le {date}, {age} lors de l'ajout. Anecdote : {story}",
+  "@a11yGalleryCardWithStory": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      },
+      "age": {
+        "type": "String"
+      },
+      "story": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yGalleryFilterChanged": "Filtre : {label}. {count} dessins.",
+  "@a11yGalleryFilterChanged": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "artworkAddedOn": "Ajouté le {date}",
+  "@artworkAddedOn": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "artworkAgeAtAddition": "Âge lors de l'ajout : {age}",
+  "@artworkAgeAtAddition": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "artworkDrawnOn": "Dessiné le {date}",
+  "@artworkDrawnOn": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "artworkAgeAtDrawing": "Âge lors du dessin : {age}",
+  "@artworkAgeAtDrawing": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "ageLessThanMonth": "Moins de 1 mois",
+  "@ageLessThanMonth": {
+    "description": "Localized user-facing copy."
+  },
+  "ageMonths": "{count, plural, =1{1 mois} other{{count} mois}}",
+  "@ageMonths": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ageYears": "{count, plural, =1{1 an} other{{count} ans}}",
+  "@ageYears": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ageYearsMonths": "{years, plural, =1{1 an} other{{years} ans}} et {months, plural, =1{1 mois} other{{months} mois}}",
+  "@ageYearsMonths": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "years": {
+        "type": "num"
+      },
+      "months": {
+        "type": "num"
+      }
+    }
+  },
+  "ageBeforeBirth": "Avant la naissance",
+  "@ageBeforeBirth": {
+    "description": "Localized user-facing copy."
+  },
+  "captureTitle": "Ajouter un dessin",
+  "@captureTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureSourceCameraTitle": "Prendre une photo",
+  "@captureSourceCameraTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureSourceCameraBody": "Le dessin est devant vous.",
+  "@captureSourceCameraBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureSourceGalleryTitle": "Choisir dans mes photos",
+  "@captureSourceGalleryTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureSourceGalleryBody": "Le dessin est déjà photographié.",
+  "@captureSourceGalleryBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureReviewTitle": "Le dessin est-il bien visible ?",
+  "@captureReviewTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureReviewUse": "Utiliser cette photo",
+  "@captureReviewUse": {
+    "description": "Localized user-facing copy."
+  },
+  "captureReviewRetake": "Reprendre",
+  "@captureReviewRetake": {
+    "description": "Localized user-facing copy."
+  },
+  "captureReviewUnreadable": "Cette image n'a pas pu être ouverte.",
+  "@captureReviewUnreadable": {
+    "description": "Localized user-facing copy."
+  },
+  "captureReviewTooLarge": "Cette image est très volumineuse et pourrait ralentir l'application.",
+  "@captureReviewTooLarge": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDetailsTitle": "À qui est ce dessin ?",
+  "@captureDetailsTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDetailsViewLarge": "Voir en grand",
+  "@captureDetailsViewLarge": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistLabel": "Artiste",
+  "@captureArtistLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistChoose": "Choisir l'artiste",
+  "@captureArtistChoose": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistRequired": "Choisissez l'artiste avant d'enregistrer.",
+  "@captureArtistRequired": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistAddChild": "Ajouter un enfant",
+  "@captureArtistAddChild": {
+    "description": "Localized user-facing copy."
+  },
+  "captureNoChildTitle": "Ce dessin a besoin d'un artiste",
+  "@captureNoChildTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureNoChildBody": "Ajoutez un enfant : votre dessin est conservé pendant ce temps.",
+  "@captureNoChildBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureStoryLabel": "Anecdote (facultatif)",
+  "@captureStoryLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "captureStoryHint": "Ce que l'enfant raconte sur son dessin.",
+  "@captureStoryHint": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioCardTitle": "Raconter le dessin",
+  "@captureAudioCardTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioCardSubtitle": "Enregistrez la voix de l'enfant racontant son dessin (max 2 min).",
+  "@captureAudioCardSubtitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioRecord": "Enregistrer la voix",
+  "@captureAudioRecord": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioRecording": "Enregistrement en cours…",
+  "@captureAudioRecording": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioStop": "Terminer",
+  "@captureAudioStop": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioCancel": "Annuler",
+  "@captureAudioCancel": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioPlay": "Écouter",
+  "@captureAudioPlay": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioPause": "Pause",
+  "@captureAudioPause": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioReRecord": "Recommencer",
+  "@captureAudioReRecord": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioReRecordConfirmTitle": "Remplacer l'enregistrement ?",
+  "@captureAudioReRecordConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioReRecordConfirmBody": "L'enregistrement actuel sera remplacé par un nouveau.",
+  "@captureAudioReRecordConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioDelete": "Supprimer la voix",
+  "@captureAudioDelete": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioDeleteConfirmTitle": "Supprimer l'enregistrement ?",
+  "@captureAudioDeleteConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioDeleteConfirmBody": "Cette action supprimera l'enregistrement audio.",
+  "@captureAudioDeleteConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioMicPermissionDeniedTitle": "Accès au microphone requis",
+  "@captureAudioMicPermissionDeniedTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAudioMicPermissionDeniedBody": "Pour enregistrer la voix de votre enfant, autorisez l'accès au microphone dans les réglages.",
+  "@captureAudioMicPermissionDeniedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkAudioCardTitle": "La voix de l'enfant",
+  "@artworkAudioCardTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkAudioDownloading": "Chargement de la voix…",
+  "@artworkAudioDownloading": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkAudioDownloadError": "Impossible de charger la voix",
+  "@artworkAudioDownloadError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkAudioRetry": "Réessayer",
+  "@artworkAudioRetry": {
+    "description": "Localized user-facing copy."
+  },
+  "sharingIncludeAudio": "Inclure les voix d'enfants",
+  "@sharingIncludeAudio": {
+    "description": "Localized user-facing copy."
+  },
+  "sharingIncludeAudioSubtitle": "Les proches avec le lien pourront écouter les enregistrements vocaux.",
+  "@sharingIncludeAudioSubtitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAddedToday": "Ajouté le {date}",
+  "@captureAddedToday": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "captureSave": "Enregistrer le dessin",
+  "@captureSave": {
+    "description": "Localized user-facing copy."
+  },
+  "captureChildCreated": "{childName} a été ajouté.",
+  "@captureChildCreated": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "captureErrorWriteTitle": "Le dessin n'a pas été enregistré",
+  "@captureErrorWriteTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureErrorWriteBody": "Rien n'a été perdu. Vous pouvez réessayer.",
+  "@captureErrorWriteBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureErrorStorageFullTitle": "Il n'y a plus assez d'espace sur l'appareil",
+  "@captureErrorStorageFullTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureErrorStorageFullBody": "Libérez de l'espace, puis réessayez.",
+  "@captureErrorStorageFullBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDiscardTitle": "Abandonner ce dessin ?",
+  "@captureDiscardTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDiscardBody": "La photo et l'anecdote ne seront pas enregistrées.",
+  "@captureDiscardBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDiscardPhotoTitle": "Abandonner cette photo ?",
+  "@captureDiscardPhotoTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureDiscardPhotoBody": "Vous pourrez en reprendre une autre.",
+  "@captureDiscardPhotoBody": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionCameraDeniedTitle": "L'accès à l'appareil photo est refusé",
+  "@permissionCameraDeniedTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionCameraDeniedBody": "Vous pouvez tout de même choisir une photo existante.",
+  "@permissionCameraDeniedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionPhotosDeniedTitle": "L'accès aux photos est refusé",
+  "@permissionPhotosDeniedTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionPhotosDeniedBody": "Vous pouvez tout de même prendre une nouvelle photo.",
+  "@permissionPhotosDeniedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionBothDeniedTitle": "artkiddo n'a pas accès à vos photos",
+  "@permissionBothDeniedTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionBothDeniedBody": "Autorisez l'appareil photo ou les photos dans les réglages pour ajouter un dessin.",
+  "@permissionBothDeniedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionCameraReason": "Autorisation nécessaire pour prendre une photo.",
+  "@permissionCameraReason": {
+    "description": "Localized user-facing copy."
+  },
+  "permissionPhotosReason": "Autorisation nécessaire pour choisir une photo.",
+  "@permissionPhotosReason": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkTitle": "Dessin de {childName}",
+  "@artworkTitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "artworkStoryHeading": "Anecdote",
+  "@artworkStoryHeading": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryEmpty": "Aucune anecdote pour ce dessin.",
+  "@artworkStoryEmpty": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryAdd": "Ajouter une anecdote",
+  "@artworkStoryAdd": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryEdit": "Modifier l'anecdote",
+  "@artworkStoryEdit": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryClear": "Effacer l'anecdote",
+  "@artworkStoryClear": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryHint": "Ce que l'enfant raconte sur son dessin.",
+  "@artworkStoryHint": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStorySaved": "Anecdote enregistrée.",
+  "@artworkStorySaved": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryCleared": "Anecdote effacée.",
+  "@artworkStoryCleared": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryClearConfirmTitle": "Effacer l'anecdote ?",
+  "@artworkStoryClearConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryClearConfirmBody": "Le texte sera retiré de ce dessin.",
+  "@artworkStoryClearConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkStoryError": "L'anecdote n'a pas été enregistrée. Votre texte est conservé.",
+  "@artworkStoryError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtAdd": "Ajouter la date du dessin",
+  "@artworkDrawnAtAdd": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtEdit": "Modifier la date du dessin",
+  "@artworkDrawnAtEdit": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtClear": "Effacer la date du dessin",
+  "@artworkDrawnAtClear": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtPickerTitle": "Date du dessin",
+  "@artworkDrawnAtPickerTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtSaved": "Date du dessin enregistrée.",
+  "@artworkDrawnAtSaved": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtCleared": "Date du dessin effacée.",
+  "@artworkDrawnAtCleared": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtClearConfirmTitle": "Effacer la date du dessin ?",
+  "@artworkDrawnAtClearConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtClearConfirmBody": "L'âge affiché redeviendra celui du jour de l'ajout.",
+  "@artworkDrawnAtClearConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtError": "La date du dessin n'a pas été enregistrée.",
+  "@artworkDrawnAtError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtFutureError": "Cette date n'est pas encore arrivée.",
+  "@artworkDrawnAtFutureError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDrawnAtBeforeBirthError": "Cette date précède la naissance de l'enfant.",
+  "@artworkDrawnAtBeforeBirthError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkSendImage": "Envoyer cette image",
+  "@artworkSendImage": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkSendImageHelp": "L'image part par votre application de messagerie.",
+  "@artworkSendImageHelp": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkShareGallery": "Partager sa galerie",
+  "@artworkShareGallery": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkShareGalleryHelp": "Un lien web pour voir tous ses dessins.",
+  "@artworkShareGalleryHelp": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkShareText": "Un dessin de {childName}, ajouté le {date}.",
+  "@artworkShareText": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "artworkZoom": "Agrandir",
+  "@artworkZoom": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkZoomIn": "Agrandir davantage",
+  "@artworkZoomIn": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkZoomOut": "Réduire",
+  "@artworkZoomOut": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkZoomImageMissing": "Image introuvable",
+  "@artworkZoomImageMissing": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkZoomDecodeFailed": "Cette image n'a pas pu être affichée.",
+  "@artworkZoomDecodeFailed": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkImageMissingTitle": "L'image de ce dessin est introuvable",
+  "@artworkImageMissingTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkImageMissingBody": "Les informations du dessin sont conservées.",
+  "@artworkImageMissingBody": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDelete": "Supprimer ce dessin",
+  "@artworkDelete": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDeleteTitle": "Supprimer ce dessin ?",
+  "@artworkDeleteTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDeleteBody": "La photo sera retirée de cet appareil. Cette action est définitive.",
+  "@artworkDeleteBody": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDeleteCloudNotice": "La copie déjà sauvegardée n'est pas retirée par cette action.",
+  "@artworkDeleteCloudNotice": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDeleteError": "Le dessin n'a pas pu être supprimé.",
+  "@artworkDeleteError": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkDeleted": "Dessin supprimé.",
+  "@artworkDeleted": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkUnknownArtist": "Artiste inconnu",
+  "@artworkUnknownArtist": {
+    "description": "Localized user-facing copy."
+  },
+  "a11yArtworkImage": "Dessin de {childName}, ajouté le {date}",
+  "@a11yArtworkImage": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "childrenTitle": "Enfants",
+  "@childrenTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenHelp": "Chaque dessin est attribué à un enfant, ce qui permet d'afficher son âge.",
+  "@childrenHelp": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenAdd": "Ajouter un enfant",
+  "@childrenAdd": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenRowSubtitle": "Né(e) le {date} · {count, plural, =0{aucun dessin} =1{1 dessin} other{{count} dessins}}",
+  "@childrenRowSubtitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "childrenEmptyTitle": "Aucun enfant pour l'instant",
+  "@childrenEmptyTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenEmptyBody": "Ajoutez un enfant pour attribuer ses dessins et afficher son âge.",
+  "@childrenEmptyBody": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenErrorTitle": "Impossible d'ouvrir la liste des enfants",
+  "@childrenErrorTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenActionsViewArtworks": "Voir ses dessins",
+  "@childrenActionsViewArtworks": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenActionsEdit": "Modifier le profil",
+  "@childrenActionsEdit": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenActionsShare": "Partager sa galerie",
+  "@childrenActionsShare": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenActionsDelete": "Supprimer le profil",
+  "@childrenActionsDelete": {
+    "description": "Localized user-facing copy."
+  },
+  "childrenDeleteTitle": "Supprimer {childName} ?",
+  "@childrenDeleteTitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "childrenDeleteBody": "{count, plural, =0{Aucun dessin ne sera supprimé.} =1{1 dessin sera également supprimé de cet appareil.} other{{count} dessins seront également supprimés de cet appareil.}} Cette action est définitive.",
+  "@childrenDeleteBody": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "childrenDeleteError": "{childName} n'a pas été supprimé.",
+  "@childrenDeleteError": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "childrenDeleted": "{childName} et ses dessins ont été supprimés.",
+  "@childrenDeleted": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "childEditorTitleCreate": "Nouvel enfant",
+  "@childEditorTitleCreate": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorTitleEdit": "Modifier le profil",
+  "@childEditorTitleEdit": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorFromDraft": "Votre dessin est conservé pendant ce temps.",
+  "@childEditorFromDraft": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorNameLabel": "Prénom ou surnom",
+  "@childEditorNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorNameHint": "Par exemple : Léa, Nono",
+  "@childEditorNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorBirthDateLabel": "Date de naissance",
+  "@childEditorBirthDateLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorBirthDateChoose": "Choisir une date",
+  "@childEditorBirthDateChoose": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorBirthDateHelp": "Sert à indiquer l'âge de l'enfant sur chaque dessin.",
+  "@childEditorBirthDateHelp": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorNameEmpty": "Indiquez un prénom ou un surnom.",
+  "@childEditorErrorNameEmpty": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorNameTooLong": "40 caractères au maximum.",
+  "@childEditorErrorNameTooLong": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorWarnNameDuplicate": "Un autre enfant porte déjà ce prénom.",
+  "@childEditorWarnNameDuplicate": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorBirthDateMissing": "Choisissez la date de naissance.",
+  "@childEditorErrorBirthDateMissing": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorBirthDateFuture": "Cette date est dans le futur.",
+  "@childEditorErrorBirthDateFuture": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorBirthDateTooOld": "Cette date semble trop ancienne.",
+  "@childEditorErrorBirthDateTooOld": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorErrorWrite": "Le profil n'a pas été enregistré. Vos informations sont conservées.",
+  "@childEditorErrorWrite": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorCreated": "{childName} a été ajouté.",
+  "@childEditorCreated": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "childEditorUpdated": "Profil mis à jour.",
+  "@childEditorUpdated": {
+    "description": "Localized user-facing copy."
+  },
+  "childEditorSaveDisabledReason": "Indiquez un prénom et une date de naissance.",
+  "@childEditorSaveDisabledReason": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsTitle": "Réglages",
+  "@settingsTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsLocalNotice": "Vos dessins sont sur cet appareil. Aucun compte n'est nécessaire.",
+  "@settingsLocalNotice": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsGroupBackup": "Sauvegarde et partage",
+  "@settingsGroupBackup": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsGroupApp": "Application",
+  "@settingsGroupApp": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsGroupDocuments": "Documents",
+  "@settingsGroupDocuments": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAccountRow": "Sauvegarde et compte",
+  "@settingsAccountRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAccountOff": "Non activée",
+  "@settingsAccountOff": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAccountExplain": "Un compte permet de sauvegarder vos dessins et de partager une galerie web.",
+  "@settingsAccountExplain": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsBackupNever": "Jamais sauvegardé",
+  "@settingsBackupNever": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsBackupLast": "Dernière sauvegarde : {date}",
+  "@settingsBackupLast": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "settingsBackupRun": "Sauvegarder maintenant",
+  "@settingsBackupRun": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsBackupRunning": "Sauvegarde en cours… {n} sur {total}",
+  "@settingsBackupRunning": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupPartial": "{n} dessins sauvegardés, {m} en échec.",
+  "@settingsBackupPartial": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupFailed": "La sauvegarde n'a pas abouti.",
+  "@settingsBackupFailed": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsBackupUnavailable": "Le service de sauvegarde est indisponible pour le moment.",
+  "@settingsBackupUnavailable": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsBackupBlocked": "La sauvegarde a besoin de votre intervention pour continuer.",
+  "@settingsBackupBlocked": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsRestoreNotice": "La restauration sur un nouvel appareil n'est pas encore disponible.",
+  "@settingsRestoreNotice": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsLanguageRow": "Langue",
+  "@settingsLanguageRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsLanguageSystem": "Suivre la langue de l'appareil",
+  "@settingsLanguageSystem": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsLanguageFr": "Français (Canada)",
+  "@settingsLanguageFr": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsLanguageEn": "English (Canada)",
+  "@settingsLanguageEn": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAboutRow": "À propos",
+  "@settingsAboutRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsPrivacyRow": "Politique de confidentialité",
+  "@settingsPrivacyRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsTermsRow": "Conditions d'utilisation",
+  "@settingsTermsRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsVersion": "Version {version}",
+  "@settingsVersion": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGroupFamily": "Famille",
+  "@settingsGroupFamily": {
+    "description": "Localized user-facing copy."
+  },
+  "familyRow": "Inviter un membre",
+  "@familyRow": {
+    "description": "Localized user-facing copy."
+  },
+  "familyTitle": "Famille",
+  "@familyTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyNameLabel": "Nom de la famille",
+  "@familyNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "familyNameHint": "Ex. : Famille Tremblay",
+  "@familyNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "familyNameSaved": "Nom enregistré.",
+  "@familyNameSaved": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteExplain": "Partagez ce code ou ce QR avec la personne qui rejoint votre famille. Il reste valable et peut être réutilisé autant de fois que nécessaire.",
+  "@familyInviteExplain": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteCodeLabel": "Code d'invitation",
+  "@familyInviteCodeLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteCopy": "Copier le code",
+  "@familyInviteCopy": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteCopied": "Code copié.",
+  "@familyInviteCopied": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinExplain": "Vous avez un code ? Saisissez-le ou scannez le QR pour rejoindre une famille.",
+  "@familyJoinExplain": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinCodeHint": "Ex. : 7K4RTQ2M",
+  "@familyJoinCodeHint": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinButton": "Rejoindre",
+  "@familyJoinButton": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinChecking": "Vérification…",
+  "@familyJoinChecking": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConverging": "Adhésion à votre famille…",
+  "@familyJoinConverging": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinSuccess": "Vous avez rejoint la famille.",
+  "@familyJoinSuccess": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinInvalidCode": "Ce code n'existe pas. Vérifiez-le et réessayez.",
+  "@familyJoinInvalidCode": {
+    "description": "Localized user-facing copy."
+  },
+  "familyScanButton": "Scanner un code",
+  "@familyScanButton": {
+    "description": "Localized user-facing copy."
+  },
+  "familyScanTitle": "Scanner un code",
+  "@familyScanTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyScanExplain": "Cadrez le QR code affiché par l'autre personne.",
+  "@familyScanExplain": {
+    "description": "Localized user-facing copy."
+  },
+  "familyScanPermissionDenied": "L'accès à l'appareil photo est nécessaire pour scanner un code.",
+  "@familyScanPermissionDenied": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsOffline": "Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.",
+  "@settingsOffline": {
+    "description": "Localized user-facing copy."
+  },
+  "accountTitle": "Sauvegarde et compte",
+  "@accountTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountIntroTitle": "Ce qu'un compte apporte",
+  "@accountIntroTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountIntroBody": "Une sauvegarde de vos dessins et un lien web à partager avec vos proches. Vos dessins restent sur cet appareil dans tous les cas.",
+  "@accountIntroBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountEmailLabel": "Votre adresse courriel",
+  "@accountEmailLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountEmailHint": "parent@exemple.ca",
+  "@accountEmailHint": {
+    "description": "Localized user-facing copy."
+  },
+  "accountEmailInvalid": "Cette adresse ne semble pas valide.",
+  "@accountEmailInvalid": {
+    "description": "Localized user-facing copy."
+  },
+  "accountPasswordLabel": "Mot de passe",
+  "@accountPasswordLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountPasswordInvalid": "Le mot de passe doit contenir au moins 6 caractères.",
+  "@accountPasswordInvalid": {
+    "description": "Localized user-facing copy."
+  },
+  "accountCodePaste": "Coller",
+  "@accountCodePaste": {
+    "description": "Localized user-facing copy."
+  },
+  "accountSubmit": "Continuer",
+  "@accountSubmit": {
+    "description": "Localized user-facing copy."
+  },
+  "accountSubmitting": "Connexion…",
+  "@accountSubmitting": {
+    "description": "Localized user-facing copy."
+  },
+  "accountErrorInvalidCredentials": "Adresse ou mot de passe incorrect.",
+  "@accountErrorInvalidCredentials": {
+    "description": "Localized user-facing copy."
+  },
+  "accountErrorWeakPassword": "Le mot de passe doit contenir au moins 6 caractères.",
+  "@accountErrorWeakPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountErrorRateLimited": "Trop de demandes. Réessayez dans {seconds} secondes.",
+  "@accountErrorRateLimited": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "accountSignedIn": "Compte lié.",
+  "@accountSignedIn": {
+    "description": "Localized user-facing copy."
+  },
+  "accountConnectedAs": "Compte lié : {email}",
+  "@accountConnectedAs": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSignOut": "Se déconnecter",
+  "@accountSignOut": {
+    "description": "Localized user-facing copy."
+  },
+  "accountSignOutTitle": "Se déconnecter ?",
+  "@accountSignOutTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountSignOutBody": "Vos dessins restent sur cet appareil.",
+  "@accountSignOutBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDelete": "Supprimer mon compte",
+  "@accountDelete": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteTitle": "Supprimer votre compte ?",
+  "@accountDeleteTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteBody": "Cela supprime votre identifiant de connexion. Les enfants et les œuvres de votre foyer ne sont jamais touchés — les autres membres du foyer gardent un accès complet.",
+  "@accountDeleteBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteConfirmCheck": "J'ai compris que cette action est définitive.",
+  "@accountDeleteConfirmCheck": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteLastMemberWarning": "Vous êtes le dernier membre actif de votre foyer. Supprimer votre compte effacera aussi, immédiatement et définitivement, tous les enfants, toutes les œuvres et tout le contenu cloud de ce foyer.",
+  "@accountDeleteLastMemberWarning": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteLocalChoiceTitle": "Que faire du coffre sur cet appareil ?",
+  "@accountDeleteLocalChoiceTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteKeepLocal": "Conserver le coffre local",
+  "@accountDeleteKeepLocal": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteKeepLocalBody": "Les dessins déjà sur cet appareil restent utilisables hors ligne.",
+  "@accountDeleteKeepLocalBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteEraseLocal": "Effacer aussi le coffre local",
+  "@accountDeleteEraseLocal": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteEraseLocalBody": "Tous les dessins de cet appareil sont supprimés, y compris ceux non sauvegardés.",
+  "@accountDeleteEraseLocalBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleting": "Suppression du compte…",
+  "@accountDeleting": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeleteNetworkErrorBody": "Le compte n'a pas pu être supprimé (aucune connexion). Réessayez plus tard.",
+  "@accountDeleteNetworkErrorBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeletePartialTitle": "La suppression n'a pas pu être terminée",
+  "@accountDeletePartialTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountDeletePartialBody": "Voici ce qui a été supprimé et ce qui reste. Écrivez-nous et nous terminerons l'opération.",
+  "@accountDeletePartialBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountOfflineReason": "Une connexion est nécessaire.",
+  "@accountOfflineReason": {
+    "description": "Localized user-facing copy."
+  },
+  "shareTitle": "Partager la galerie de {childName}",
+  "@shareTitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareWarning": "Toute personne disposant du lien peut ouvrir cette galerie.",
+  "@shareWarning": {
+    "description": "Localized user-facing copy."
+  },
+  "shareSignedOutTitle": "Le partage web a besoin d'un compte",
+  "@shareSignedOutTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "shareSignedOutBody": "La galerie doit être hébergée pour que vos proches puissent l'ouvrir sans installer l'application.",
+  "@shareSignedOutBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareSignedOutAction": "Se connecter pour partager",
+  "@shareSignedOutAction": {
+    "description": "Localized user-facing copy."
+  },
+  "shareSignedOutAlternative": "Plutôt envoyer une image",
+  "@shareSignedOutAlternative": {
+    "description": "Localized user-facing copy."
+  },
+  "shareGalleryHeading": "Partager sa galerie",
+  "@shareGalleryHeading": {
+    "description": "Localized user-facing copy."
+  },
+  "shareGalleryBody": "Un lien web qui montre les dessins sauvegardés de {childName}. Il se met à jour avec les nouveaux dessins.",
+  "@shareGalleryBody": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareGalleryPickerBody": "Choisissez l'enfant dont vous souhaitez partager les œuvres.",
+  "@shareGalleryPickerBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareGalleryCreate": "Créer le lien",
+  "@shareGalleryCreate": {
+    "description": "Localized user-facing copy."
+  },
+  "shareGalleryCreating": "Création du lien…",
+  "@shareGalleryCreating": {
+    "description": "Localized user-facing copy."
+  },
+  "shareImageHeading": "Envoyer cette image",
+  "@shareImageHeading": {
+    "description": "Localized user-facing copy."
+  },
+  "shareImageBody": "L'image part telle quelle par votre application de messagerie. Elle ne se met pas à jour.",
+  "@shareImageBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareDifference": "La galerie se met à jour ; l'image envoyée, non.",
+  "@shareDifference": {
+    "description": "Localized user-facing copy."
+  },
+  "shareLinkReadyTitle": "Lien créé",
+  "@shareLinkReadyTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "shareLinkReadyCreatedOn": "Créé le {date}",
+  "@shareLinkReadyCreatedOn": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "shareLinkOtherDeviceBody": "Ce lien a été créé sur un autre appareil : impossible de l'afficher ou de le copier ici. Vous pouvez tout de même le révoquer.",
+  "@shareLinkOtherDeviceBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevoke": "Révoquer ce lien",
+  "@shareRevoke": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevokeTitle": "Révoquer ce lien ?",
+  "@shareRevokeTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevokeBody": "Les personnes qui l'ont reçu ne pourront plus ouvrir la galerie.",
+  "@shareRevokeBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevoking": "Révocation…",
+  "@shareRevoking": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevoked": "Lien révoqué.",
+  "@shareRevoked": {
+    "description": "Localized user-facing copy."
+  },
+  "shareRevokeError": "Le lien n'a pas pu être révoqué.",
+  "@shareRevokeError": {
+    "description": "Localized user-facing copy."
+  },
+  "shareErrorNetwork": "Le lien n'a pas été créé : aucune connexion.",
+  "@shareErrorNetwork": {
+    "description": "Localized user-facing copy."
+  },
+  "shareErrorService": "Le lien n'a pas été créé.",
+  "@shareErrorService": {
+    "description": "Localized user-facing copy."
+  },
+  "trashTitle": "Corbeille",
+  "@trashTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "trashEmptyTitle": "La Corbeille est vide",
+  "@trashEmptyTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "trashEmptyBody": "Les œuvres supprimées apparaissent ici pendant 30 jours.",
+  "@trashEmptyBody": {
+    "description": "Localized user-facing copy."
+  },
+  "trashErrorTitle": "Impossible d'ouvrir la Corbeille",
+  "@trashErrorTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "trashItemDeletedOn": "Supprimé le {date}",
+  "@trashItemDeletedOn": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "trashItemPurgeOn": "Supprimé définitivement le {date}",
+  "@trashItemPurgeOn": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "trashRestore": "Restaurer",
+  "@trashRestore": {
+    "description": "Localized user-facing copy."
+  },
+  "trashRestoring": "Restauration…",
+  "@trashRestoring": {
+    "description": "Localized user-facing copy."
+  },
+  "trashRestoreError": "L'œuvre n'a pas pu être restaurée.",
+  "@trashRestoreError": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurge": "Supprimer définitivement",
+  "@trashPurge": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurging": "Suppression…",
+  "@trashPurging": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeError": "L'œuvre n'a pas pu être supprimée définitivement.",
+  "@trashPurgeError": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeConfirmTitle": "Supprimer définitivement cette œuvre ?",
+  "@trashPurgeConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeConfirmBody": "Cette action est irréversible. L'œuvre et son image seront effacées définitivement.",
+  "@trashPurgeConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeAll": "Vider la Corbeille",
+  "@trashPurgeAll": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeAllConfirmTitle": "Vider toute la Corbeille ?",
+  "@trashPurgeAllConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeAllConfirmBody": "Toutes les œuvres de la Corbeille seront effacées définitivement. Cette action est irréversible.",
+  "@trashPurgeAllConfirmBody": {
+    "description": "Localized user-facing copy."
+  },
+  "trashPurgeAllError": "La Corbeille n'a pas pu être vidée.",
+  "@trashPurgeAllError": {
+    "description": "Localized user-facing copy."
+  },
+  "shareNotSyncedTitle": "Les dessins de {childName} ne sont pas encore sauvegardés",
+  "@shareNotSyncedTitle": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNotSyncedBody": "La galerie web serait vide. Sauvegardez d'abord, puis créez le lien.",
+  "@shareNotSyncedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "shareNotSyncedAction": "Sauvegarder maintenant",
+  "@shareNotSyncedAction": {
+    "description": "Localized user-facing copy."
+  },
+  "shareChildMissing": "Ce profil n'existe plus.",
+  "@shareChildMissing": {
+    "description": "Localized user-facing copy."
+  },
+  "shareMessage": "Voici la galerie de dessins de {childName} : {url}",
+  "@shareMessage": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "shareExistingHeading": "Liens actifs",
+  "@shareExistingHeading": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNetworkTitle": "Aucune connexion",
+  "@errorNetworkTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNetworkBody": "Vérifiez votre connexion, puis réessayez.",
+  "@errorNetworkBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorServiceTitle": "Le service ne répond pas",
+  "@errorServiceTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorServiceBody": "Réessayez dans quelques instants.",
+  "@errorServiceBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorLocalWriteTitle": "L'enregistrement a échoué",
+  "@errorLocalWriteTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorLocalWriteBody": "Rien n'a été perdu. Vous pouvez réessayer.",
+  "@errorLocalWriteBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNotFoundTitle": "Introuvable",
+  "@errorNotFoundTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNotFoundBody": "Cet élément n'existe plus.",
+  "@errorNotFoundBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNotSignedInTitle": "Compte requis",
+  "@errorNotSignedInTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorNotSignedInBody": "Connectez-vous pour utiliser cette fonction.",
+  "@errorNotSignedInBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorUnavailableTitle": "Fonction indisponible",
+  "@errorUnavailableTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorUnavailableBody": "Cette opération n'est pas encore disponible.",
+  "@errorUnavailableBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorFoyerMismatchTitle": "Cet appareil est lié ailleurs",
+  "@errorFoyerMismatchTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorFoyerMismatchBody": "Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.",
+  "@errorFoyerMismatchBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorQuotaExceededTitle": "Espace de stockage du foyer atteint",
+  "@errorQuotaExceededTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorQuotaExceededBody": "Cette œuvre reste enregistrée sur cet appareil. Elle sera envoyée automatiquement dès qu'une place se libère.",
+  "@errorQuotaExceededBody": {
+    "description": "Localized user-facing copy."
+  },
+  "errorUnknownTitle": "Une erreur est survenue",
+  "@errorUnknownTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "errorUnknownBody": "Réessayez. Si le problème persiste, écrivez-nous.",
+  "@errorUnknownBody": {
+    "description": "Localized user-facing copy."
+  },
+
+  "familyHubTitle": "Espace famille",
+  "@familyHubTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionArtists": "Artistes",
+  "@familyHubSectionArtists": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubAddArtist": "Ajouter un artiste",
+  "@familyHubAddArtist": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionFamilyBackup": "Famille et sauvegarde",
+  "@familyHubSectionFamilyBackup": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubAccountLocalOnly": "Sauvegarde sur cet appareil",
+  "@familyHubAccountLocalOnly": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubAccountLocalSubtitle": "Activez une sauvegarde privée quand vous le souhaitez.",
+  "@familyHubAccountLocalSubtitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubFamilySubtitle": "Inviter, rejoindre ou gérer le foyer.",
+  "@familyHubFamilySubtitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubFamilyAndSettings": "Famille et réglages",
+  "@familyHubFamilyAndSettings": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAnecdoteTitle": "Ajouter une anecdote",
+  "@captureAnecdoteTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureAnecdoteSubtitle": "Facultatif — vous pourrez aussi le faire plus tard.",
+  "@captureAnecdoteSubtitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureIosCropTitle": "Recadrer le dessin",
+  "@captureIosCropTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "artworkAudioSaveError": "Impossible d'enregistrer la voix",
+  "@artworkAudioSaveError": {
+    "description": "Localized user-facing copy."
+  },
+  "syncUploadSuspendedTitle": "Sauvegardes suspendues",
+  "@syncUploadSuspendedTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "syncUploadSuspendedBody": "Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.",
+  "@syncUploadSuspendedBody": {
+    "description": "Localized user-facing copy."
+  }
+}
