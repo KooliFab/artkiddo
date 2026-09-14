@@ -3,7 +3,8 @@
 Snapshot status: public, offline-first foundation. This document is the entry
 point for a fresh conversation; read it before scanning the source tree.
 
-Verified commit: refresh this document whenever an architecture boundary changes.
+Verified commit: 6fd6a6ab234a912e8326e9319e6f35fc7411385a
+Verified on: 2026-09-13
 
 ## Repository shape
 
