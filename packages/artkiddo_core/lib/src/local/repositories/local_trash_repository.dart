@@ -102,7 +102,7 @@ class LocalTrashRepository implements TrashRepository {
       if (row == null || row.deletedAt == null) {
         return const ActionSuccess(null);
       }
-      return _purgeRows([row]);
+      return await _purgeRows([row]);
     } catch (e, st) {
       Log.e('Purge locale impossible ($masterpieceId)', e, st, 'Trash');
       return ActionFailed(_mapException(e, st));
@@ -115,7 +115,7 @@ class LocalTrashRepository implements TrashRepository {
       final rows = await (_db.select(
         _db.masterpiecesTable,
       )..where((t) => t.deletedAt.isNotNull())).get();
-      return _purgeRows(rows);
+      return await _purgeRows(rows);
     } catch (e, st) {
       Log.e('Vidage de la Corbeille locale impossible', e, st, 'Trash');
       return ActionFailed(_mapException(e, st));
