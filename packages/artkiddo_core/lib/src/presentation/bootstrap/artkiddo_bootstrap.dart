@@ -10,6 +10,10 @@ import '../../domain/action_result.dart';
 import '../gallery/gallery_providers.dart';
 import '../navigation/composition_actions.dart';
 import '../../contracts/remote_media.dart';
+import '../../contracts/household.dart';
+import '../../contracts/gallery_sharing.dart';
+import '../foyer/foyer_controller.dart' show foyerApiProvider;
+import '../sharing/share_controller.dart' show sharingServiceProvider;
 import '../../local/repositories/trash_repository.dart';
 
 abstract final class ArtKiddoBootstrap {
@@ -60,6 +64,14 @@ abstract final class ArtKiddoBootstrap {
     if (capabilities.remoteBackup &&
         container.read(remoteMediaFetcherProvider) is NoRemoteMediaFetcher) {
       failures.add('remoteBackup requires a RemoteMediaFetcher binding');
+    }
+    if (capabilities.household &&
+        container.read(foyerApiProvider) is NoFoyerApi) {
+      failures.add('household requires a FoyerApi binding');
+    }
+    if (capabilities.webGalleryLinks &&
+        container.read(sharingServiceProvider) is NoSharingService) {
+      failures.add('webGalleryLinks requires a SharingService binding');
     }
 
     if (failures.isNotEmpty) {
