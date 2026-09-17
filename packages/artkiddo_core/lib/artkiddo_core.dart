@@ -69,4 +69,6 @@ export 'src/presentation/gallery/capture_screen.dart';
 export 'src/presentation/gallery/gallery_actions.dart';
 export 'src/presentation/gallery/gallery_providers.dart';
 export 'src/presentation/gallery/gallery_screen.dart';
+export 'src/presentation/settings/about_screen.dart';
+export 'src/presentation/settings/language_screen.dart';
 export 'src/debug/demo_seed.dart';
