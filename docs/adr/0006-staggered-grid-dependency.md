@@ -7,6 +7,13 @@ Date: 2026-09-17
 
 The offline-first public core package (`artkiddo_core`) contains the domain model, local database, offline vault, and the full gallery presentation layer. To render rich multimedia experiences, take photos, record voice stories, display QR codes, and share artworks without cloud infrastructure, the core depends on select Flutter packages.
 
+### The Seam Rule: Core Owns Neutral Presentation
+
+Under the consolidation architecture:
+- **Generic never knows specific**: `artkiddo_core` owns the complete visual and interactive presentation for all neutral features (Gallery, Artwork viewer/editor, Capture flow, Audio recording, Children/Trash management, Settings About/Language, and account-free Share & Family interfaces).
+- **Core declares slots, compositions fill them**: generic controllers and screens declare honest default affordances and abstract hooks (`GalleryActions`, `CompositionActions`, `foyerConvergenceProvider`, `RemoteMediaFetcher`). When a destination or capability is unsupported in local offline mode, affordances are hidden or display honest account-free interfaces—they never crash or present inert broken controls.
+- Private compositions (`artkiddo-cloud`) override these contracts via typed Riverpod overrides and action callbacks to connect proprietary backend features (Supabase sync, cloud foyer join/invite, web gallery public links, R2 remote media downloading).
+
 Under `public-code-rules.md`, public dependencies must satisfy four strict criteria:
 1. **Product necessity**: Required for offline product behavior, local media capture/playback, or offline UI rendering.
 2. **Permissive Open-Source License**: BSD, MIT, or Apache-2.0.
