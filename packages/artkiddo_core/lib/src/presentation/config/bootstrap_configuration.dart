@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/misc.dart' show Override;
+
 import 'app_capabilities.dart';
 import 'cloud_services.dart';
 
@@ -8,10 +10,15 @@ final class ArtKiddoBootstrapConfig {
   final CloudServices? cloudServices;
   final AppEnvironment environment;
 
+  /// Provider overrides supplied by the composition. The core declares
+  /// neutral defaults; a composition replaces them with its own bindings.
+  final List<Override> overrides;
+
   const ArtKiddoBootstrapConfig({
     required this.capabilities,
     required this.cloudServices,
     required this.environment,
+    this.overrides = const [],
   });
 
   void validate() {

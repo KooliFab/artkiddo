@@ -18,6 +18,7 @@ abstract final class ArtKiddoBootstrap {
         appCapabilitiesProvider.overrideWithValue(config.capabilities),
         cloudServicesProvider.overrideWithValue(config.cloudServices),
         appEnvironmentProvider.overrideWithValue(config.environment),
+        ...config.overrides,
       ],
     );
   }

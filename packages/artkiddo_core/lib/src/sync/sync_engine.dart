@@ -325,7 +325,7 @@ class SyncEngine {
     } else if (m.relativeImagePath == null) {
       // A row this device only knows through `pull` without recorded keys
       throw StateError(
-        'masterpiece ${m.id} has no local original and no recorded R2 keys to reuse',
+        'masterpiece ${m.id} has no local original and no recorded object keys to reuse',
       );
     } else {
       final originalFile = await vault.resolveFile(m.relativeImagePath!);
@@ -359,7 +359,7 @@ class SyncEngine {
         childId: current.childId,
         fileName: displayFile.path,
       );
-      // R2 free tier: no thumbnail in R2, kept locally only
+      // No thumbnail uploaded to remote storage; kept locally only
       thumbnailKey = null;
       imageByteSize = displayBytes.length;
     }
@@ -602,7 +602,7 @@ class SyncEngine {
     if (local.relativeImagePath != null || local.thumbnailImagePath != null) {
       return;
     }
-    // R2 refactor: prioritize display download and locally regenerate thumbnail
+    // Remote media refactor: prioritize display download and locally regenerate thumbnail
     final displayKey = row.displayObjectKey;
     if (displayKey != null) {
       try {
@@ -681,7 +681,7 @@ class SyncEngine {
       return ActionResultLike.alreadyHave;
     }
 
-    // The R2 key isn't on the domain model (a cache concern, like the
+    // The object key isn't on the domain model (a cache concern, like the
     // paths themselves) — read it straight from the row.
     final row = await (db.select(
       db.masterpiecesTable,

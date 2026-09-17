@@ -4,7 +4,7 @@
 // SQLite database and its own temp documents directory — real persistence,
 // exactly like `local_data_test.dart`), wired to a *shared*
 // `FakeHomeCloudApi`/`FakeObjectUploader`/`FakeObjectDownloader` standing in
-// for one Supabase project + R2 bucket. Two devices sharing the fakes is
+// for cloud backend + remote object storage. Two devices sharing the fakes is
 // what actually exercises convergence: what one device pushes is what the
 // other pulls, through the exact same `SyncEngine` code either device runs
 // — there is no special-cased "test-only" sync path.
@@ -12,8 +12,7 @@
 // The delete-wins/last-write-wins server rules this suite relies on
 // (`DeletedRowUpdateRejectedException`, server-assigned `updated_at`) are
 // modeled by `FakeHomeCloudApi` to match migration `0004`'s trigger, which
-// is verified separately against the real local Supabase stack (see the
-// C-06 report).
+// is verified separately against the backend integration test suite.
 
 import 'dart:io';
 
@@ -73,7 +72,7 @@ class Device {
 
   /// Sets the shared fake's "currently authenticated account" to this
   /// device's user before running a sync — the real app only ever has one
-  /// Supabase session per process; this models switching which
+  /// remote auth session per process; this models switching which
   /// account/device is "active" between calls in a single test process.
   Future<SyncRunSummary> sync() async {
     cloudApi.currentUserId = userId;
@@ -598,8 +597,8 @@ void main() {
       final pulled = await b.masterpieces.getById(mpId);
       expect(pulled, isNotNull);
       expect(pulled!.relativeImagePath, isNull, reason: 'the original never left device A (ADR 0007)');
-      expect(pulled.thumbnailImagePath, isNotNull, reason: 'R2 refactor: thumbnail regenerated locally from display');
-      expect(pulled.displayImagePath, isNotNull, reason: 'R2 refactor: display downloaded to regenerate thumbnail');
+      expect(pulled.thumbnailImagePath, isNotNull, reason: 'thumbnail regenerated locally from display');
+      expect(pulled.displayImagePath, isNotNull, reason: 'display downloaded to regenerate thumbnail');
       expect(pulled.syncState, SyncState.synced);
 
       final thumbFile = await b.vault.resolveFile(pulled.thumbnailImagePath!);
@@ -718,7 +717,7 @@ void main() {
 
       final initialUploads = uploader.uploadCount;
       await a.sync();
-      // Should have uploaded display and audio (2 uploads, no thumbnail in R2)
+      // Should have uploaded display and audio (2 uploads, no thumbnail in remote storage)
       expect(uploader.uploadCount, initialUploads + 2);
 
       cloudApi.seedMembership('user-b', foyerId);
@@ -752,7 +751,7 @@ void main() {
       final currentUploads = uploader.uploadCount;
       await a.masterpieces.updateStory(id: mpId, story: 'Nouvelle histoire');
       await a.sync();
-      expect(uploader.uploadCount, currentUploads, reason: 'R2 keys reused, no new uploads');
+      expect(uploader.uploadCount, currentUploads, reason: 'object keys reused, no new uploads');
     });
   });
 }

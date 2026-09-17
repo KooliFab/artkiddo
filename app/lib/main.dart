@@ -8,10 +8,23 @@ Future<void> main() async {
   await initializeDateFormatting('fr_CA', null);
   await initializeDateFormatting('en_CA', null);
   final container = await ArtKiddoBootstrap.start(
-    const ArtKiddoBootstrapConfig(
+    ArtKiddoBootstrapConfig(
       capabilities: AppCapabilities.local,
       cloudServices: null,
       environment: AppEnvironment.local,
+      overrides: [
+        compositionActionsProvider.overrideWithValue(
+          CompositionActions(
+            openFamilyHub: (context) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ChildrenScreen(),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     ),
   );
   await seedDebugDemoData(

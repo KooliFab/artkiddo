@@ -22,6 +22,7 @@ export 'src/domain/action_result.dart';
 export 'src/local/storage/local_vault.dart';
 export 'src/presentation/locale/locale_provider.dart';
 export 'src/presentation/navigation/app_shell.dart';
+export 'src/presentation/navigation/composition_actions.dart';
 export 'src/presentation/theme/app_theme.dart';
 export 'src/presentation/providers/core_providers.dart';
 export 'l10n/generated/app_localizations.dart';
