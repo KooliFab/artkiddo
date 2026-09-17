@@ -101,10 +101,14 @@ void main() {
   }
 
   setUp(() async {
-    tempRoot = await Directory.systemTemp.createTemp('artkiddo_share_controller_test_');
+    tempRoot = await Directory.systemTemp.createTemp(
+      'artkiddo_share_controller_test_',
+    );
     final docsDir = Directory(p.join(tempRoot.path, 'docs'));
     await docsDir.create(recursive: true);
-    db = AppDatabase.forTesting(NativeDatabase(File(p.join(tempRoot.path, 'test.sqlite'))));
+    db = AppDatabase.forTesting(
+      NativeDatabase(File(p.join(tempRoot.path, 'test.sqlite'))),
+    );
     vault = LocalVault(documentsDirProvider: () async => docsDir);
     sharingService = _FakeSharingService();
 
@@ -118,19 +122,31 @@ void main() {
     if (await tempRoot.exists()) await tempRoot.delete(recursive: true);
   });
 
-  test('setNewLinkIncludeAudio updates newLinkIncludeAudio flag in state', () async {
-    final controller = container.read(shareControllerProvider(args).notifier);
-    // Wait for initial load
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+  test(
+    'setNewLinkIncludeAudio updates newLinkIncludeAudio flag in state',
+    () async {
+      final controller = container.read(shareControllerProvider(args).notifier);
+      // Wait for initial load
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    expect(container.read(shareControllerProvider(args)).newLinkIncludeAudio, isFalse);
+      expect(
+        container.read(shareControllerProvider(args)).newLinkIncludeAudio,
+        isFalse,
+      );
 
-    controller.setNewLinkIncludeAudio(true);
-    expect(container.read(shareControllerProvider(args)).newLinkIncludeAudio, isTrue);
+      controller.setNewLinkIncludeAudio(true);
+      expect(
+        container.read(shareControllerProvider(args)).newLinkIncludeAudio,
+        isTrue,
+      );
 
-    controller.setNewLinkIncludeAudio(false);
-    expect(container.read(shareControllerProvider(args)).newLinkIncludeAudio, isFalse);
-  });
+      controller.setNewLinkIncludeAudio(false);
+      expect(
+        container.read(shareControllerProvider(args)).newLinkIncludeAudio,
+        isFalse,
+      );
+    },
+  );
 
   test('createLink passes includeAudio to SharingService', () async {
     final controller = container.read(shareControllerProvider(args).notifier);
@@ -147,24 +163,37 @@ void main() {
     expect(state.links.first.includeAudio, isTrue);
   });
 
-  test('updateLinkIncludeAudio updates existing link in state and calls SharingService', () async {
-    final controller = container.read(shareControllerProvider(args).notifier);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+  test(
+    'updateLinkIncludeAudio updates existing link in state and calls SharingService',
+    () async {
+      final controller = container.read(shareControllerProvider(args).notifier);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    // Create a link with audio = false
-    controller.setNewLinkIncludeAudio(false);
-    await controller.createLink();
+      // Create a link with audio = false
+      controller.setNewLinkIncludeAudio(false);
+      await controller.createLink();
 
-    final linkId = container.read(shareControllerProvider(args)).links.first.id;
-    expect(container.read(shareControllerProvider(args)).links.first.includeAudio, isFalse);
+      final linkId = container
+          .read(shareControllerProvider(args))
+          .links
+          .first
+          .id;
+      expect(
+        container.read(shareControllerProvider(args)).links.first.includeAudio,
+        isFalse,
+      );
 
-    // Toggle to true
-    final result = await controller.updateLinkIncludeAudio(linkId, true);
-    expect(result, isA<ActionSuccess<void>>());
-    expect(sharingService.lastUpdatedLinkId, linkId);
-    expect(sharingService.lastUpdatedIncludeAudio, isTrue);
+      // Toggle to true
+      final result = await controller.updateLinkIncludeAudio(linkId, true);
+      expect(result, isA<ActionSuccess<void>>());
+      expect(sharingService.lastUpdatedLinkId, linkId);
+      expect(sharingService.lastUpdatedIncludeAudio, isTrue);
 
-    final updatedLink = container.read(shareControllerProvider(args)).links.first;
-    expect(updatedLink.includeAudio, isTrue);
-  });
+      final updatedLink = container
+          .read(shareControllerProvider(args))
+          .links
+          .first;
+      expect(updatedLink.includeAudio, isTrue);
+    },
+  );
 }

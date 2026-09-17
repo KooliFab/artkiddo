@@ -48,4 +48,3 @@ final remoteMediaFetcherProvider = Provider<RemoteMediaFetcher>((ref) {
 
 /// Current authenticated user email, or null if unauthenticated or in local mode.
 final sessionEmailProvider = Provider<String?>((ref) => null);
-

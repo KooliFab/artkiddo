@@ -28,10 +28,17 @@ class ShareArgs {
   final String childName;
   final VoidCallback? sendImage;
 
-  const ShareArgs({required this.childId, required this.childName, this.sendImage});
+  const ShareArgs({
+    required this.childId,
+    required this.childName,
+    this.sendImage,
+  });
 
   @override
-  bool operator ==(Object other) => other is ShareArgs && other.childId == childId && other.childName == childName;
+  bool operator ==(Object other) =>
+      other is ShareArgs &&
+      other.childId == childId &&
+      other.childName == childName;
   @override
   int get hashCode => Object.hash(childId, childName);
 }
@@ -78,7 +85,8 @@ class ShareState {
       links: links ?? this.links,
       create: create ?? this.create,
       revoke: revoke ?? this.revoke,
-      childHasSyncedArtworks: childHasSyncedArtworks ?? this.childHasSyncedArtworks,
+      childHasSyncedArtworks:
+          childHasSyncedArtworks ?? this.childHasSyncedArtworks,
       loading: loading ?? this.loading,
       resolvedChildName: resolvedChildName ?? this.resolvedChildName,
       offline: offline ?? this.offline,
@@ -99,7 +107,10 @@ class ShareController extends Notifier<ShareState> {
   }
 
   Future<void> _load() async {
-    final children = await ref.read(childrenRepositoryProvider).watchAll().first;
+    final children = await ref
+        .read(childrenRepositoryProvider)
+        .watchAll()
+        .first;
     final child = children.where((c) => c.id == args.childId).firstOrNull;
     if (child == null) {
       state = state.copyWith(step: ShareStep.childMissing, loading: false);
@@ -125,7 +136,9 @@ class ShareController extends Notifier<ShareState> {
         state = state.copyWith(
           links: visibleLinks,
           childHasSyncedArtworks: hasSynced,
-          step: visibleLinks.isNotEmpty ? ShareStep.linkReady : ShareStep.choice,
+          step: visibleLinks.isNotEmpty
+              ? ShareStep.linkReady
+              : ShareStep.choice,
           loading: false,
           offline: false,
         );
@@ -175,12 +188,12 @@ class ShareController extends Notifier<ShareState> {
     bool includeAudio,
   ) async {
     if (state.updatingLinkIds.contains(linkId)) return const ActionCancelled();
-    state = state.copyWith(
-      updatingLinkIds: {...state.updatingLinkIds, linkId},
-    );
+    state = state.copyWith(updatingLinkIds: {...state.updatingLinkIds, linkId});
     final service = ref.read(sharingServiceProvider);
     final result = await service.updateIncludeAudio(linkId, includeAudio);
-    final nextUpdating = state.updatingLinkIds.where((id) => id != linkId).toSet();
+    final nextUpdating = state.updatingLinkIds
+        .where((id) => id != linkId)
+        .toSet();
     switch (result) {
       case ActionSuccess():
         final updatedLinks = state.links.map((link) {
@@ -222,7 +235,8 @@ class ShareController extends Notifier<ShareState> {
     return result;
   }
 
-  void consumeRevokeError() => state = state.copyWith(revoke: const ActionIdle());
+  void consumeRevokeError() =>
+      state = state.copyWith(revoke: const ActionIdle());
 
   Future<void> refreshAfterSignIn() async {
     state = state.copyWith(loading: true);
@@ -230,4 +244,7 @@ class ShareController extends Notifier<ShareState> {
   }
 }
 
-final shareControllerProvider = NotifierProvider.family<ShareController, ShareState, ShareArgs>(ShareController.new);
+final shareControllerProvider =
+    NotifierProvider.family<ShareController, ShareState, ShareArgs>(
+      ShareController.new,
+    );

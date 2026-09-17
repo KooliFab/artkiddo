@@ -7,7 +7,6 @@ import '../../domain/app_failure.dart';
 import '../../local/logging/log.dart';
 import '../async_action.dart';
 
-
 export '../../contracts/household.dart'
     show
         FamilyInfo,

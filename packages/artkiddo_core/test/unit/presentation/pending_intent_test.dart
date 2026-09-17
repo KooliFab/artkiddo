@@ -13,16 +13,30 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container.read(pendingIntentProvider.notifier).pose(const ShareChildGalleryIntent('child-A'));
-    expect(container.read(pendingIntentProvider), isA<ShareChildGalleryIntent>());
+    container
+        .read(pendingIntentProvider.notifier)
+        .pose(const ShareChildGalleryIntent('child-A'));
+    expect(
+      container.read(pendingIntentProvider),
+      isA<ShareChildGalleryIntent>(),
+    );
 
     final consumed = container.read(pendingIntentProvider.notifier).consume();
-    expect(consumed, isA<ShareChildGalleryIntent>().having((i) => i.childId, 'childId', 'child-A'));
+    expect(
+      consumed,
+      isA<ShareChildGalleryIntent>().having(
+        (i) => i.childId,
+        'childId',
+        'child-A',
+      ),
+    );
 
     // Consuming again must not replay the same intent a second time
     // (navigation.md §5.1 step 4 — the slot is cleared before the
     // destination is opened).
-    final secondConsume = container.read(pendingIntentProvider.notifier).consume();
+    final secondConsume = container
+        .read(pendingIntentProvider.notifier)
+        .consume();
     expect(secondConsume, isA<NoPendingIntent>());
     expect(container.read(pendingIntentProvider), isA<NoPendingIntent>());
   });
@@ -31,10 +45,16 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container.read(pendingIntentProvider.notifier).pose(const ShareChildGalleryIntent('child-A'));
+    container
+        .read(pendingIntentProvider.notifier)
+        .pose(const ShareChildGalleryIntent('child-A'));
     container.read(pendingIntentProvider.notifier).pose(const SyncNowIntent());
 
     final consumed = container.read(pendingIntentProvider.notifier).consume();
-    expect(consumed, isA<SyncNowIntent>(), reason: 'only one intent slot exists; the later pose wins');
+    expect(
+      consumed,
+      isA<SyncNowIntent>(),
+      reason: 'only one intent slot exists; the later pose wins',
+    );
   });
 }

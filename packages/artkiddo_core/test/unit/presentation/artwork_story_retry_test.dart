@@ -20,13 +20,17 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 
 /// Depot qui echoue le nombre de fois demande, puis delegue reellement.
 class _FlakyMasterpieces implements MasterpiecesRepository {
-  _FlakyMasterpieces(this._inner, {required int failures}) : _remaining = failures;
+  _FlakyMasterpieces(this._inner, {required int failures})
+    : _remaining = failures;
 
   final MasterpiecesRepository _inner;
   int _remaining;
 
   @override
-  Future<ActionResult<void>> updateStory({required String id, required String? story}) async {
+  Future<ActionResult<void>> updateStory({
+    required String id,
+    required String? story,
+  }) async {
     if (_remaining > 0) {
       _remaining--;
       return ActionFailed(LocalWriteFailure());
@@ -47,7 +51,9 @@ void main() {
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('artkiddo_d45_');
-    db = AppDatabase.forTesting(NativeDatabase(File(p.join(dir.path, 'test.sqlite'))));
+    db = AppDatabase.forTesting(
+      NativeDatabase(File(p.join(dir.path, 'test.sqlite'))),
+    );
     vault = LocalVault(documentsDirProvider: () async => dir);
     children = DriftChildrenRepository(db, vault);
     masterpieces = DriftMasterpiecesRepository(db, vault);
@@ -58,28 +64,35 @@ void main() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
   });
 
-  test('un echec d ecriture d anecdote n empeche pas le rejeu, et le rejeu est durable', () async {
-    final created = await children.create(name: 'Lea', birthDate: DateTime(2021, 4, 3));
-    final childId = (created as ActionSuccess<String>).value;
+  test(
+    'un echec d ecriture d anecdote n empeche pas le rejeu, et le rejeu est durable',
+    () async {
+      final created = await children.create(
+        name: 'Lea',
+        birthDate: DateTime(2021, 4, 3),
+      );
+      final childId = (created as ActionSuccess<String>).value;
 
-    final source = File(p.join(dir.path, 'src.jpg'))..writeAsBytesSync(List<int>.filled(64, 7));
-    final art = await masterpieces.create(
-      childId: childId,
-      sourceImageFile: source,
-      addedAt: DateTime(2026, 9, 3),
-    );
-    final artId = (art as ActionSuccess<String>).value;
+      final source = File(p.join(dir.path, 'src.jpg'))
+        ..writeAsBytesSync(List<int>.filled(64, 7));
+      final art = await masterpieces.create(
+        childId: childId,
+        sourceImageFile: source,
+        addedAt: DateTime(2026, 9, 3),
+      );
+      final artId = (art as ActionSuccess<String>).value;
 
-    final flaky = _FlakyMasterpieces(masterpieces, failures: 1);
+      final flaky = _FlakyMasterpieces(masterpieces, failures: 1);
 
-    // Premier essai : echec annonce comme tel, aucune ecriture.
-    final first = await flaky.updateStory(id: artId, story: 'Un chat bleu');
-    expect(first, isA<ActionFailed<void>>());
-    expect((await masterpieces.getById(artId))!.story, isNull);
+      // Premier essai : echec annonce comme tel, aucune ecriture.
+      final first = await flaky.updateStory(id: artId, story: 'Un chat bleu');
+      expect(first, isA<ActionFailed<void>>());
+      expect((await masterpieces.getById(artId))!.story, isNull);
 
-    // Second essai, sans rien reinitialiser : il doit aboutir.
-    final second = await flaky.updateStory(id: artId, story: 'Un chat bleu');
-    expect(second, isA<ActionSuccess<void>>());
-    expect((await masterpieces.getById(artId))!.story, 'Un chat bleu');
-  });
+      // Second essai, sans rien reinitialiser : il doit aboutir.
+      final second = await flaky.updateStory(id: artId, story: 'Un chat bleu');
+      expect(second, isA<ActionSuccess<void>>());
+      expect((await masterpieces.getById(artId))!.story, 'Un chat bleu');
+    },
+  );
 }

@@ -24,7 +24,8 @@ void main() {
     childName: 'Lea',
     ageLabel: '5 ans et 5 mois',
     dateLabel: 'Ajoute le 3 septembre 2026',
-    story: "C'est notre maison, avec le chat sur le toit et un tres grand soleil derriere",
+    story:
+        "C'est notre maison, avec le chat sur le toit et un tres grand soleil derriere",
     imageFile: null,
     imageExists: false,
     cacheWidth: 400,
@@ -40,35 +41,43 @@ void main() {
 
   for (final layout in layouts) {
     for (final scale in scales) {
-      testWidgets('la carte tient dans sa cellule a ${layout.$1.toInt()} dp, facteur $scale', (tester) async {
-        final width = layout.$1;
-        final columns = layout.$2;
-        // Memes valeurs que la grille de production.
-        final margin = width < 600 ? 16.0 : 24.0;
-        final gutter = width < 600 ? 12.0 : 16.0;
-        final columnWidth = (width - margin * 2 - gutter * (columns - 1)) / columns;
-        final extent = galleryCellExtent(columnWidth, scale);
+      testWidgets(
+        'la carte tient dans sa cellule a ${layout.$1.toInt()} dp, facteur $scale',
+        (tester) async {
+          final width = layout.$1;
+          final columns = layout.$2;
+          // Memes valeurs que la grille de production.
+          final margin = width < 600 ? 16.0 : 24.0;
+          final gutter = width < 600 ? 12.0 : 16.0;
+          final columnWidth =
+              (width - margin * 2 - gutter * (columns - 1)) / columns;
+          final extent = galleryCellExtent(columnWidth, scale);
 
-        tester.view.physicalSize = Size(width, 1200);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
+          tester.view.physicalSize = Size(width, 1200);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(
-          MediaQuery(
-            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: Center(
-                  child: SizedBox(width: columnWidth, height: extent, child: card()),
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: MaterialApp(
+                home: Scaffold(
+                  body: Center(
+                    child: SizedBox(
+                      width: columnWidth,
+                      height: extent,
+                      child: card(),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
+          );
 
-        // Un debordement de rendu est remonte comme exception par le binding.
-        expect(tester.takeException(), isNull);
-      });
+          // Un debordement de rendu est remonte comme exception par le binding.
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   }
 }

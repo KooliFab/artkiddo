@@ -23,10 +23,14 @@ void main() {
   const entry = CaptureEntry(origin: CaptureOrigin.galleryFab);
 
   setUp(() async {
-    tempRoot = await Directory.systemTemp.createTemp('artkiddo_capture_controller_test_');
+    tempRoot = await Directory.systemTemp.createTemp(
+      'artkiddo_capture_controller_test_',
+    );
     docsDir = Directory(p.join(tempRoot.path, 'docs'));
     await docsDir.create(recursive: true);
-    db = AppDatabase.forTesting(NativeDatabase(File(p.join(tempRoot.path, 'test.sqlite'))));
+    db = AppDatabase.forTesting(
+      NativeDatabase(File(p.join(tempRoot.path, 'test.sqlite'))),
+    );
     vault = LocalVault(documentsDirProvider: () async => docsDir);
 
     container = ProviderContainer(
@@ -49,46 +53,71 @@ void main() {
     return file;
   }
 
-  test('draft (photo + story) is identical before and after a child-editor round trip (C6)', () async {
-    final controller = container.read(captureControllerProvider(entry).notifier);
-    final file = await makeSourceImage('drawing.jpg');
+  test(
+    'draft (photo + story) is identical before and after a child-editor round trip (C6)',
+    () async {
+      final controller = container.read(
+        captureControllerProvider(entry).notifier,
+      );
+      final file = await makeSourceImage('drawing.jpg');
 
-    await controller.photoPicked(file.path);
-    controller.confirmPhoto();
-    controller.updateStory('Un dinosaure vert.');
+      await controller.photoPicked(file.path);
+      controller.confirmPhoto();
+      controller.updateStory('Un dinosaure vert.');
 
-    final before = container.read(captureControllerProvider(entry));
-    final beforeStory = before.draft!.story;
-    final beforePath = before.draft!.temporaryImagePath;
+      final before = container.read(captureControllerProvider(entry));
+      final beforeStory = before.draft!.story;
+      final beforePath = before.draft!.temporaryImagePath;
 
-    // Simulate the round trip to `childEditor` and back with a freshly
-    // created child — `contracts.md` §2.3 `childCreated`.
-    controller.childCreated('new-child-id', 'Léa');
+      // Simulate the round trip to `childEditor` and back with a freshly
+      // created child — `contracts.md` §2.3 `childCreated`.
+      controller.childCreated('new-child-id', 'Léa');
 
-    final after = container.read(captureControllerProvider(entry));
-    expect(after.draft!.story, beforeStory, reason: 'story must survive the childEditor round trip');
-    expect(after.draft!.temporaryImagePath, beforePath, reason: 'photo path must survive the round trip');
-    expect(after.selectedChildId, 'new-child-id');
-    expect(after.childCreatedBanner, 'Léa');
-  });
+      final after = container.read(captureControllerProvider(entry));
+      expect(
+        after.draft!.story,
+        beforeStory,
+        reason: 'story must survive the childEditor round trip',
+      );
+      expect(
+        after.draft!.temporaryImagePath,
+        beforePath,
+        reason: 'photo path must survive the round trip',
+      );
+      expect(after.selectedChildId, 'new-child-id');
+      expect(after.childCreatedBanner, 'Léa');
+    },
+  );
 
-  test('two rapid activations of save() leave only one call actually running (C7)', () async {
-    final controller = container.read(captureControllerProvider(entry).notifier);
-    final file = await makeSourceImage('drawing2.jpg');
+  test(
+    'two rapid activations of save() leave only one call actually running (C7)',
+    () async {
+      final controller = container.read(
+        captureControllerProvider(entry).notifier,
+      );
+      final file = await makeSourceImage('drawing2.jpg');
 
-    await controller.photoPicked(file.path);
-    controller.confirmPhoto();
-    controller.selectChild('some-child-id'); // does not need to exist for this invariant
+      await controller.photoPicked(file.path);
+      controller.confirmPhoto();
+      controller.selectChild(
+        'some-child-id',
+      ); // does not need to exist for this invariant
 
-    // Fire twice without awaiting the first — the busy transition happens
-    // synchronously before the first `await`, so the second call must be
-    // a no-op (contracts.md §1.2, §10 C7).
-    final first = controller.save();
-    final second = controller.save();
+      // Fire twice without awaiting the first — the busy transition happens
+      // synchronously before the first `await`, so the second call must be
+      // a no-op (contracts.md §1.2, §10 C7).
+      final first = controller.save();
+      final second = controller.save();
 
-    final secondResult = await second;
-    await first;
+      final secondResult = await second;
+      await first;
 
-    expect(secondResult, isA<ActionCancelled<String>>(), reason: 'the second concurrent save() must be ignored, not queued or duplicated');
-  });
+      expect(
+        secondResult,
+        isA<ActionCancelled<String>>(),
+        reason:
+            'the second concurrent save() must be ignored, not queued or duplicated',
+      );
+    },
+  );
 }

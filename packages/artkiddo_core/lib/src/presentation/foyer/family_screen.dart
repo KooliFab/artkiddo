@@ -14,7 +14,6 @@ import '../ui/app_button.dart';
 import '../ui/state_block.dart';
 import 'foyer_controller.dart';
 
-
 /// Single « Famille » screen: family name, fixed invite code (to share, in text or QR),
 /// and section to join another family (manual input or QR scan).
 class FamilyScreen extends ConsumerStatefulWidget {
@@ -97,7 +96,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     final loading = state.family.isBusy && info == null;
     final canSubmitCode =
         _codeController.text.trim().length >= 6 && !state.redeem.isBusy;
-    final canScanQr = ref.watch(compositionActionsProvider).openQrScanner != null;
+    final canScanQr =
+        ref.watch(compositionActionsProvider).openQrScanner != null;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.familyTitle)),
@@ -240,8 +240,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                           icon: Icons.qr_code_scanner,
                           onPressed:
                               state.redeem.isBusy || state.convergence.isBusy
-                                  ? null
-                                  : _scanCode,
+                              ? null
+                              : _scanCode,
                         ),
                       ],
                       const SizedBox(height: AppSpacing.s4),
