@@ -26,3 +26,4 @@ app/ios/Runner/GeneratedPluginRegistrant.*
 app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 .env*
 !.env.example
+.DS_Store
