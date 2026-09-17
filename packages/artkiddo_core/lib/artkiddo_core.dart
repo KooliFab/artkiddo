@@ -32,6 +32,7 @@ export 'src/domain/masterpiece.dart';
 export 'src/sync/conflict_resolution.dart';
 export 'src/sync/sync_outbox.dart';
 export 'src/sync/vault_meta.dart';
+export 'src/sync/sync_engine.dart';
 export 'src/presentation/async_action.dart';
 export 'src/presentation/theme/app_tokens.dart';
 export 'src/presentation/navigation/pending_intent.dart';
