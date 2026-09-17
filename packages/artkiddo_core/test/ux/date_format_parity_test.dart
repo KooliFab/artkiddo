@@ -10,8 +10,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:artkiddo_core/src/presentation/ui/formatters.dart';
-import 'package:artkiddo_core/l10n/generated/app_localizations.dart';
+import 'package:artkiddo_core/artkiddo_core.dart';
 
 Future<AppLocalizations> _l10n(String languageCode) =>
     AppLocalizations.delegate.load(Locale(languageCode));
