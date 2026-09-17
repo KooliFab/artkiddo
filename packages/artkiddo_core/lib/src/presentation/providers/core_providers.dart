@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../contracts/remote_media.dart';
 import '../../local/audio/audio_player_service.dart';
 import '../../local/audio/audio_recorder_service.dart';
 import '../config/app_capabilities.dart';
@@ -39,4 +40,8 @@ final audioPlayerServiceProvider = Provider<AudioPlayerService>((ref) {
   final service = JustAudioPlayerService();
   ref.onDispose(() => service.dispose());
   return service;
+});
+
+final remoteMediaFetcherProvider = Provider<RemoteMediaFetcher>((ref) {
+  return const NoRemoteMediaFetcher();
 });
