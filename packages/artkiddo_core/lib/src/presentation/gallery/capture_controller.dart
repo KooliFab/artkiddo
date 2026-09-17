@@ -97,6 +97,8 @@ class CaptureState {
   final bool reviewUnreadable;
   final bool reviewTooLarge;
   final bool reviewLoading;
+  /// True while the OS gallery/file picker is open (before an image is returned).
+  final bool pickingPhoto;
   final ImageSource?
   lastSource; // for "Reprendre" relaunching the same source (screens.md §4.2)
   final bool isRecording;
@@ -118,6 +120,7 @@ class CaptureState {
     this.reviewUnreadable = false,
     this.reviewTooLarge = false,
     this.reviewLoading = false,
+    this.pickingPhoto = false,
     this.lastSource,
     this.isRecording = false,
     this.recordingDurationMs = 0,
@@ -148,6 +151,7 @@ class CaptureState {
     bool? reviewUnreadable,
     bool? reviewTooLarge,
     bool? reviewLoading,
+    bool? pickingPhoto,
     ImageSource? lastSource,
     bool clearLastSource = false,
     bool? isRecording,
@@ -175,6 +179,7 @@ class CaptureState {
       reviewUnreadable: reviewUnreadable ?? this.reviewUnreadable,
       reviewTooLarge: reviewTooLarge ?? this.reviewTooLarge,
       reviewLoading: reviewLoading ?? this.reviewLoading,
+      pickingPhoto: pickingPhoto ?? this.pickingPhoto,
       lastSource: clearLastSource || clearDraft
           ? null
           : (lastSource ?? this.lastSource),
@@ -237,6 +242,7 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   Future<void> chooseSource(ImageSource source) async {
+    state = state.copyWith(pickingPhoto: true);
     try {
       Log.d('Ouverture du sélecteur ${source.name}', 'Capture');
       final picked = await _picker.pickImage(source: source);
@@ -258,12 +264,16 @@ class CaptureController extends Notifier<CaptureState> {
         const kind = PermissionStatus.denied;
         state = state.copyWith(
           step: CaptureStep.sourceChoice,
+          pickingPhoto: false,
           permissions: source == ImageSource.camera
               ? state.permissions.copyWith(camera: kind)
               : state.permissions.copyWith(photos: kind),
         );
       } else {
-        state = state.copyWith(step: CaptureStep.sourceChoice);
+        state = state.copyWith(
+          step: CaptureStep.sourceChoice,
+          pickingPhoto: false,
+        );
       }
     }
   }
@@ -275,6 +285,7 @@ class CaptureController extends Notifier<CaptureState> {
       reviewLoading: true,
       reviewUnreadable: false,
       reviewTooLarge: false,
+      pickingPhoto: false,
       lastSource: source,
     );
     try {
@@ -305,7 +316,7 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   void pickerCancelled() {
-    state = state.copyWith(step: CaptureStep.sourceChoice);
+    state = state.copyWith(step: CaptureStep.sourceChoice, pickingPhoto: false);
   }
 
   void reportCameraDenied() {

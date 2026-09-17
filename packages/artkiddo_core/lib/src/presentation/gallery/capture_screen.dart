@@ -67,6 +67,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (_sheetOpen || !mounted) return;
     final state = ref.read(captureControllerProvider(widget.entry));
     if (state.step != CaptureStep.sourceChoice) return;
+    if (state.pickingPhoto) return; // gallery picker already open
     _sheetOpen = true;
     try {
       final result = await showModalBottomSheet<ImageSource>(
@@ -181,7 +182,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final state = ref.watch(captureControllerProvider(widget.entry));
 
     ref.listen(captureControllerProvider(widget.entry), (previous, next) {
-      if (next.step == CaptureStep.sourceChoice && !_sheetOpen) {
+      if (next.step == CaptureStep.sourceChoice &&
+          !_sheetOpen &&
+          !next.pickingPhoto) {
         _openSourceSheet();
       }
       if (next.step == CaptureStep.review &&
@@ -210,7 +213,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           ),
         ),
         body: switch (state.step) {
-          CaptureStep.sourceChoice => const SizedBox.shrink(),
+          CaptureStep.sourceChoice => state.pickingPhoto
+              ? const Center(child: CircularProgressIndicator())
+              : const SizedBox.shrink(),
           CaptureStep.review => _buildReview(l10n, state),
           CaptureStep.details => _buildDetails(l10n, state),
         },
@@ -277,7 +282,8 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   Widget _buildDetails(AppLocalizations l10n, CaptureState state) {
-    final draft = state.draft!;
+    final draft = state.draft;
+    if (draft == null) return const Center(child: CircularProgressIndicator());
     final childrenAsync = ref.watch(allChildrenStreamProvider);
     final children = childrenAsync.value ?? const <domain.Child>[];
     final noChild = children.isEmpty;
