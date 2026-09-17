@@ -97,6 +97,7 @@ class CaptureState {
   final bool reviewUnreadable;
   final bool reviewTooLarge;
   final bool reviewLoading;
+
   /// True while the OS gallery/file picker is open (before an image is returned).
   final bool pickingPhoto;
   final ImageSource?

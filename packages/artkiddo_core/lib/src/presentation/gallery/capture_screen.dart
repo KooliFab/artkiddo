@@ -213,9 +213,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           ),
         ),
         body: switch (state.step) {
-          CaptureStep.sourceChoice => state.pickingPhoto
-              ? const Center(child: CircularProgressIndicator())
-              : const SizedBox.shrink(),
+          CaptureStep.sourceChoice =>
+            state.pickingPhoto
+                ? const Center(child: CircularProgressIndicator())
+                : const SizedBox.shrink(),
           CaptureStep.review => _buildReview(l10n, state),
           CaptureStep.details => _buildDetails(l10n, state),
         },

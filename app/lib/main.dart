@@ -17,9 +17,7 @@ Future<void> main() async {
           CompositionActions(
             openFamilyHub: (context) {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const ChildrenScreen(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const ChildrenScreen()),
               );
             },
           ),

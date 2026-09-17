@@ -13,10 +13,13 @@ void main() {
       expect(fetcher, isA<NoRemoteMediaFetcher>());
     });
 
-    test('NoRemoteMediaFetcher does not fetch anything and returns false', () async {
-      const fetcher = NoRemoteMediaFetcher();
-      final result = await fetcher.ensureAudioDownloaded('some-id');
-      expect(result, isFalse);
-    });
+    test(
+      'NoRemoteMediaFetcher does not fetch anything and returns false',
+      () async {
+        const fetcher = NoRemoteMediaFetcher();
+        final result = await fetcher.ensureAudioDownloaded('some-id');
+        expect(result, isFalse);
+      },
+    );
   });
 }

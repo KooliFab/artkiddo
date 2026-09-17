@@ -195,7 +195,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   Padding(
                     padding: EdgeInsets.only(right: _margin(width)),
                     child: _FamilyButton(
-                      onPressed: () => compositionActions.openFamilyHub!(context),
+                      onPressed: () =>
+                          compositionActions.openFamilyHub!(context),
                     ),
                   ),
                 ],

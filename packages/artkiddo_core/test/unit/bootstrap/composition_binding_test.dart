@@ -1,5 +1,4 @@
 import 'package:artkiddo_core/artkiddo_core.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,7 +41,9 @@ void main() {
             (error) => error.failures,
             'failures',
             allOf(
-              contains('remoteAccount requires a CompositionActions.openAccount'),
+              contains(
+                'remoteAccount requires a CompositionActions.openAccount',
+              ),
               contains('household requires a CompositionActions.openFamilyHub'),
               contains(
                 'webGalleryLinks requires a CompositionActions.openGalleryShare',

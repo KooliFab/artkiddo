@@ -1099,7 +1099,9 @@ class _ArtworkAudioPlayerCardState
     });
 
     final fetcher = ref.read(remoteMediaFetcherProvider);
-    final downloaded = await fetcher.ensureAudioDownloaded(widget.masterpiece.id);
+    final downloaded = await fetcher.ensureAudioDownloaded(
+      widget.masterpiece.id,
+    );
 
     if (!mounted) return;
 
@@ -1385,12 +1387,7 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
         }
       }
     } catch (e, st) {
-      Log.e(
-        'Error checking microphone permissions',
-        e,
-        st,
-        'ArtworkScreen',
-      );
+      Log.e('Error checking microphone permissions', e, st, 'ArtworkScreen');
       if (mounted) setState(() => _micDenied = true);
       return;
     }

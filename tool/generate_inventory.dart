@@ -78,8 +78,7 @@ void main(List<String> arguments) {
       .toList();
   final testFiles = _dartFiles(
     Directory('${root.path}/packages/artkiddo_core/test'),
-  )
-    ..addAll(_dartFiles(Directory('${root.path}/app/test')));
+  )..addAll(_dartFiles(Directory('${root.path}/app/test')));
   testFiles.sort((a, b) => _relative(a.path).compareTo(_relative(b.path)));
 
   final fingerprint = _fingerprint(inputFiles);

@@ -23,11 +23,14 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.s2),
               Text(
                 l10n.settingsVersion('1.0.0+1'),
-                style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.inkMuted,
+                ),
               ),
               const SizedBox(height: AppSpacing.s4),
               TextButton(
-                onPressed: () => launchUrl(Uri.parse('mailto:contact@artkiddo.bencool.ca')),
+                onPressed: () =>
+                    launchUrl(Uri.parse('mailto:contact@artkiddo.bencool.ca')),
                 child: Text(l10n.commonContactUs),
               ),
             ],
