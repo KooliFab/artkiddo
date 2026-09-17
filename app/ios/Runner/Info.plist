@@ -39,6 +39,8 @@
 		<string>artkiddo a besoin de cette autorisation pour enregistrer les dessins dans votre galerie si vous le souhaitez.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>artkiddo a besoin du microphone pour enregistrer les anecdotes vocales racontées par vos enfants sur leurs dessins.</string>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>artkiddo utilise le réseau local pour transférer manuellement vos données entre deux appareils proches.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

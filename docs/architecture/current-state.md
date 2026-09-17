@@ -28,6 +28,8 @@ an account, environment values, network, database server, or object storage.
 ```text
 presentation → domain / contracts → local repositories → database + local vault
 
+app transfer adapter → local_data_transfer (external package, optional)
+
 private mobile adapters → public contracts and core
 private web client      → private backend contract
 private backend         → no client repository
@@ -36,6 +38,10 @@ private backend         → no client repository
 The public repository has no dependency on a private repository. Optional
 remote behavior is explicit: a private composition supplies compatible adapter
 implementations and enables the matching capability before a provider is read.
+
+Manual local transfer is also opt-in. It does not alter the local database or
+vault until the application validates a received manifest and explicitly
+commits staged files.
 
 ## Local persistence
 

@@ -14,6 +14,19 @@ Future<void> main() async {
       environment: AppEnvironment.local,
     ),
   );
+  await seedDebugDemoData(
+    db: container.read(appDatabaseProvider),
+    createArtwork: (childId, sourceImageFile, addedAt, story) =>
+        DriftMasterpiecesRepository(
+          container.read(appDatabaseProvider),
+          container.read(localVaultProvider),
+        ).create(
+          childId: childId,
+          sourceImageFile: sourceImageFile,
+          addedAt: addedAt,
+          story: story,
+        ),
+  );
   runApp(
     UncontrolledProviderScope(
       container: container,

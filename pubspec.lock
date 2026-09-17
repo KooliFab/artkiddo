@@ -621,6 +621,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  local_data_transfer:
+    dependency: transitive
+    description:
+      path: "../local_data_transfer"
+      relative: true
+    source: path
+    version: "0.1.0"
   logging:
     dependency: transitive
     description:
