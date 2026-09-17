@@ -65,5 +65,6 @@ export 'src/presentation/gallery/artwork_zoom_screen.dart';
 export 'src/presentation/gallery/camera_capture_screen.dart';
 export 'src/presentation/gallery/capture_controller.dart';
 export 'src/presentation/gallery/capture_screen.dart';
+export 'src/presentation/gallery/gallery_actions.dart';
 export 'src/presentation/gallery/gallery_providers.dart';
 export 'src/debug/demo_seed.dart';
