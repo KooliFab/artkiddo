@@ -33,6 +33,15 @@ The following third-party dependencies are declared in `artkiddo_core/pubspec.ya
 - `share_plus` (^13.3.0): Triggers native system share sheets to share local artwork images via standard OS channels (BSD-3-Clause).
 - `url_launcher` (^6.3.2): Official Flutter plugin for opening external standard URLs (e.g. system settings or documentation) (BSD-3-Clause).
 
+### 4. Deliberately excluded
+
+- `mobile_scanner`: **stays private.** Rendering a QR code is a pure Dart
+  drawing operation, but reading one requires the camera for a purpose the
+  account-free product never has: joining a household. The public core exposes
+  `CompositionActions.openQrScanner`, and only the private mobile composition
+  binds it. A local build therefore ships no scanning code and requests no
+  permission for it.
+
 ## Cross-repository impact
 
 - `artkiddo_core` remains completely self-contained and account-free. None of these packages communicate with any remote backend.
