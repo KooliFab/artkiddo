@@ -23,7 +23,7 @@ import '../ui/formatters.dart';
 import '../ui/state_block.dart';
 import '../utils/app_settings_launcher.dart';
 import 'artwork_zoom_screen.dart';
-import 'gallery_actions.dart';
+import '../navigation/composition_actions.dart';
 import 'gallery_providers.dart';
 
 /// `artwork` — `screens.md` §5.
@@ -345,8 +345,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     String childName,
     AppLocalizations l10n,
   ) async {
-    final galleryActions = ref.read(galleryActionsProvider);
-    final openShare = galleryActions.openGalleryShare;
+    final compositionActions = ref.read(compositionActionsProvider);
+    final openShare = compositionActions.openGalleryShare;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -403,7 +403,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
-                    openShare(context, m.childId);
+                    openShare(context, m.childId, childName);
                   },
                 ),
               ],

@@ -23,7 +23,7 @@ import '../ui/state_block.dart';
 import 'artwork_screen.dart';
 import 'capture_controller.dart';
 import 'capture_screen.dart';
-import 'gallery_actions.dart';
+import '../navigation/composition_actions.dart';
 import 'gallery_providers.dart';
 
 /// ArtKiddo's product surface: a calm, chronological wall of artwork.
@@ -123,14 +123,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     List<Child> children,
     GalleryFilter filter,
   ) async {
-    final galleryActions = ref.read(galleryActionsProvider);
-    final openShare = galleryActions.openGalleryShare;
+    final compositionActions = ref.read(compositionActionsProvider);
+    final openShare = compositionActions.openGalleryShare;
     if (openShare == null) return;
 
     if (filter case OneChild(childId: final childId)) {
       final child = children.where((item) => item.id == childId).firstOrNull;
       if (child != null) {
-        openShare(context, child.id);
+        openShare(context, child.id, child.name);
       }
       return;
     }
@@ -139,7 +139,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       builder: (sheetContext) => _ArtistPickerSheet(children: children),
     );
     if (child != null && context.mounted) {
-      openShare(context, child.id);
+      openShare(context, child.id, child.name);
     }
   }
 
@@ -161,7 +161,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final capabilities = ref.watch(appCapabilitiesProvider);
-    final galleryActions = ref.watch(galleryActionsProvider);
+    final compositionActions = ref.watch(compositionActionsProvider);
     final width = MediaQuery.sizeOf(context).width;
     final filter = ref.watch(galleryFilterProvider);
     final children =
@@ -185,17 +185,17 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               title: Text('ArtKiddo', style: AppTypography.display),
               actions: [
                 if (capabilities.webGalleryLinks &&
-                    galleryActions.openGalleryShare != null)
+                    compositionActions.openGalleryShare != null)
                   _ShareButton(
                     enabled: hasArtists,
                     onPressed: () => _share(context, children, filter),
                   ),
-                if (galleryActions.openFamilyHub != null) ...[
+                if (compositionActions.openFamilyHub != null) ...[
                   const SizedBox(width: AppSpacing.s1),
                   Padding(
                     padding: EdgeInsets.only(right: _margin(width)),
                     child: _FamilyButton(
-                      onPressed: () => galleryActions.openFamilyHub!(context),
+                      onPressed: () => compositionActions.openFamilyHub!(context),
                     ),
                   ),
                 ],
