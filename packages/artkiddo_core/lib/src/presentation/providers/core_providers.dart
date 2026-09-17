@@ -45,3 +45,7 @@ final audioPlayerServiceProvider = Provider<AudioPlayerService>((ref) {
 final remoteMediaFetcherProvider = Provider<RemoteMediaFetcher>((ref) {
   return const NoRemoteMediaFetcher();
 });
+
+/// Current authenticated user email, or null if unauthenticated or in local mode.
+final sessionEmailProvider = Provider<String?>((ref) => null);
+

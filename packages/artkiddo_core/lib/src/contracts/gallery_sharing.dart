@@ -50,3 +50,35 @@ abstract class SharingService {
   );
   Future<ActionResult<void>> revokeLink(String linkId);
 }
+
+/// Honest default implementation for local environments where web links are not available.
+final class NoSharingService implements SharingService {
+  const NoSharingService();
+
+  @override
+  Future<ActionResult<List<ShareLink>>> listLinks(String childId) async {
+    return const ActionSuccess([]);
+  }
+
+  @override
+  Future<ActionResult<ShareLink>> createLink(
+    String childId, {
+    bool includeAudio = false,
+  }) async {
+    return const ActionCancelled();
+  }
+
+  @override
+  Future<ActionResult<void>> updateIncludeAudio(
+    String linkId,
+    bool includeAudio,
+  ) async {
+    return const ActionCancelled();
+  }
+
+  @override
+  Future<ActionResult<void>> revokeLink(String linkId) async {
+    return const ActionCancelled();
+  }
+}
+

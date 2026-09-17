@@ -43,3 +43,33 @@ abstract class FoyerApi {
   Future<RedeemOutcome> redeemInvite({required String code});
   Future<int> activeMemberCount(String foyerId);
 }
+
+/// Honest default implementation for local or unauthenticated environments.
+final class NoFoyerApi implements FoyerApi {
+  const NoFoyerApi();
+
+  @override
+  Future<FamilyInfo> getFamilyInfo() async {
+    return const FamilyInfo(
+      foyerId: 'local',
+      name: null,
+      code: '',
+      role: FoyerMemberRole.parent,
+    );
+  }
+
+  @override
+  Future<void> renameFamily(String name) async {}
+
+  @override
+  Future<FoyerMembership?> currentMembership() async => null;
+
+  @override
+  Future<RedeemOutcome> redeemInvite({required String code}) async {
+    return const RedeemOutcome(state: RedeemState.invalidCode);
+  }
+
+  @override
+  Future<int> activeMemberCount(String foyerId) async => 1;
+}
+
