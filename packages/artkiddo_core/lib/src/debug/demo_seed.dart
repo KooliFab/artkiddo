@@ -16,7 +16,7 @@ import '../local/database/app_database.dart';
 /// but those source files are not tracked. Deterministic drawings keep this
 /// fixture usable by both the local app and private cloud composition without
 /// shipping real children's photos or uploading fixture data.
-Future<void> seedDebugDemoData({
+Future<int> seedDebugDemoData({
   required AppDatabase db,
   required Future<ActionResult<String>> Function(
     String childId,
@@ -25,9 +25,13 @@ Future<void> seedDebugDemoData({
     String? story,
   )
   createArtwork,
+  bool force = false,
 }) async {
-  if (!kDebugMode) return;
-  if ((await (db.select(db.childrenTable)..limit(1)).get()).isNotEmpty) return;
+  if (!kDebugMode) return 0;
+  if (!force &&
+      (await (db.select(db.childrenTable)..limit(1)).get()).isNotEmpty) {
+    return 0;
+  }
 
   const leaId = 'debug-demo-child-lea';
   const noahId = 'debug-demo-child-noah';
@@ -65,7 +69,7 @@ Future<void> seedDebugDemoData({
   for (final child in children) {
     await db
         .into(db.childrenTable)
-        .insert(
+        .insertOnConflictUpdate(
           ChildrenTableCompanion.insert(
             id: child.id,
             name: child.name,
@@ -77,6 +81,7 @@ Future<void> seedDebugDemoData({
         );
   }
 
+  var createdCount = 0;
   final tempDir = await getTemporaryDirectory();
   try {
     for (var i = 0; i < artworks.length; i++) {
@@ -104,6 +109,7 @@ Future<void> seedDebugDemoData({
 
       final result = await createArtwork(childId, source, addedAt, story);
       if (result case ActionSuccess(value: final id)) {
+        createdCount++;
         await (db.update(
           db.masterpiecesTable,
         )..where((t) => t.id.equals(id))).write(
@@ -120,6 +126,8 @@ Future<void> seedDebugDemoData({
       if (await file.exists()) await file.delete();
     }
   }
+
+  return createdCount;
 }
 
 const _demoFileNames = [
