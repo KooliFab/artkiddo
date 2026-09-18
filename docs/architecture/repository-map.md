@@ -10,7 +10,6 @@
 | `src/local/repositories` | local repositories | children, artwork, local trash | remote adapters |
 | `src/sync` | outbox and conflict primitives | durable local sync state | provider SDKs and HTTP parsing |
 | `src/presentation` | UI, controllers, capabilities | account-free user journeys | private implementation details |
-| `app/lib/transfer` | Arkiddo adapter over `local_data_transfer` | serialization, acceptance, vault commits | transport details |
 
 Dependencies point inward from presentation to domain/contracts and outward to
 local adapters only. Remote adapters do not exist in this checkout.

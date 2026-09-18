@@ -33,8 +33,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>artkiddo a besoin de l'appareil photo pour vous permettre de photographier et numériser les dessins de vos enfants, et pour scanner un code d'invitation famille.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>artkiddo utilise le réseau local pour transférer manuellement vos données entre deux appareils proches.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>artkiddo a besoin du microphone pour enregistrer les anecdotes vocales racontées par vos enfants sur leurs dessins.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
