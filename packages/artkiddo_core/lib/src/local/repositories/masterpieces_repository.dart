@@ -156,6 +156,10 @@ abstract class MasterpiecesRepository {
     required String id,
     required String displayRelativePath,
   });
+
+  /// Hard-deletes all artwork rows and their image files from the local database and vault.
+  /// Used for debugging, resets and tests.
+  Future<ActionResult<int>> deleteAllPhotos();
 }
 
 /// Outcome of [MasterpiecesRepository.backfillMissingDerivatives].
@@ -1107,5 +1111,44 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       return ActionFailed(_mapWriteException(e, st));
     }
     return const ActionSuccess(null);
+  }
+
+  @override
+  Future<ActionResult<int>> deleteAllPhotos() async {
+    int count = 0;
+    try {
+      await _db.transaction(() async {
+        count = await _db.delete(_db.masterpiecesTable).go();
+        // Also clear any outbox items referencing masterpieces
+        await (_db.delete(
+          _db.syncOutboxTable,
+        )..where((t) => t.entity.equals(SyncEntityKind.masterpiece.name))).go();
+      });
+    } catch (e, st) {
+      Log.e(
+        'Échec de la suppression de toutes les œuvres',
+        e,
+        st,
+        'MasterpiecesRepo',
+      );
+      return ActionFailed(_mapWriteException(e, st));
+    }
+
+    try {
+      await _vault.eraseAllArtworkPhotos();
+    } catch (e, st) {
+      Log.e(
+        'Échec du nettoyage des fichiers photos du vault',
+        e,
+        st,
+        'MasterpiecesRepo',
+      );
+    }
+
+    Log.i(
+      'Toutes les photos ($count) ont été supprimées en mode debug',
+      'MasterpiecesRepo',
+    );
+    return ActionSuccess(count);
   }
 }

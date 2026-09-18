@@ -71,6 +71,7 @@ export 'src/presentation/gallery/gallery_providers.dart';
 export 'src/presentation/gallery/gallery_screen.dart';
 export 'src/presentation/settings/about_screen.dart';
 export 'src/presentation/settings/language_screen.dart';
+export 'src/presentation/settings/debug_settings_screen.dart';
 export 'src/presentation/sharing/share_controller.dart';
 export 'src/presentation/sharing/share_screen.dart';
 export 'src/presentation/foyer/foyer_controller.dart';

@@ -238,4 +238,19 @@ void main() {
       await legacy.close();
     },
   );
+
+  test('deleteAllPhotos clears database records and local photos', () async {
+    final id = await createArtwork();
+    final artwork = await masterpieces.getById(id);
+    final photo = await vault.resolveFile(artwork!.relativeImagePath!);
+    expect(await photo.exists(), isTrue);
+
+    final result = await masterpieces.deleteAllPhotos();
+    expect(result, isA<ActionSuccess<int>>());
+    expect((result as ActionSuccess<int>).value, equals(1));
+
+    final count = await (db.select(db.masterpiecesTable)).get();
+    expect(count, isEmpty);
+    expect(await photo.exists(), isFalse);
+  });
 }

@@ -147,6 +147,19 @@ class LocalVault {
     }
   }
 
+  /// Erases all artwork photos and their derivatives from the vault.
+  /// Audio files are preserved.
+  Future<void> eraseAllArtworkPhotos() async {
+    final masterpieces = await masterPiecesDirectory;
+    if (await masterpieces.exists()) {
+      await masterpieces.delete(recursive: true);
+    }
+    final derivatives = await _derivativesDirectory;
+    if (await derivatives.exists()) {
+      await derivatives.delete(recursive: true);
+    }
+  }
+
   /// Deletes a file from the vault. A missing file is not an error
   /// (idempotent). Throws if the file exists but cannot be removed.
   Future<void> deleteFile(String relativePath) async {

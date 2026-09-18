@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/action_result.dart';
+import '../settings/debug_settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/child_row.dart';
 import '../ui/state_block.dart';
@@ -22,7 +24,23 @@ class ChildrenScreen extends ConsumerWidget {
     final countsAsync = ref.watch(artworkCountByChildProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.childrenTitle)),
+      appBar: AppBar(
+        title: Text(l10n.childrenTitle),
+        actions: [
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Debug / Réglages',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DebugSettingsScreen(),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: SafeArea(
         child: childrenAsync.when(
           loading: () => ListView.builder(

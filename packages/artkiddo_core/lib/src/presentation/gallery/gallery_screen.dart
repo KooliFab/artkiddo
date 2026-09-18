@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,7 @@ import '../children/child_editor_controller.dart';
 import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
 import '../providers/core_providers.dart';
+import '../settings/debug_settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/filter_chip_row.dart';
 import '../ui/state_block.dart';
@@ -193,11 +195,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                 if (compositionActions.openFamilyHub != null) ...[
                   const SizedBox(width: AppSpacing.s1),
                   Padding(
-                    padding: EdgeInsets.only(right: _margin(width)),
+                    padding: EdgeInsets.only(
+                      right: kDebugMode ? AppSpacing.s1 : _margin(width),
+                    ),
                     child: _FamilyButton(
                       onPressed: () =>
                           compositionActions.openFamilyHub!(context),
                     ),
+                  ),
+                ],
+                if (kDebugMode) ...[
+                  Padding(
+                    padding: EdgeInsets.only(right: _margin(width)),
+                    child: const _DebugSettingsButton(),
                   ),
                 ],
               ],
@@ -1060,6 +1070,28 @@ class _FamilyButton extends StatelessWidget {
         side: const BorderSide(color: AppColors.border),
       ),
       icon: const Icon(Icons.people_outline),
+    );
+  }
+}
+
+class _DebugSettingsButton extends StatelessWidget {
+  const _DebugSettingsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Debug / Réglages',
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const DebugSettingsScreen()),
+        );
+      },
+      style: IconButton.styleFrom(
+        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+        backgroundColor: AppColors.surface,
+        side: const BorderSide(color: AppColors.border),
+      ),
+      icon: const Icon(Icons.settings_outlined, color: AppColors.ink),
     );
   }
 }
