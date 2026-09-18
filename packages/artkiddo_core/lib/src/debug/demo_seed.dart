@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:image/image.dart' as image;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -81,7 +82,26 @@ Future<void> seedDebugDemoData({
     for (var i = 0; i < artworks.length; i++) {
       final (childId, addedAt, story) = artworks[i];
       final source = File(p.join(tempDir.path, 'artkiddo-debug-demo-$i.png'));
-      await source.writeAsBytes(_drawDemo(i));
+      final assetName = _demoFileNames[i];
+
+      Uint8List? bytes;
+      for (final prefix in [
+        'packages/artkiddo_core/assets/seed/',
+        'assets/seed/',
+      ]) {
+        try {
+          final data = await rootBundle.load('$prefix$assetName');
+          bytes = data.buffer.asUint8List();
+          break;
+        } catch (_) {}
+      }
+
+      if (bytes != null && bytes.isNotEmpty) {
+        await source.writeAsBytes(bytes);
+      } else {
+        await source.writeAsBytes(_drawDemo(i));
+      }
+
       final result = await createArtwork(childId, source, addedAt, story);
       if (result case ActionSuccess(value: final id)) {
         await (db.update(
@@ -102,6 +122,17 @@ Future<void> seedDebugDemoData({
   }
 }
 
+const _demoFileNames = [
+  'demo-lea-01.png',
+  'demo-noah-01.png',
+  'demo-lea-02.png',
+  'demo-lea-03.png',
+  'demo-noah-02.png',
+  'demo-lea-04.png',
+  'demo-noah-03.png',
+  'demo-lea-05.png',
+];
+
 List<int> _drawDemo(int index) {
   final canvas = image.Image(width: 900, height: 700);
   final colours = [
@@ -121,27 +152,6 @@ List<int> _drawDemo(int index) {
     y: 350,
     radius: 215,
     color: colours[index % colours.length],
-  );
-  image.drawCircle(
-    canvas,
-    x: 300 + (index * 37) % 300,
-    y: 230,
-    radius: 85,
-    color: colours[(index + 3) % colours.length],
-  );
-  image.drawCircle(
-    canvas,
-    x: 250,
-    y: 500,
-    radius: 48,
-    color: colours[(index + 5) % colours.length],
-  );
-  image.drawCircle(
-    canvas,
-    x: 650,
-    y: 500,
-    radius: 62,
-    color: colours[(index + 1) % colours.length],
   );
   return image.encodePng(canvas);
 }

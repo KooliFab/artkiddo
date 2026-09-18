@@ -42,6 +42,8 @@ dev_dependencies:
 
 flutter:
   generate: true
+  assets:
+    - assets/seed/
   fonts:
     - family: Playpen Sans
       fonts:
