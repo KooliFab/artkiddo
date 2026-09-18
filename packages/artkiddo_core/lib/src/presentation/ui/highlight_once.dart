@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 
+/// Highlights the newly-added artwork card once after returning from
+/// capture. Fades an accent surface halo over 1200ms, or — under
+/// reduced motion — a static 2px accent border for the same duration.
 class HighlightOnce extends StatefulWidget {
   final bool active;
   final Widget child;

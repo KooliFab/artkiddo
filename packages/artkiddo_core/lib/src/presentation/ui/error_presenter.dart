@@ -14,6 +14,10 @@ class PresentedError {
   });
 }
 
+/// Single translation point for [AppFailure] -> (title, body, retry label).
+///
+/// No screen composes its own error message and no `toString()` of an
+/// exception ever reaches the UI — `cause`/`stack` stay in diagnostics.
 class ErrorPresenter {
   const ErrorPresenter._();
 
@@ -89,11 +93,16 @@ class ErrorPresenter {
         body: l10n.errorUnknownBody,
         actionLabel: l10n.commonRetry,
       ),
+      // Never retryable on its own — the action offered is the way
+      // out (sign out and keep working locally), not another attempt.
       FoyerMismatchFailure() => PresentedError(
         title: l10n.errorFoyerMismatchTitle,
         body: l10n.errorFoyerMismatchBody,
         actionLabel: l10n.accountSignOut,
       ),
+      // Retryable on its own (a purge or an expiry frees space) —
+      // same retry action as any other transient send failure, no
+      // member decision required.
       QuotaExceededFailure(:final resetsAt) => PresentedError(
         title: resetsAt != null
             ? '${l10n.errorQuotaExceededTitle} (disponible à ${resetsAt.toLocal().hour.toString().padLeft(2, '0')}:${resetsAt.toLocal().minute.toString().padLeft(2, '0')})'

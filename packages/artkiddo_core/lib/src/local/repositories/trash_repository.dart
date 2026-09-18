@@ -7,6 +7,8 @@ import 'local_trash_repository.dart';
 
 export '../../contracts/trash.dart' show TrashRepository, TrashedArtwork;
 
+/// Selects the local or household-wide implementation before reading any
+/// provider singleton. The local composition never touches remote cloud providers.
 final trashRepositoryProvider = Provider<TrashRepository>((ref) {
   final capabilities = ref.watch(appCapabilitiesProvider);
   if (capabilities.trash != TrashCapability.local) {

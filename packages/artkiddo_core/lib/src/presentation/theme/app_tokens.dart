@@ -1,5 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+/// Exact design tokens transposed from reference design tokens.
+///
+/// Values are exact, not intentions. Do not invent new colors, spacing or
+/// radii outside this set.
 abstract final class AppColors {
   static const paper = Color(0xFFF7F2EA);
   static const surface = Color(0xFFFFFDFC);
@@ -66,7 +70,10 @@ abstract final class AppShadows {
   ];
 }
 
+/// Text styles. Font family attached by [AppTheme].
 abstract final class AppTypography {
+  /// Explicit on every token so locally supplied styles cannot fall back to
+  /// the platform's default font family instead of the ArtKiddo voice.
   static const family = 'Playpen Sans';
 
   static const display = TextStyle(
@@ -153,6 +160,7 @@ abstract final class AppMotion {
   static const pageCurve = Curves.easeInOutCubic;
 }
 
+/// Responsive layout breakpoints.
 abstract final class AppBreakpoints {
   static const compactMax = 599.0;
   static const mediumMax = 839.0;

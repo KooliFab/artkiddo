@@ -1,19 +1,29 @@
+import 'package:flutter_riverpod/misc.dart' show Override;
+
 import 'app_capabilities.dart';
 import 'cloud_services.dart';
 
 enum AppEnvironment { local, production, test }
 
+/// Typed input to the reusable application bootstrap.
 final class ArtKiddoBootstrapConfig {
   final AppCapabilities capabilities;
   final CloudServices? cloudServices;
   final AppEnvironment environment;
 
+  /// Provider overrides supplied by the composition. The core declares
+  /// neutral defaults; a composition replaces them with its own bindings.
+  final List<Override> overrides;
+
   const ArtKiddoBootstrapConfig({
     required this.capabilities,
     required this.cloudServices,
     required this.environment,
+    this.overrides = const [],
   });
 
+  /// Validates all capability/service invariants before any provider or UI is
+  /// constructed. No fallback between local and cloud modes is permitted.
   void validate() {
     final failures = <String>[];
     final cloud = cloudServices;
@@ -76,6 +86,8 @@ final class ArtKiddoBootstrapConfig {
   }
 }
 
+/// A configuration error that must be visible to the user and actionable by
+/// the owning composition. It is never converted to an empty local state.
 final class BootstrapConfigurationException extends StateError {
   final List<String> failures;
 

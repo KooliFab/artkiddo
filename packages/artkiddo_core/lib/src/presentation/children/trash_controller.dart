@@ -18,6 +18,9 @@ class TrashState {
   final AsyncAction purge;
   final AsyncAction purgeAll;
 
+  /// The item currently targeted by [restore]/[purge] — a list can
+  /// show several rows at once, so the busy state needs to say
+  /// *which* row, not just whether one is busy.
   final String? busyItemId;
 
   const TrashState({
@@ -59,6 +62,10 @@ class TrashState {
   }
 }
 
+/// Loads and acts on the local trash. `isParent`/`foyerId` stay part
+/// of [TrashState]'s shape for a shared-household trash composition;
+/// this controller itself only ever operates on
+/// [TrashCapability.local] and rejects any other capability.
 class TrashController extends Notifier<TrashState> {
   @override
   TrashState build() {
@@ -73,6 +80,10 @@ class TrashController extends Notifier<TrashState> {
       throw StateError('The public core only supports local trash');
     }
     state = state.copyWith(loading: true, isParent: true, foyerId: null);
+    // Opening the screen is the second deterministic purge trigger
+    // after startup. The repository keeps the database write
+    // authoritative and journals any file cleanup that needs another
+    // retry.
     await repository.purgeExpired();
     final result = await repository.listTrash();
     _applyListResult(result);

@@ -14,6 +14,8 @@ import '../../domain/action_result.dart';
 import '../children/children_providers.dart';
 import 'gallery_providers.dart';
 
+/// Where the capture flow was entered from — the gallery FAB, or an
+/// empty-state call to action.
 enum CaptureOrigin { galleryFab, galleryEmpty, galleryEmptyFiltered }
 
 enum CaptureStep { sourceChoice, review, details }
@@ -52,6 +54,10 @@ class CaptureDraft {
   final int? audioDurationMs;
   final String story; // '' = no anecdote
   final DateTime startedAt;
+  // Whether `temporaryImagePath` already went through the mandatory
+  // crop step — distinguishes a freshly acquired photo (crop still
+  // pending, triggered reactively by the screen) from a draft being
+  // re-viewed via step 3's "view large" (already confirmed).
   final bool cropped;
 
   const CaptureDraft({
@@ -88,6 +94,10 @@ class CaptureState {
   final CaptureStep step;
   final CaptureDraft? draft;
   final String? selectedChildId; // null = no choice; never filled implicitly
+  // Distinguishes an automatic preselection from an explicit user
+  // choice — `isDirty` must only react to the latter, or the "blank
+  // draft" branch stays unreachable whenever a preselection rule
+  // fires.
   final bool childSelectedManually;
   final bool artistErrorShown;
   final AsyncAction save;
@@ -97,6 +107,9 @@ class CaptureState {
   final bool reviewUnreadable;
   final bool reviewTooLarge;
   final bool reviewLoading;
+
+  /// True while the OS gallery/file picker is open (before an image is returned).
+  final bool pickingPhoto;
   final ImageSource?
   lastSource; // for "Reprendre" relaunching the same source (screens.md §4.2)
   final bool isRecording;
@@ -118,6 +131,7 @@ class CaptureState {
     this.reviewUnreadable = false,
     this.reviewTooLarge = false,
     this.reviewLoading = false,
+    this.pickingPhoto = false,
     this.lastSource,
     this.isRecording = false,
     this.recordingDurationMs = 0,
@@ -126,6 +140,8 @@ class CaptureState {
     this.playbackPositionMs = 0,
   });
 
+  /// A "blank" step-3 draft (no manual artist choice, empty anecdote,
+  /// no audio) is not dirty — back goes straight to step 2.
   bool get isDirty =>
       draft != null &&
       (draft!.story.trim().isNotEmpty ||
@@ -148,6 +164,7 @@ class CaptureState {
     bool? reviewUnreadable,
     bool? reviewTooLarge,
     bool? reviewLoading,
+    bool? pickingPhoto,
     ImageSource? lastSource,
     bool clearLastSource = false,
     bool? isRecording,
@@ -175,6 +192,7 @@ class CaptureState {
       reviewUnreadable: reviewUnreadable ?? this.reviewUnreadable,
       reviewTooLarge: reviewTooLarge ?? this.reviewTooLarge,
       reviewLoading: reviewLoading ?? this.reviewLoading,
+      pickingPhoto: pickingPhoto ?? this.pickingPhoto,
       lastSource: clearLastSource || clearDraft
           ? null
           : (lastSource ?? this.lastSource),
@@ -236,7 +254,15 @@ class CaptureController extends Notifier<CaptureState> {
     }
   }
 
+  /// Gallery source only — camera capture goes through the in-app
+  /// camera viewfinder (pushed by the screen, which then calls
+  /// [photoPicked] directly) so it never opens the OS's native camera
+  /// app and its own confirmation screen. `imageQuality` is left unset
+  /// here: the picker must not silently recompress the drawing — the
+  /// only intentional pixel change is the mandatory crop step, applied
+  /// afterwards via [cropDraft].
   Future<void> chooseSource(ImageSource source) async {
+    state = state.copyWith(pickingPhoto: true);
     try {
       Log.d('Ouverture du sélecteur ${source.name}', 'Capture');
       final picked = await _picker.pickImage(source: source);
@@ -258,12 +284,16 @@ class CaptureController extends Notifier<CaptureState> {
         const kind = PermissionStatus.denied;
         state = state.copyWith(
           step: CaptureStep.sourceChoice,
+          pickingPhoto: false,
           permissions: source == ImageSource.camera
               ? state.permissions.copyWith(camera: kind)
               : state.permissions.copyWith(photos: kind),
         );
       } else {
-        state = state.copyWith(step: CaptureStep.sourceChoice);
+        state = state.copyWith(
+          step: CaptureStep.sourceChoice,
+          pickingPhoto: false,
+        );
       }
     }
   }
@@ -275,6 +305,7 @@ class CaptureController extends Notifier<CaptureState> {
       reviewLoading: true,
       reviewUnreadable: false,
       reviewTooLarge: false,
+      pickingPhoto: false,
       lastSource: source,
     );
     try {
@@ -305,9 +336,12 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   void pickerCancelled() {
-    state = state.copyWith(step: CaptureStep.sourceChoice);
+    state = state.copyWith(step: CaptureStep.sourceChoice, pickingPhoto: false);
   }
 
+  /// The in-app camera viewfinder reported a denied camera permission —
+  /// mirrors the `PlatformException` branch in [chooseSource] for the
+  /// picker path.
   void reportCameraDenied() {
     state = state.copyWith(
       step: CaptureStep.sourceChoice,
@@ -315,6 +349,13 @@ class CaptureController extends Notifier<CaptureState> {
     );
   }
 
+  /// Mandatory crop: the single confirmation left in the flow, for both
+  /// sources. Triggered reactively by the screen as soon as a freshly
+  /// picked draft reaches `review` — never called from [photoPicked]
+  /// itself so unit tests can drive the controller without the
+  /// `image_cropper` platform channel. A cancelled or failed crop
+  /// discards the picked file and returns to the source choice, same
+  /// as an abandoned pick.
   Future<void> cropDraft({required String cropTitle}) async {
     final draft = state.draft;
     if (draft == null || draft.cropped) return;
@@ -379,6 +420,8 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   String? _applyPreselectionRule() {
+    // A preselected child id takes priority over the most-recently-used
+    // one, in that order.
     if (entry.preselectedChildId != null) return entry.preselectedChildId;
 
     final filter = ref.read(galleryFilterProvider);
@@ -392,6 +435,11 @@ class CaptureController extends Notifier<CaptureState> {
     return null; // >=2 children + "all" filter, or 0 children: no selection.
   }
 
+  /// Deletes the current draft's temp file and clears it without
+  /// touching `step` — shared by [retakeSameSource] (gallery) and, from
+  /// the screen, the camera retake path (which must relaunch the
+  /// camera viewfinder itself, not `chooseSource`, so it can't be done
+  /// here).
   Future<void> discardDraftForRetake() async {
     await _deleteDraftFile();
     state = state.copyWith(
@@ -401,16 +449,28 @@ class CaptureController extends Notifier<CaptureState> {
     );
   }
 
+  /// Step 2 retake for the gallery source: relaunches the *same*
+  /// source directly instead of routing back through the dead
+  /// `sourceChoice` step body. Falls back to the two-choice sheet only
+  /// if no source was recorded. Camera retakes are handled by the
+  /// screen, since relaunching the camera viewfinder needs a
+  /// `BuildContext`.
   Future<void> retakeSameSource() async {
     final source = state.lastSource;
     await discardDraftForRetake();
     if (source == null) {
+      // Any other platform failure: stay on the sheet, no dramatic
+      // message.
       state = state.copyWith(step: CaptureStep.sourceChoice);
       return;
     }
     await chooseSource(source);
   }
 
+  /// Step 2 -> step 1, and the unreadable-image block's retake — no
+  /// valid draft exists yet in either case. Reopening the two-choice
+  /// sheet is the screen's responsibility, driven by
+  /// `step == sourceChoice`.
   Future<void> backToSourceChoice() async {
     await _deleteDraftFile();
     state = state.copyWith(
@@ -421,11 +481,17 @@ class CaptureController extends Notifier<CaptureState> {
     );
   }
 
+  /// Step 3, blank draft -> step 2, **photo preserved**. The old
+  /// behaviour reused `retakePhoto()`, which destroyed the draft and
+  /// sent the user to the dead step-1 screen.
   Future<void> backToReviewFromDetails() async {
     if (state.isRecording) await cancelRecording();
     state = state.copyWith(step: CaptureStep.review);
   }
 
+  /// Full draft abandonment confirmed from step 3. The temporary picker
+  /// file was only ever deleted on a *successful* save — an abandoned
+  /// draft left its file behind in the OS temp directory.
   Future<void> discardDraft() => _deleteDraftFile();
 
   Future<void> _deleteDraftFile() async {
@@ -478,6 +544,8 @@ class CaptureController extends Notifier<CaptureState> {
     state = state.copyWith(draft: state.draft!.copyWith(story: trimmed));
   }
 
+  /// Called on return from the child editor with a freshly created
+  /// child.
   void childCreated(String childId, String childName) {
     if (state.step != CaptureStep.details) return;
     selectChild(childId);
@@ -489,6 +557,8 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   Future<ActionResult<String>> save() async {
+    // Only `busy` blocks a new command. Save is also blocked while
+    // recording is active.
     if (state.save.isBusy || state.isRecording) return const ActionCancelled();
     final draft = state.draft;
     if (draft == null) return const ActionCancelled();
@@ -517,6 +587,8 @@ class CaptureController extends Notifier<CaptureState> {
     switch (result) {
       case ActionSuccess(value: final id):
         Log.i('Œuvre enregistrée ($id)', 'Capture');
+        // Best-effort cleanup of temporary files; failure here is not
+        // user-visible and does not affect durable success.
         try {
           final tmp = File(draft.temporaryImagePath);
           if (await tmp.exists()) await tmp.delete();
@@ -546,6 +618,7 @@ class CaptureController extends Notifier<CaptureState> {
           clearSelectedChildId: true,
         );
         ref.read(highlightedArtworkProvider.notifier).highlight(id);
+        // Light haptic on a successful artwork save, and nowhere else.
         try {
           await HapticFeedback.lightImpact();
         } catch (e, st) {
@@ -560,6 +633,10 @@ class CaptureController extends Notifier<CaptureState> {
     }
     return result;
   }
+
+  // ===========================================================================
+  // Audio story recording & preview
+  // ===========================================================================
 
   Future<void> startRecording() async {
     if (state.isRecording) return;
@@ -600,6 +677,7 @@ class CaptureController extends Notifier<CaptureState> {
     _durSub = recorder.durationStream.listen((dur) {
       final ms = dur.inMilliseconds;
       if (ms >= _maxAudioDurationMs) {
+        // Auto-stop at 2 minutes max.
         stopRecording();
       } else {
         state = state.copyWith(recordingDurationMs: ms);
@@ -714,6 +792,8 @@ class CaptureController extends Notifier<CaptureState> {
     }
   }
 
+  /// Reachable even if the FAB is hidden at 0 children, because the
+  /// last child may be deleted while the draft is open.
   bool get hasNoChildren =>
       (ref.read(allChildrenStreamProvider).value ?? const []).isEmpty;
 

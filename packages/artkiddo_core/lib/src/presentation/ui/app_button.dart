@@ -5,6 +5,12 @@ import '../theme/app_tokens.dart';
 
 enum AppButtonVariant { primary, secondary, tertiary, share, destructive }
 
+/// The three (+1 derived) button variants. No other variant is
+/// created by downstream code.
+///
+/// A disabled button always shows a reason underneath it
+/// ([disabledReason]) — never a disabled button without a legible
+/// reason.
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -48,6 +54,10 @@ class AppButton extends StatelessWidget {
           padding: const EdgeInsets.only(top: AppSpacing.s1),
           child: Text(
             disabledReason!,
+            // `inkDisabled` is forbidden for informative text — its
+            // contrast on `paper` is ~3.1:1, under the 4.5:1 floor.
+            // `inkMuted` (6.79:1) is the correct token; `inkDisabled`
+            // stays reserved for the button's own label/icon.
             style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
           ),
         ),
@@ -66,6 +76,9 @@ class AppButton extends StatelessWidget {
     };
     final background = switch (variant) {
       AppButtonVariant.primary => AppColors.accent,
+      // A secondary action is a gallery-white outlined control, not a
+      // transparent Material button (whose inherited elevation reads
+      // grey).
       AppButtonVariant.secondary => AppColors.surface,
       AppButtonVariant.share => AppColors.share,
       _ => Colors.transparent,
@@ -143,6 +156,9 @@ class AppButton extends StatelessWidget {
   }
 }
 
+/// Bound to a controller's [AsyncAction]: reads idle/busy/done/failed,
+/// ignores activations while busy, and never closes the screen by
+/// itself.
 class AsyncActionButton extends StatelessWidget {
   final AsyncAction action;
   final String idleLabel;

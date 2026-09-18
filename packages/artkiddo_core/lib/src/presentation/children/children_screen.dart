@@ -11,6 +11,7 @@ import 'child_editor_controller.dart';
 import 'child_editor_screen.dart';
 import 'children_providers.dart';
 
+/// Children management screen.
 class ChildrenScreen extends ConsumerWidget {
   const ChildrenScreen({super.key});
 
@@ -43,6 +44,7 @@ class ChildrenScreen extends ConsumerWidget {
                 intent: StateBlockIntent.error,
                 title: l10n.childrenErrorTitle,
                 actionLabel: l10n.commonRetry,
+                // Invalidate stream on retry so the query re-executes.
                 onAction: () => ref.invalidate(allChildrenStreamProvider),
               ),
             ),
@@ -97,6 +99,7 @@ class ChildrenScreen extends ConsumerWidget {
           },
         ),
       ),
+      // Migrates into the shell's rail header at medium/expanded — see AppShell._railFab.
       floatingActionButton:
           AppBreakpoints.isCompact(MediaQuery.of(context).size.width)
           ? FloatingActionButton.extended(
@@ -114,6 +117,7 @@ class ChildrenScreen extends ConsumerWidget {
     );
   }
 
+  // Shows the confirmation banner required on successful creation/edit.
   Future<void> _openEditor(
     BuildContext context,
     WidgetRef ref,

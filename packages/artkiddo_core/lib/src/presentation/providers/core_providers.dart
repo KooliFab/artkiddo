@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../contracts/remote_media.dart';
 import '../../local/audio/audio_player_service.dart';
 import '../../local/audio/audio_recorder_service.dart';
 import '../config/app_capabilities.dart';
@@ -19,6 +20,7 @@ final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
   return AppEnvironment.local;
 });
 
+/// Global singletons for local storage and local database.
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
   ref.onDispose(() => db.close());
@@ -40,3 +42,10 @@ final audioPlayerServiceProvider = Provider<AudioPlayerService>((ref) {
   ref.onDispose(() => service.dispose());
   return service;
 });
+
+final remoteMediaFetcherProvider = Provider<RemoteMediaFetcher>((ref) {
+  return const NoRemoteMediaFetcher();
+});
+
+/// Current authenticated user email, or null if unauthenticated or in local mode.
+final sessionEmailProvider = Provider<String?>((ref) => null);

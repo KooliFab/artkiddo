@@ -6,24 +6,49 @@ import '../database/app_database.dart';
 import '../logging/log.dart';
 import 'image_derivatives.dart';
 
+/// Result of [LocalVault.generateDerivatives]: either relative path is
+/// `null` when that particular derivative could not be produced (a
+/// corrupt or unreadable original, a decode failure, a write failure).
+/// The original file is never touched regardless of the outcome.
 class DerivativePaths {
   final String? displayRelativePath;
   final String? thumbnailRelativePath;
   const DerivativePaths({this.displayRelativePath, this.thumbnailRelativePath});
 }
 
+/// Manages the private sandbox file storage for artwork photos and
+/// audio. Guarantees files are safely stored inside the app sandbox,
+/// independently from the device's own photo gallery.
 class LocalVault {
   static const String masterpiecesFolder = 'masterpieces';
 
+  /// Bounded-dimension derivatives kept alongside the untouched
+  /// original — `display` for the artwork detail screen (1600px), and
+  /// `thumbnail` for the gallery grid (640px, matching the
+  /// `cacheWidth` clamp already used by the grid's own tiles, so the
+  /// thumbnail is never upscaled at any column width/DPR combination
+  /// in use today).
   static const String derivativesFolder = 'masterpieces_derivatives';
   static const String audioFolder = 'audio';
   static const int displayMaxDimension = 1600;
   static const int thumbnailMaxDimension = 640;
   static const int maxArtworkCloudBytes = 300000;
 
+  /// JPEG quality (1-100), chosen for *reading*, not archiving — the
+  /// original stays untouched and is what the zoom screen and any
+  /// future export always read. 85 for `display`: the accepted
+  /// "visually lossless for photographic content" floor, used
+  /// full-screen on the artwork detail. 75 for `thumbnail`: displayed
+  /// at a few hundred device-independent pixels at most in the grid,
+  /// where artifacts at that quality are not perceptible, so the
+  /// lower bound trades a little more fidelity for the
+  /// disproportionately larger share of derivative storage/bandwidth
+  /// the many-small-tiles grid represents.
   static const int displayJpegQuality = 85;
   static const int thumbnailJpegQuality = 75;
 
+  /// Overridable for tests: defaults to the real app documents
+  /// directory.
   final Future<Directory> Function() _documentsDirProvider;
   final ImageDerivativeCodec _derivativeCodec;
 
@@ -34,6 +59,7 @@ class LocalVault {
            documentsDirProvider ?? getApplicationDocumentsDirectory,
        _derivativeCodec = derivativeCodec ?? const ImageDerivativeCodec();
 
+  /// Retrieves the directory where full-resolution photos are stored.
   Future<Directory> get masterPiecesDirectory async {
     final docsDir = await _documentsDirProvider();
     final dir = Directory(p.join(docsDir.path, masterpiecesFolder));
@@ -43,6 +69,10 @@ class LocalVault {
     return dir;
   }
 
+  /// Retrieves the directory where derivatives are stored — separate
+  /// from [masterPiecesDirectory] so that deleting a masterpiece's
+  /// originals folder entry, or reasoning about what's an original vs.
+  /// a cache, is never ambiguous.
   Future<Directory> get _derivativesDirectory async {
     final docsDir = await _documentsDirProvider();
     final dir = Directory(p.join(docsDir.path, derivativesFolder));
@@ -52,6 +82,7 @@ class LocalVault {
     return dir;
   }
 
+  /// Retrieves the directory where audio recordings are stored.
   Future<Directory> get audioDirectory async {
     final docsDir = await _documentsDirProvider();
     final dir = Directory(p.join(docsDir.path, audioFolder));
@@ -61,6 +92,11 @@ class LocalVault {
     return dir;
   }
 
+  /// Copies a captured image file into the vault using a permanent
+  /// filename. Returns the relative file path from the app documents
+  /// directory for easy persistence. Throws a [FileSystemException]
+  /// (or subtype) if the copy fails — callers must not treat a thrown
+  /// copy as a success.
   Future<String> storeMasterpieceImage({
     required File sourceFile,
     required String masterpieceId,
@@ -77,14 +113,25 @@ class LocalVault {
 
     await sourceFile.copy(targetFile.path);
 
+    // Store relative path (e.g. "masterpieces/uuid.jpg") so it survives
+    // app container migrations.
     return p.join(masterpiecesFolder, targetFileName);
   }
 
+  /// Resolves a stored relative path to a concrete File.
   Future<File> resolveFile(String relativePath) async {
     final docsDir = await _documentsDirProvider();
     return File(p.join(docsDir.path, relativePath));
   }
 
+  /// The "erase local data" half of account deletion — requires no
+  /// network, and must succeed even if a remote deletion request has
+  /// already failed or never ran. Removes every original and
+  /// derivative image and audio recording this vault holds; a missing
+  /// directory is not an error (idempotent, same discipline as
+  /// [deleteFile]). Does not touch the Drift database — the caller is
+  /// responsible for clearing [AppDatabase]'s own tables alongside
+  /// this, since this class has no reference to it.
   Future<void> eraseEverything() async {
     final masterpieces = await masterPiecesDirectory;
     if (await masterpieces.exists()) {
@@ -100,6 +147,8 @@ class LocalVault {
     }
   }
 
+  /// Deletes a file from the vault. A missing file is not an error
+  /// (idempotent). Throws if the file exists but cannot be removed.
   Future<void> deleteFile(String relativePath) async {
     final file = await resolveFile(relativePath);
     if (await file.exists()) {
@@ -107,6 +156,12 @@ class LocalVault {
     }
   }
 
+  /// Deletes a file, recording a [PendingFileCleanupsTable] entry
+  /// instead of throwing when the deletion fails. This is the
+  /// recovery strategy required by the durability contract: a failed
+  /// file cleanup must never turn an otherwise-successful durable
+  /// operation into a failure, but it must also never be silently
+  /// forgotten.
   Future<void> deleteFileOrEnqueueCleanup({
     required String relativePath,
     required AppDatabase db,
@@ -131,6 +186,9 @@ class LocalVault {
     }
   }
 
+  /// Retries every pending cleanup entry, silently. Intended to be
+  /// called once at app startup. Entries that still fail are left in
+  /// place for the next attempt.
   Future<void> retryPendingCleanups(AppDatabase db) async {
     final pending = await db.select(db.pendingFileCleanupsTable).get();
     for (final entry in pending) {
@@ -150,6 +208,27 @@ class LocalVault {
     }
   }
 
+  /// (Re)builds the `display` and `thumbnail` derivatives for the
+  /// original at [originalRelativePath], writing them under
+  /// [derivativesFolder]. Never reads or writes
+  /// [originalRelativePath] itself beyond the initial read — the
+  /// original is only ever a source.
+  ///
+  /// Both derivatives are requested from a single
+  /// [ImageDerivativeCodec] call so the original is decoded only once
+  /// (in the background isolate `resizeMany` runs in) rather than
+  /// twice.
+  ///
+  /// File names are deterministic (`<masterpieceId>_display.jpg` /
+  /// `<masterpieceId>_thumb.jpg`), so calling this twice for the same
+  /// masterpiece overwrites the same two paths rather than
+  /// accumulating orphans — the idempotence a backfill pass requires.
+  /// Each derivative is attempted independently: a failure on one
+  /// (corrupt original, decode error, disk full) leaves that one
+  /// `null` in the result without preventing the other from
+  /// succeeding, and never throws — the original file and its
+  /// database row are untouched either way; a derivative is a cache,
+  /// not a reference copy.
   Future<DerivativePaths> generateDerivatives({
     required String masterpieceId,
     required String originalRelativePath,
@@ -213,6 +292,8 @@ class LocalVault {
     );
   }
 
+  /// Regenerates the local thumbnail from a downloaded display image
+  /// derivative.
   Future<String?> generateThumbnailFromDisplay({
     required String masterpieceId,
     required String displayRelativePath,
@@ -269,6 +350,8 @@ class LocalVault {
       final dir = await _derivativesDirectory;
       final fileName = '${masterpieceId}_$suffix.jpg';
       final targetFile = File(p.join(dir.path, fileName));
+      // Write-then-rename: a crash mid-write never leaves a half-written
+      // file at the path callers will read from.
       final tmpFile = File('${targetFile.path}.tmp');
       await tmpFile.writeAsBytes(bytes, flush: true);
       await tmpFile.rename(targetFile.path);
@@ -284,6 +367,15 @@ class LocalVault {
     }
   }
 
+  /// Writes bytes downloaded from the remote side as one of a
+  /// masterpiece's derivatives — the counterpart, on the pull side, of
+  /// [generateDerivatives] on the capture side. Uses the exact same
+  /// deterministic naming (`<masterpieceId>_display.jpg` /
+  /// `<masterpieceId>_thumb.jpg`) so a downloaded derivative and a
+  /// locally generated one are indistinguishable to every reader —
+  /// neither `Masterpiece.bestDisplayImagePath` nor the gallery grid
+  /// needs to know which source produced the file at the path they
+  /// read.
   Future<String> storeDownloadedDerivative({
     required List<int> bytes,
     required String masterpieceId,
@@ -293,12 +385,19 @@ class LocalVault {
     final suffix = isDisplay ? 'display' : 'thumb';
     final fileName = '${masterpieceId}_$suffix.jpg';
     final targetFile = File(p.join(dir.path, fileName));
+    // Write-then-rename, same rationale as [_writeDerivativeBytes]: a
+    // crash mid-download never leaves a half-written file at the path
+    // callers will read from.
     final tmpFile = File('${targetFile.path}.tmp');
     await tmpFile.writeAsBytes(bytes, flush: true);
     await tmpFile.rename(targetFile.path);
     return p.join(derivativesFolder, fileName);
   }
 
+  /// Counterpart to [deleteFileOrEnqueueCleanup] for a masterpiece's
+  /// derivatives: called from `delete()` alongside the original's
+  /// cleanup. Either argument may be `null` (no derivative was ever
+  /// generated) — a no-op in that case.
   Future<void> deleteDerivativeFilesOrEnqueueCleanup({
     required String? displayRelativePath,
     required String? thumbnailRelativePath,
@@ -318,6 +417,10 @@ class LocalVault {
     }
   }
 
+  /// Stores a captured audio file into the vault using a versioned
+  /// filename. Uses a temporary write followed by an atomic rename so
+  /// an interrupted write never leaves a partial file at the readable
+  /// path.
   Future<String> storeMasterpieceAudio({
     required File sourceFile,
     required String masterpieceId,
@@ -333,6 +436,8 @@ class LocalVault {
     final targetFileName = '${masterpieceId}_v$version$extension';
     final targetFile = File(p.join(targetDir.path, targetFileName));
 
+    // Temp write + atomic rename: an interrupted write never leaves a
+    // partial file at the readable path.
     final tmpFile = File('${targetFile.path}.tmp');
     await sourceFile.copy(tmpFile.path);
     await tmpFile.rename(targetFile.path);
@@ -340,6 +445,8 @@ class LocalVault {
     return p.join(audioFolder, targetFileName);
   }
 
+  /// Writes downloaded audio bytes into the vault with a versioned
+  /// filename, using temporary file writing and atomic rename.
   Future<String> storeDownloadedAudio({
     required List<int> bytes,
     required String masterpieceId,
@@ -356,6 +463,8 @@ class LocalVault {
     return p.join(audioFolder, targetFileName);
   }
 
+  /// Deletes an audio file from the vault or enqueues deferred
+  /// cleanup.
   Future<void> deleteAudioFileOrEnqueueCleanup({
     required String? relativeAudioPath,
     required AppDatabase db,

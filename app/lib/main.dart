@@ -8,11 +8,35 @@ Future<void> main() async {
   await initializeDateFormatting('fr_CA', null);
   await initializeDateFormatting('en_CA', null);
   final container = await ArtKiddoBootstrap.start(
-    const ArtKiddoBootstrapConfig(
+    ArtKiddoBootstrapConfig(
       capabilities: AppCapabilities.local,
       cloudServices: null,
       environment: AppEnvironment.local,
+      overrides: [
+        compositionActionsProvider.overrideWithValue(
+          CompositionActions(
+            openFamilyHub: (context) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ChildrenScreen()),
+              );
+            },
+          ),
+        ),
+      ],
     ),
+  );
+  await seedDebugDemoData(
+    db: container.read(appDatabaseProvider),
+    createArtwork: (childId, sourceImageFile, addedAt, story) =>
+        DriftMasterpiecesRepository(
+          container.read(appDatabaseProvider),
+          container.read(localVaultProvider),
+        ).create(
+          childId: childId,
+          sourceImageFile: sourceImageFile,
+          addedAt: addedAt,
+          story: story,
+        ),
   );
   runApp(
     UncontrolledProviderScope(

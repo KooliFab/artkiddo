@@ -1,3 +1,19 @@
+library;
+
+/// Thrown by the neutral [NoFoyerApi] when household-scoped work is
+/// attempted in a composition that never enabled the `household` capability.
+/// The public core still declares this provider (with this honest default)
+/// so widgets never read a capability-owned provider directly; the exception
+/// exists only to fail loudly if a caller reaches it despite the capability
+/// gate, rather than fabricating a household that does not exist.
+class HouseholdUnavailableException implements Exception {
+  const HouseholdUnavailableException();
+
+  @override
+  String toString() =>
+      'HouseholdUnavailableException: no household composition is bound';
+}
+
 enum FoyerMemberRole { parent, contributeur }
 
 extension FoyerMemberRoleWire on FoyerMemberRole {
@@ -42,4 +58,37 @@ abstract class FoyerApi {
   Future<FoyerMembership?> currentMembership();
   Future<RedeemOutcome> redeemInvite({required String code});
   Future<int> activeMemberCount(String foyerId);
+}
+
+/// Default implementation when no composition has bound a real [FoyerApi].
+///
+/// It never fabricates a household: every member throws
+/// [HouseholdUnavailableException]. `currentMembership()` is the one
+/// exception — returning `null` ("no membership") is a truthful answer on
+/// its own, not a stand-in for a household that was never bound.
+final class NoFoyerApi implements FoyerApi {
+  const NoFoyerApi();
+
+  @override
+  Future<FamilyInfo> getFamilyInfo() async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<void> renameFamily(String name) async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<FoyerMembership?> currentMembership() async => null;
+
+  @override
+  Future<RedeemOutcome> redeemInvite({required String code}) async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<int> activeMemberCount(String foyerId) async {
+    throw const HouseholdUnavailableException();
+  }
 }

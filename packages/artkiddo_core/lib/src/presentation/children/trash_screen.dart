@@ -9,6 +9,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../local/repositories/trash_repository.dart';
 import 'trash_controller.dart';
 
+/// Trash screen displaying recoverable deleted items and purge actions.
 class TrashScreen extends ConsumerWidget {
   const TrashScreen({super.key});
 
@@ -17,6 +18,10 @@ class TrashScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(trashControllerProvider);
 
+    // Restore and purge are single, list-wide AsyncActions. Failures
+    // are surfaced as SnackBars rather than attributed to one row's
+    // inline banner, which would need per-row action state this screen
+    // does not carry.
     ref.listen(trashControllerProvider, (previous, next) {
       final wasRestoreError = previous?.restore is ActionError;
       final wasPurgeError = previous?.purge is ActionError;
@@ -143,6 +148,8 @@ class _TrashRow extends ConsumerWidget {
             style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
           ),
           const SizedBox(height: AppSpacing.s1),
+          // Every trashed item shows its own countdown — the condition
+          // placing automatic purge as defensible, not optional decoration.
           Text(
             l10n.trashItemPurgeOn(item.purgeAt),
             style: AppTypography.caption.copyWith(color: AppColors.danger),

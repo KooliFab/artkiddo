@@ -13,6 +13,11 @@ import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'child_editor_controller.dart';
 
+/// Compact pushes `childEditor` as a full page; medium/expanded present
+/// it as a non-dismissible 560-wide dialog instead. Centralized here so
+/// every entry point (galleries' empty states, the children list, the
+/// child actions sheet, the capture draft, the shell's rail FAB) gets
+/// the same responsive behaviour for free.
 Future<ActionResult<String>?> pushChildEditor(
   BuildContext context,
   ChildEditorArgs args,
@@ -41,6 +46,7 @@ Future<ActionResult<String>?> pushChildEditor(
   );
 }
 
+/// Single form shared by all three entry points.
 class ChildEditorScreen extends ConsumerStatefulWidget {
   final ChildEditorArgs args;
 
@@ -107,11 +113,18 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
     final isCreate = widget.args.childId == null;
 
     if (_nameController.text != state.name &&
-        !_nameController.value.composing.isValid) {}
+        !_nameController.value.composing.isValid) {
+      // Keep controller in sync without fighting user typing.
+    }
     if (_nameController.text.isEmpty && state.name.isNotEmpty) {
       _nameController.text = state.name;
     }
 
+    // `nameDuplicate` is a *warning*, not a block — two children can
+    // share a nickname, and saving stays possible. Feeding it into
+    // `TextField.errorText` rendered it exactly like `nameEmpty` (2 px
+    // danger contour, danger text): the same visual treatment for a
+    // blocking problem and a non-blocking one.
     final nameError = state.attemptedSubmit
         ? (state.errors.contains(ChildFieldError.nameEmpty)
               ? l10n.childEditorErrorNameEmpty

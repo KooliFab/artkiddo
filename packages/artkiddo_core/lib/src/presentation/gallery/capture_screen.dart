@@ -21,6 +21,7 @@ import '../../domain/child.dart' as domain;
 import 'camera_capture_screen.dart';
 import 'capture_controller.dart';
 
+/// `capture` — one route, three internal steps.
 class CaptureScreen extends ConsumerStatefulWidget {
   final CaptureEntry entry;
   final ImageSource? initialSource;
@@ -33,7 +34,18 @@ class CaptureScreen extends ConsumerStatefulWidget {
 class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   late final TextEditingController _storyController;
   bool _detailsExpanded = false;
+  // The source sheet used to be opened exactly once, from `initState`.
+  // Any later return to `sourceChoice` (retake, a permission denial
+  // reported after the sheet already closed) left the step-1 body — a
+  // bare `SizedBox.shrink()` — with no way to reopen it. This flag just
+  // prevents opening the sheet twice concurrently; *when* to open it is
+  // driven reactively by `step == sourceChoice`, from `build`'s
+  // `ref.listen`, not from one-shot imperative calls scattered across
+  // the controller's callers.
   bool _sheetOpen = false;
+  // Guards the reactive crop trigger below the same way `_sheetOpen`
+  // guards the source sheet — a fresh, uncropped draft must open the
+  // crop tool exactly once, not once per rebuild.
   bool _cropping = false;
 
   @override
@@ -67,6 +79,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (_sheetOpen || !mounted) return;
     final state = ref.read(captureControllerProvider(widget.entry));
     if (state.step != CaptureStep.sourceChoice) return;
+    if (state.pickingPhoto) return; // gallery picker already open
     _sheetOpen = true;
     try {
       final result = await showModalBottomSheet<ImageSource>(
@@ -76,6 +89,8 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       );
       if (!mounted) return;
       if (result == null) {
+        // Sheet closed without choosing: leave `capture` entirely — no
+        // draft exists yet.
         final current = ref.read(captureControllerProvider(widget.entry));
         if (current.draft == null) {
           Navigator.of(context).pop(const ActionCancelled<String>());
@@ -88,6 +103,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  /// Acquires a photo for [source]. Camera goes through the in-app
+  /// camera viewfinder instead of `image_picker`'s native camera app,
+  /// so there is no OS-level "Retake / Use Photo" confirmation to
+  /// strip out separately. Gallery is unchanged (a plain file picker
+  /// has no such confirmation to begin with).
   Future<void> _acquirePhoto(ImageSource source) async {
     if (source != ImageSource.camera) {
       await _controller.chooseSource(source);
@@ -111,6 +131,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  /// Step 2 retake. Gallery keeps the controller-driven relaunch;
+  /// camera must go back through [_acquirePhoto] since relaunching the
+  /// camera viewfinder needs this widget's `BuildContext`.
   Future<void> _handleRetake() async {
     final state = ref.read(captureControllerProvider(widget.entry));
     if (state.lastSource == ImageSource.camera) {
@@ -121,6 +144,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  /// Reactively opens the mandatory crop tool the moment a freshly
+  /// picked, unvalidated draft settles on step 2 — the crop's own
+  /// confirmation replaces the old plain-preview review.
   Future<void> _triggerCrop() async {
     if (_cropping) return;
     _cropping = true;
@@ -135,6 +161,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   Future<void> _handleBack() async {
     final state = ref.read(captureControllerProvider(widget.entry));
     if (state.isRecording) {
+      // A first back action while recording stops and discards the
+      // active take. Navigation only happens after the microphone has
+      // been closed.
       await _controller.cancelRecording();
       return;
     }
@@ -147,9 +176,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           title: AppLocalizations.of(context).captureDiscardPhotoTitle,
           body: AppLocalizations.of(context).captureDiscardPhotoBody,
         );
+        // Step 2 -> step 1 goes back to the source choice, not a
+        // relaunch of the same source (that's retake).
         if (confirmed) await _controller.backToSourceChoice();
       case CaptureStep.details:
         if (!state.isDirty) {
+          // A blank step-3 draft returns to step 2 with the photo
+          // intact — an earlier version called `retakePhoto()`, which
+          // destroyed the draft and sent the user to the dead step-1
+          // screen.
           await _controller.backToReviewFromDetails();
           return;
         }
@@ -159,6 +194,8 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           body: AppLocalizations.of(context).captureDiscardBody,
         );
         if (confirmed) {
+          // Delete the temp file on a confirmed abandon — only a
+          // successful save cleaned it up before.
           await _controller.discardDraft();
           if (mounted) {
             Navigator.of(context).pop(const ActionCancelled<String>());
@@ -180,10 +217,21 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(captureControllerProvider(widget.entry));
 
+    // Reactively reopen the source sheet whenever the controller
+    // returns to `sourceChoice` while it isn't already showing —
+    // covers retake falling back to the sheet, the step-2 back action,
+    // the unreadable-image block's retake, and a permission denial
+    // reported after the sheet that triggered it has already closed.
     ref.listen(captureControllerProvider(widget.entry), (previous, next) {
-      if (next.step == CaptureStep.sourceChoice && !_sheetOpen) {
+      if (next.step == CaptureStep.sourceChoice &&
+          !_sheetOpen &&
+          !next.pickingPhoto) {
         _openSourceSheet();
       }
+      // The mandatory crop tool fires once per freshly picked draft, as
+      // soon as it's validated and sitting on step 2 uncropped — not for
+      // a draft revisited via "view large" (already cropped), which stays
+      // a plain view.
       if (next.step == CaptureStep.review &&
           next.draft != null &&
           !next.draft!.cropped &&
@@ -210,7 +258,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           ),
         ),
         body: switch (state.step) {
-          CaptureStep.sourceChoice => const SizedBox.shrink(),
+          CaptureStep.sourceChoice =>
+            state.pickingPhoto
+                ? const Center(child: CircularProgressIndicator())
+                : const SizedBox.shrink(),
           CaptureStep.review => _buildReview(l10n, state),
           CaptureStep.details => _buildDetails(l10n, state),
         },
@@ -239,9 +290,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (draft == null) return const SizedBox.shrink();
 
     if (!draft.cropped) {
+      // The crop tool is opening (or just returned) — triggered reactively
+      // from `build`'s `ref.listen`. Its own "Done" is the sole
+      // confirmation left for this photo, so there is nothing to show here
+      // besides a brief loading state.
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Reached only via step 3's "view large" — the photo is already
+    // cropped and confirmed, so this is a plain preview. Retake is kept
+    // for a full do-over.
     return SafeArea(
       child: Column(
         children: [
@@ -277,7 +335,8 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   }
 
   Widget _buildDetails(AppLocalizations l10n, CaptureState state) {
-    final draft = state.draft!;
+    final draft = state.draft;
+    if (draft == null) return const Center(child: CircularProgressIndicator());
     final childrenAsync = ref.watch(allChildrenStreamProvider);
     final children = childrenAsync.value ?? const <domain.Child>[];
     final noChild = children.isEmpty;
@@ -322,6 +381,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     ];
 
     final formFields = <Widget>[
+      // The artist selector's own field label — the selector row already
+      // shows the chosen name or a placeholder, but the field itself had
+      // no label.
       Text(
         l10n.captureArtistLabel,
         style: AppTypography.label.copyWith(color: AppColors.inkMuted),
@@ -390,6 +452,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ),
             ),
           ),
+          // A "view large" link back to the full step-2 preview.
           TextButton(
             onPressed: _controller.backToReviewFromDetails,
             child: Text(l10n.captureDetailsViewLarge),
@@ -398,6 +461,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       ),
     );
 
+    // At medium/expanded width the full step-2-sized preview sits to the
+    // left (50%), the form to the right (capped at 480), and the save bar
+    // moves under the form instead of spanning the full width.
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -919,6 +985,8 @@ class _SourceChoiceSheet extends ConsumerWidget {
           children: [
             Text(l10n.captureTitle, style: AppTypography.h2),
             const SizedBox(height: AppSpacing.s3),
+            // When both permissions are denied, show one combined block
+            // instead of the camera-only one.
             if (bothDenied) ...[
               StateBlock(
                 intent: StateBlockIntent.warning,

@@ -1,5 +1,11 @@
+/// Vendor-neutral synchronization boundary.
+///
+/// This file is deliberately free of Flutter, Drift, provider SDK and
+/// wire-map dependencies. Concrete adapters decode their provider
+/// payloads and return these typed values to the local application.
 library;
 
+/// Thrown when a remote delete has already won a concurrent update.
 class DeletedRowUpdateRejectedException implements Exception {
   final String message;
   const DeletedRowUpdateRejectedException(this.message);
@@ -8,6 +14,7 @@ class DeletedRowUpdateRejectedException implements Exception {
   String toString() => 'DeletedRowUpdateRejectedException: $message';
 }
 
+/// A remote service asks the caller to slow down.
 class RateLimitedException implements Exception {
   final Duration? retryAfter;
   const RateLimitedException({this.retryAfter});
@@ -16,6 +23,7 @@ class RateLimitedException implements Exception {
   String toString() => 'RateLimitedException(retryAfter: $retryAfter)';
 }
 
+/// One typed child row returned by a sync pull.
 class RemoteChildRow {
   final String id;
   final String name;
@@ -34,6 +42,7 @@ class RemoteChildRow {
   });
 }
 
+/// One typed masterpiece row returned by a sync pull.
 class RemoteMasterpieceRow {
   final String id;
   final String childId;
@@ -48,6 +57,7 @@ class RemoteMasterpieceRow {
   final DateTime updatedAt;
   final DateTime? deletedAt;
 
+  /// The server's authoritative byte count for quota accounting.
   final int byteSize;
   final int? imageWidth;
   final int? imageHeight;
@@ -71,6 +81,8 @@ class RemoteMasterpieceRow {
   });
 }
 
+/// One tombstone for an artwork physically removed after the trash
+/// window.
 class PurgedMasterpieceRow {
   final String id;
   final DateTime purgedAt;
@@ -78,6 +90,12 @@ class PurgedMasterpieceRow {
   const PurgedMasterpieceRow({required this.id, required this.purgedAt});
 }
 
+/// A bounded page returned by one remote stream.
+///
+/// [nextCursor] is only safe to persist after every item in [items]
+/// has been applied durably. [hasMore] lets an adapter expose server
+/// pagination without forcing the public core to know its provider's
+/// page token format.
 class PullPage<T> {
   final List<T> items;
   final DateTime? nextCursor;
@@ -92,6 +110,12 @@ class PullPage<T> {
   bool get isEmpty => items.isEmpty;
 }
 
+/// Independent cursors for the three remote streams.
+///
+/// Drift v11 persists this value object as three durable stream
+/// cursors. Keeping it in the neutral contract means public/local and
+/// private/cloud adapters share the same pagination semantics without
+/// exposing a provider token.
 class PullCursorSet {
   final DateTime? children;
   final DateTime? masterpieces;
@@ -136,6 +160,7 @@ bool _sameInstant(DateTime? left, DateTime? right) {
   return left.isAtSameMomentAs(right);
 }
 
+/// Public sync contract implemented by a private/cloud adapter.
 abstract class SyncBackend {
   Future<String> ensureMyFoyer();
 
@@ -170,6 +195,9 @@ abstract class SyncBackend {
   Future<void> softDeleteMasterpiece(String id);
   Future<void> softDeleteMasterpiecesForChild(String childId);
 
+  /// Legacy list methods remain the compatibility bridge until
+  /// adapters all expose bounded pages. Their payload is already
+  /// typed at this boundary.
   Future<List<RemoteChildRow>> pullChildren({
     required String foyerId,
     DateTime? since,

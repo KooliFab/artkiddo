@@ -4,6 +4,9 @@ import '../theme/app_tokens.dart';
 
 enum StateBlockIntent { info, help, warning, error, success }
 
+/// A single component declined into multiple intentions.
+/// An `error` block always shows: what failed, what did not change, and the
+/// exit action — never a raw technical message.
 class StateBlock extends StatelessWidget {
   final StateBlockIntent intent;
   final String title;
@@ -80,6 +83,9 @@ class StateBlock extends StatelessWidget {
                       ),
                       if (body != null) ...[
                         const SizedBox(height: AppSpacing.s1),
+                        // No truncated text without the ability to read it elsewhere,
+                        // and a StateBlock body is not one of the named exceptions.
+                        // Let it wrap freely instead of clipping on large text scales.
                         Text(
                           body!,
                           style: AppTypography.body.copyWith(color: style.ink),
@@ -114,6 +120,7 @@ class StateBlock extends StatelessWidget {
   }
 }
 
+/// Full-page empty state view.
 class EmptyStateView extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -201,6 +208,7 @@ class _PrimaryEmptyAction extends StatelessWidget {
   }
 }
 
+/// Offline banner shown on network-dependent surfaces.
 class OfflineBanner extends StatelessWidget {
   final String label;
   const OfflineBanner({super.key, required this.label});
