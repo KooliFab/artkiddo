@@ -7,6 +7,8 @@ import '../logging/log.dart';
 import '../../domain/action_result.dart';
 import '../storage/local_vault.dart';
 
+/// The account-free artwork trash. It owns only local rows and files; it has
+/// no household, auth, network, or provider dependency.
 class LocalTrashRepository implements TrashRepository {
   static const retention = Duration(days: 30);
 
@@ -66,6 +68,8 @@ class LocalTrashRepository implements TrashRepository {
       final row = await (_db.select(
         _db.masterpiecesTable,
       )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+      // Restoring an already-restored or already-purged item is an
+      // idempotent no-op, as required by the local trash contract.
       if (row == null || row.deletedAt == null) {
         return const ActionSuccess(null);
       }
@@ -158,6 +162,8 @@ class LocalTrashRepository implements TrashRepository {
       return ActionFailed(_mapException(e, st));
     }
 
+    // Database truth is durable before file work starts. Any failed file
+    // deletion is journaled by LocalVault and retried at the next startup.
     for (final row in rows) {
       if (row.relativeImagePath != null) {
         await _vault.deleteFileOrEnqueueCleanup(

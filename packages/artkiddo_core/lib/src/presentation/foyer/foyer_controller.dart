@@ -29,6 +29,8 @@ final foyerConvergenceProvider = Provider<Future<void> Function()>((ref) {
 });
 
 class FoyerState {
+  /// Loads (and, server-side, bootstraps) the caller's family — name,
+  /// invite code, own role — in one call.
   final AsyncAction family;
   final FamilyInfo? familyInfo;
 
@@ -37,6 +39,10 @@ class FoyerState {
   final AsyncAction redeem;
   final RedeemOutcome? redeemOutcome;
 
+  /// Runs right after a confirmed redemption. Tracked separately from
+  /// [redeem] so the screen can show "code accepted, now converging
+  /// your foyer" as a distinct step rather than folding it into the
+  /// same spinner.
   final AsyncAction convergence;
 
   const FoyerState({
@@ -67,6 +73,13 @@ class FoyerState {
   }
 }
 
+/// Client-side controller for the unified household screen:
+/// loading/naming the family, sharing its fixed invite code, redeeming
+/// someone else's code, and the join-or-restore handoff to the sync
+/// engine. Deliberately does not decide whether to merge local
+/// artworks into the joined household itself — this controller only
+/// ever calls the convergence hook after a confirmed redemption, and
+/// lets whatever that hook already does happen as-is.
 class FoyerController extends Notifier<FoyerState> {
   @override
   FoyerState build() => const FoyerState();
@@ -112,6 +125,10 @@ class FoyerController extends Notifier<FoyerState> {
     }
   }
 
+  /// Redeems [code] and, on a confirmed success, immediately triggers
+  /// the join-or-restore convergence — redeeming itself never
+  /// transfers any data: it's the caller's job to chain convergence
+  /// after a confirmed join.
   Future<void> redeem(String code) async {
     if (state.redeem.isBusy) return;
     state = state.copyWith(
@@ -143,9 +160,16 @@ class FoyerController extends Notifier<FoyerState> {
       await converge();
       Log.i('Foyer convergence completed', 'Foyer');
       state = state.copyWith(convergence: const ActionDone());
+      // A successful join changes the caller's active foyer — refresh
+      // name/code/role so the screen reflects the family just joined,
+      // not the one that was displayed before redeeming.
       unawaited(loadFamilyInfo());
     } catch (e, st) {
       Log.e('Failed to converge after join', e, st, 'Foyer');
+      // The membership itself is already durably created server-side at
+      // this point — a convergence failure here is retryable (the
+      // existing "sync now" path already drains the same outbox/pull
+      // cycle), never a reason to report the join itself as failed.
       state = state.copyWith(
         convergence: ActionError(NetworkFailure(cause: e, stack: st)),
       );

@@ -1,5 +1,17 @@
-enum TrashCapability { local, sharedRemote }
+/// Capabilities exposed by one ArtKiddo application composition.
+///
+/// This type deliberately contains product capabilities rather than provider
+/// names. The local application can therefore be composed without importing a
+/// cloud SDK, while the store application can opt into the same UI contracts.
+enum TrashCapability {
+  /// A device-local, recoverable trash (implemented by the local repository).
+  local,
 
+  /// A household-wide trash backed by the private service.
+  sharedRemote,
+}
+
+/// Product capabilities enabled for a running application.
 final class AppCapabilities {
   final bool remoteAccount;
   final bool remoteBackup;
@@ -15,6 +27,7 @@ final class AppCapabilities {
     required this.trash,
   });
 
+  /// The complete account-free, offline-first composition.
   static const local = AppCapabilities(
     remoteAccount: false,
     remoteBackup: false,
@@ -23,6 +36,7 @@ final class AppCapabilities {
     trash: TrashCapability.local,
   );
 
+  /// The current store/cloud composition.
   static const cloud = AppCapabilities(
     remoteAccount: true,
     remoteBackup: true,

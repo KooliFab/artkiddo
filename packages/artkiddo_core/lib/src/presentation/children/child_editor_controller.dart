@@ -171,6 +171,7 @@ class ChildEditorController extends Notifier<ChildEditorState> {
 
   String _normalize(String s) => s.trim().toLowerCase();
 
+  /// Returns the resulting [ActionResult] so the caller (route) can pop.
   Future<ActionResult<String>> save() async {
     if (state.save.isBusy) return const ActionCancelled();
 
@@ -210,6 +211,9 @@ class ChildEditorController extends Notifier<ChildEditorState> {
         );
         state = state.copyWith(save: const ActionDone());
         try {
+          // Light haptic on a successful profile save (create or edit),
+          // and nowhere else. Best-effort, same reasoning as
+          // `CaptureController.save()`.
           await HapticFeedback.lightImpact();
         } catch (e, st) {
           Log.w('Retour haptique indisponible : $e', 'Children');

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 
+/// Gallery artwork card. Decoding is capped (`cacheWidth`) by the
+/// caller; this widget never requests a full resolution decode.
 class ArtworkCard extends StatelessWidget {
   final String?
   childName; // null when the gallery filter already names the child
@@ -111,6 +113,12 @@ class ArtworkCard extends StatelessWidget {
                           spacing: AppSpacing.s2,
                           runSpacing: AppSpacing.s1,
                           children: [
+                            // A cell height budget founded on the worst
+                            // case only holds if the content respects
+                            // the same bounds. Name and badge are
+                            // therefore capped at two lines, like the
+                            // story and the date; the full value stays
+                            // readable on the artwork detail.
                             if (childName != null)
                               ConstrainedBox(
                                 constraints: BoxConstraints(
@@ -158,6 +166,11 @@ class ArtworkCard extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: AppSpacing.s1),
+                        // Without a bound, the date wraps
+                        // indefinitely at large text scale factors and
+                        // breaks out of the cell budget. Two lines are
+                        // enough for the longest form, and the date
+                        // stays fully readable on the artwork detail.
                         Text(
                           dateLabel,
                           maxLines: 2,
@@ -190,6 +203,8 @@ class ArtworkCard extends StatelessWidget {
     );
   }
 
+  // The missing-image state requires an icon *and* a label — a single
+  // marker (the icon alone) is not enough.
   Widget _imageMissing() {
     return Container(
       color: AppColors.surfaceSunken,

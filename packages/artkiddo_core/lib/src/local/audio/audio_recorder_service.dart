@@ -3,18 +3,27 @@ import 'dart:io';
 import 'package:record/record.dart';
 import '../logging/log.dart';
 
+/// Normative audio configuration for voice notes: AAC-LC mono, M4A
+/// container, 44.1 kHz, 64 kbit/s. 2 minutes is approximately 1 MB.
 abstract class AudioRecorderService {
   Future<bool> hasPermission();
   Future<bool> requestPermission();
 
+  /// Starts recording audio directly into [targetPath].
   Future<void> startRecording({required String targetPath});
 
+  /// Stops the current recording and returns the recorded duration in
+  /// milliseconds, or null if no recording was in progress.
   Future<int?> stopRecording();
 
+  /// Cancels and discards the recording, cleaning up the
+  /// in-progress file if any.
   Future<void> cancelRecording();
 
+  /// Normalised amplitude stream (0.0 to 1.0) for visual feedback.
   Stream<double> get amplitudeStream;
 
+  /// Elapsed duration stream of the active recording.
   Stream<Duration> get durationStream;
 
   bool get isRecording;
@@ -22,6 +31,7 @@ abstract class AudioRecorderService {
   Future<void> dispose();
 }
 
+/// Real implementation using the `record` package.
 class RecordAudioRecorderService implements AudioRecorderService {
   final AudioRecorder? _customRecorder;
   AudioRecorder? _recorder;
@@ -130,6 +140,7 @@ class RecordAudioRecorderService implements AudioRecorderService {
     _isRecording = true;
     _startedAt = DateTime.now();
 
+    // Stream amplitude every 100ms.
     _ampSub?.cancel();
     try {
       _ampSub = _getRecorder()
@@ -150,6 +161,7 @@ class RecordAudioRecorderService implements AudioRecorderService {
       Log.w('Impossible d’attacher le flux d’amplitude: $e', 'AudioRecorder');
     }
 
+    // Duration timer every 100ms.
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (_startedAt != null && !_activeDurController.isClosed) {
@@ -225,6 +237,7 @@ class RecordAudioRecorderService implements AudioRecorderService {
   }
 }
 
+/// Fake implementation for tests without native platform channels.
 class FakeAudioRecorderService implements AudioRecorderService {
   bool permissionGranted = true;
   String? currentPath;
@@ -261,6 +274,7 @@ class FakeAudioRecorderService implements AudioRecorderService {
     currentPath = targetPath;
     startedAt = DateTime.now();
 
+    // Create target file so it exists.
     final file = File(targetPath);
     if (!await file.exists()) {
       await file.create(recursive: true);

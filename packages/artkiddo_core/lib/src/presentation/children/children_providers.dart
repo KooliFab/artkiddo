@@ -15,10 +15,13 @@ final allChildrenStreamProvider = StreamProvider<List<Child>>((ref) {
   return repository.watchAll();
 });
 
+/// Number of artworks per child for child row subtitles.
 final artworkCountByChildProvider = FutureProvider<Map<String, int>>((
   ref,
 ) async {
   final repository = ref.watch(childrenRepositoryProvider);
+  // Re-run whenever the artwork or children streams change so the counts
+  // stay in sync after a create/delete.
   ref.watch(allChildrenStreamProvider);
   return repository.countArtworksByChild();
 });

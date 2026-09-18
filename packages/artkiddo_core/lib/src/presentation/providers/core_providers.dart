@@ -20,6 +20,7 @@ final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
   return AppEnvironment.local;
 });
 
+/// Global singletons for local storage and local database.
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
   ref.onDispose(() => db.close());

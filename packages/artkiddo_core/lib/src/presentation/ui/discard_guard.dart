@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../theme/app_tokens.dart';
 
+/// Intercepts Back/Close on a dirty form and only lets the positive answer
+/// through the dialog "Discard changes?".
+///
+/// Used by capture, child editor and story editing.
 class DiscardGuard extends StatelessWidget {
   final bool isDirty;
   final Widget child;

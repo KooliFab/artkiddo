@@ -16,6 +16,11 @@ import '../foyer/foyer_controller.dart' show foyerApiProvider;
 import '../sharing/share_controller.dart' show sharingServiceProvider;
 import '../../local/repositories/trash_repository.dart';
 
+/// Creates the provider graph after validating capabilities and services.
+///
+/// The bootstrap has no vendor dependency. A private composition may provide
+/// an initializer through [CloudServices]; the local composition passes null,
+/// so no network SDK is initialized.
 abstract final class ArtKiddoBootstrap {
   static ProviderContainer createContainer(ArtKiddoBootstrapConfig config) {
     config.validate();
@@ -79,6 +84,7 @@ abstract final class ArtKiddoBootstrap {
     }
   }
 
+  /// Initializes the optional cloud service and schedules local maintenance.
   static Future<ProviderContainer> start(ArtKiddoBootstrapConfig config) async {
     config.validate();
     await config.cloudServices?.initialize?.call();

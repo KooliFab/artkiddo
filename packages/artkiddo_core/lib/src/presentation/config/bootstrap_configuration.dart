@@ -5,6 +5,7 @@ import 'cloud_services.dart';
 
 enum AppEnvironment { local, production, test }
 
+/// Typed input to the reusable application bootstrap.
 final class ArtKiddoBootstrapConfig {
   final AppCapabilities capabilities;
   final CloudServices? cloudServices;
@@ -21,6 +22,8 @@ final class ArtKiddoBootstrapConfig {
     this.overrides = const [],
   });
 
+  /// Validates all capability/service invariants before any provider or UI is
+  /// constructed. No fallback between local and cloud modes is permitted.
   void validate() {
     final failures = <String>[];
     final cloud = cloudServices;
@@ -83,6 +86,8 @@ final class ArtKiddoBootstrapConfig {
   }
 }
 
+/// A configuration error that must be visible to the user and actionable by
+/// the owning composition. It is never converted to an empty local state.
 final class BootstrapConfigurationException extends StateError {
   final List<String> failures;
 

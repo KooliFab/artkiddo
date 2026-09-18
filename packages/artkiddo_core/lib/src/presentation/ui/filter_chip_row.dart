@@ -14,6 +14,7 @@ class FilterChipItem {
   });
 }
 
+/// Filter chip bar with `radiogroup` semantics.
 class AppFilterChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -36,6 +37,8 @@ class AppFilterChip extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadii.full),
           onTap: onTap,
+          // The painted chip surface is 40 tall; the 48 tap target comes from an
+          // extended hit area around it, never from growing the visible chip.
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: kMinTapTarget),
             child: Center(

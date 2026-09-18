@@ -3,7 +3,13 @@ import 'package:flutter/services.dart';
 
 import 'app_tokens.dart';
 
+/// Material theme built from design tokens.
+///
+/// Dark mode is explicitly out of scope for phase 1:
+/// the app forces [ThemeMode.light].
 class AppTheme {
+  /// Playpen Sans is the product's voice across the entire app. Individual
+  /// display styles only adjust scale and weight; they do not switch family.
   static const fontFamily = 'packages/artkiddo_core/Playpen Sans';
 
   static ThemeData get lightTheme {

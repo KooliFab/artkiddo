@@ -15,6 +15,7 @@ import 'children_providers.dart';
 
 enum ChildAction { viewArtworks, edit, delete }
 
+/// Modal sheet (compact) / anchored menu (medium/expanded).
 Future<void> showChildActionsSheet(
   BuildContext context,
   WidgetRef ref,
@@ -32,6 +33,8 @@ Future<void> showChildActionsSheet(
     return;
   }
 
+  // At medium/expanded, this anchors a context menu on the tapped
+  // child row instead of the compact full-width sheet.
   final renderBox = context.findRenderObject() as RenderBox?;
   final overlayBox =
       Overlay.of(context).context.findRenderObject() as RenderBox?;
@@ -78,6 +81,9 @@ Future<void> showChildActionsSheet(
   await _performChildAction(context, ref, action, child, artworkCount);
 }
 
+/// Shared by the sheet's `ListTile`s and the anchored menu's
+/// selection — the four actions in one place, so compact and
+/// medium/expanded stay behaviourally identical.
 Future<void> _performChildAction(
   BuildContext context,
   WidgetRef ref,
@@ -101,6 +107,7 @@ Future<void> _performChildAction(
         ),
       );
       if (!context.mounted) return;
+      // An edit never confirmed itself either.
       if (result is ActionSuccess<String>) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -242,6 +249,12 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
     if (!mounted) return;
     switch (result) {
       case ActionSuccess():
+        // The filter-orphan reset (and its one-shot filter-reset
+        // banner) is owned entirely by the gallery filter notifier,
+        // which reacts to the children stream. Resetting the filter
+        // here too would race ahead of that listener and starve it
+        // of the "was this the active filter" signal it needs to
+        // post the banner.
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

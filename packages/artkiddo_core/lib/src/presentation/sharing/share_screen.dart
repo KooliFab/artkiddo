@@ -163,6 +163,8 @@ class _ShareSheetContent extends ConsumerWidget {
     ShareController controller,
     String childName,
   ) {
+    // The child having been deleted mid-flow is its own state, not a
+    // silent empty list.
     if (state.step == ShareStep.childMissing) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -198,6 +200,8 @@ class _ShareSheetContent extends ConsumerWidget {
               ref.read(compositionActionsProvider).openAccount?.call(context);
             },
           ),
+          // Only offered when share was opened from the artwork
+          // detail for a specific piece.
           if (args.sendImage != null) ...[
             const SizedBox(height: AppSpacing.s2),
             Align(
@@ -215,6 +219,9 @@ class _ShareSheetContent extends ConsumerWidget {
       );
     }
 
+    // `choice` and `linkReady` both show the offline banner and the
+    // "send this image" block — factored above the step-specific
+    // content.
     final children = <Widget>[
       if (state.offline) ...[
         OfflineBanner(label: l10n.settingsOffline),
@@ -230,6 +237,9 @@ class _ShareSheetContent extends ConsumerWidget {
           body: l10n.shareNotSyncedBody,
           actionLabel: l10n.shareNotSyncedAction,
           onAction: () {
+            // This action re-poses the same "sign in first" style
+            // deferred flow used for backup — the backup itself lives in
+            // account settings.
             ref
                 .read(pendingIntentProvider.notifier)
                 .pose(const SyncNowIntent());
@@ -305,6 +315,8 @@ class _ShareSheetContent extends ConsumerWidget {
       ]);
     }
 
+    // A second, clearly separated block, visible only when entered
+    // from the artwork detail.
     if (args.sendImage != null) {
       children.addAll([
         const SizedBox(height: AppSpacing.s5),
@@ -341,6 +353,11 @@ class _ShareSheetContent extends ConsumerWidget {
   }
 }
 
+/// One row of the existing-links list — up to 5, each with its own
+/// copy/revoke action, and its own busy/error rendering for the
+/// revoke: the old code fired-and-forgot `revokeLink`, with no
+/// spinner and no error path, so a failed revoke looked identical to
+/// a successful one.
 class _LinkRow extends ConsumerWidget {
   final ShareLink link;
   final ShareController controller;
@@ -351,6 +368,11 @@ class _LinkRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(shareControllerProvider(controller.args));
     final revoking = state.revoke.isBusy;
+    // The plaintext URL only ever exists, server-side, in the
+    // link-creation call's one-time response — a link this device did
+    // not itself create (cached locally at creation time) has no URL
+    // to show, copy or send. Revoking stays available regardless: it
+    // never needed the URL, only the link's `id`.
     final url = link.url;
 
     return Column(
@@ -467,6 +489,9 @@ class _LinkRow extends ConsumerWidget {
   }
 }
 
+/// The revoke confirmation dialog itself watches `revoke`'s state so
+/// it can go `busy` and non-dismissible, then close only once the
+/// service has actually confirmed the revoke.
 class _RevokeDialog extends ConsumerStatefulWidget {
   final ShareController controller;
   final String linkId;
@@ -498,6 +523,10 @@ class _RevokeDialogState extends ConsumerState<_RevokeDialog> {
       if (_confirmed && wasBusy && next.revoke is ActionDone && mounted) {
         final messenger = ScaffoldMessenger.of(context);
         Navigator.of(context).pop();
+        // The link's disappearance is one signal, the confirmation
+        // banner is a second, deliberate one. It is only posted here,
+        // after the service confirms, never on the dialog's own
+        // close.
         messenger.showSnackBar(SnackBar(content: Text(l10n.shareRevoked)));
       }
     });

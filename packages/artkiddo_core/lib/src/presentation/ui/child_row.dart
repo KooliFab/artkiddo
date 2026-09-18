@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 
+/// A single tap target for the whole child row; opens child actions.
+/// No competing icons.
 class ChildRow extends StatelessWidget {
   final String name;
   final String subtitle;

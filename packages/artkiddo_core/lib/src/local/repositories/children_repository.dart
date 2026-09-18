@@ -8,6 +8,16 @@ import '../../domain/action_result.dart';
 import '../../sync/sync_outbox.dart';
 import '../../domain/child.dart';
 
+/// Local-first persistence for children.
+///
+/// `delete` removes the child row and every masterpiece row for that
+/// child in a single transaction (explicit deletion, not relying
+/// solely on the SQLite foreign-key cascade, even though
+/// `PRAGMA foreign_keys = ON` is set on every connection), then
+/// attempts to delete each masterpiece's file — and its
+/// `display`/`thumbnail` derivatives, if any were generated —
+/// recording deferred cleanup entries for any that fail without
+/// failing the overall operation.
 abstract class ChildrenRepository {
   Stream<List<Child>> watchAll(); // sorted by name, case-insensitive
   Future<Child?> getById(String id);
@@ -23,8 +33,16 @@ abstract class ChildrenRepository {
   });
   Future<ActionResult<void>> delete(String id); // cascades masterpieces + files
 
+  /// Marks the local row as synchronized after a successful remote
+  /// send.
+  ///
+  /// Separate from [update]: that one expresses a change made by the
+  /// parent, while this only changes sync state. Without this method,
+  /// an already-sent row would stay `localOnly` and would be
+  /// re-uploaded on every sync.
   Future<ActionResult<void>> markSynced(String id);
 
+  /// Writes a `pull`-derived row by its own id — never a fresh UUID.
   Future<ActionResult<void>> upsertFromRemote({
     required String id,
     required String name,
@@ -32,6 +50,9 @@ abstract class ChildrenRepository {
     required DateTime createdAt,
   });
 
+  /// Applies a tombstone seen on `pull` by hard-deleting the local row
+  /// (and cascading to its masterpieces exactly like [delete] does).
+  /// Idempotent: a no-op success if the row is already absent.
   Future<ActionResult<void>> applyRemoteTombstone(String id);
 }
 
@@ -109,6 +130,8 @@ class DriftChildrenRepository implements ChildrenRepository {
     final id = _uuid.v4();
     final now = DateTime.now();
     try {
+      // The outbox entry is written in the same transaction as the
+      // row.
       await _db.transaction(() async {
         await _db
             .into(_db.childrenTable)
@@ -122,6 +145,13 @@ class DriftChildrenRepository implements ChildrenRepository {
                 syncState: const Value('localOnly'),
               ),
             );
+        // A single outbox entry for the child. The sync engine
+        // cascades the server-side tombstone to every masterpiece of
+        // this child itself — the logical deletion of a child
+        // logically marks its artworks too, never a database
+        // cascade — so enqueueing one entry per orphaned masterpiece
+        // here would be redundant, and wrong for any masterpiece
+        // never pushed at all.
         await _outbox.enqueue(
           entity: SyncEntityKind.child,
           entityId: id,
@@ -244,6 +274,11 @@ class DriftChildrenRepository implements ChildrenRepository {
           db: _db,
         );
       }
+      // The cascade must also take each masterpiece's derivatives
+      // with it — otherwise they survive as orphans with no row
+      // left to reference them, exactly the leak
+      // `DriftMasterpiecesRepository.delete` already avoids for a
+      // single masterpiece.
       await _vault.deleteDerivativeFilesOrEnqueueCleanup(
         displayRelativePath: masterpiece.displayImagePath,
         thumbnailRelativePath: masterpiece.thumbnailImagePath,
@@ -289,6 +324,9 @@ class DriftChildrenRepository implements ChildrenRepository {
   Future<ActionResult<void>> applyRemoteTombstone(String id) async {
     final existing = await getById(id);
     if (existing == null) {
+      // Idempotent: already applied, or never pulled. Either way the
+      // desired end state holds — restoring twice in a row must never
+      // create a duplicate.
       return const ActionSuccess(null);
     }
 

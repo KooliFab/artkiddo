@@ -26,6 +26,8 @@ final masterpiecesRepositoryProvider = Provider<MasterpiecesRepository>((ref) {
   );
 });
 
+/// `keepAlive`, not persisted between launches: at startup the filter
+/// is always `all`.
 sealed class GalleryFilter {
   const GalleryFilter();
 
@@ -69,6 +71,10 @@ class GalleryFilterNotifier extends Notifier<GalleryFilter> {
           !children.any((c) => c.id == current.childId)) {
         final removedName = _lastKnownName(current.childId, previous?.value);
         state = const AllChildren();
+        // Post the one-shot filter-reset banner through its own provider
+        // (reactive via `watch`), instead of a plain field that the view
+        // had to "consume" mid-build — which cleared it before the next
+        // frame could render it.
         ref
             .read(galleryFilterResetBannerProvider.notifier)
             .show(removedName ?? '');
@@ -93,6 +99,9 @@ final galleryFilterProvider =
       GalleryFilterNotifier.new,
     );
 
+/// One-shot `filterReset` banner: shown once when the filtered child
+/// is deleted, dismissed explicitly by the user or by switching the
+/// filter — never consumed as a side effect of a `build()`.
 class GalleryFilterResetBannerNotifier extends Notifier<String?> {
   @override
   String? build() => null;
@@ -107,6 +116,9 @@ final galleryFilterResetBannerProvider =
       GalleryFilterResetBannerNotifier.new,
     );
 
+/// Gallery tap-on-active-tab scroll-to-top request — mirrors
+/// [ShellTabRequestNotifier]'s one-shot pattern so the shell can
+/// signal the gallery branch without owning its `ScrollController`.
 class GalleryScrollToTopRequestNotifier extends Notifier<int> {
   @override
   int build() => 0;
@@ -119,6 +131,7 @@ final galleryScrollToTopRequestProvider =
       GalleryScrollToTopRequestNotifier.new,
     );
 
+/// In-memory per-filter scroll offsets, reset at launch.
 class GalleryScrollOffsets {
   final Map<String, double> _offsets = {};
 
@@ -130,7 +143,13 @@ final galleryScrollOffsetsProvider = Provider<GalleryScrollOffsets>(
   (ref) => GalleryScrollOffsets(),
 );
 
+/// Presentation-level artwork tile — distinct from the persisted
+/// [Masterpiece] entity. Path resolution and existence check happen
+/// once per batch here, not per-card.
 class ArtworkTile {
+  /// The already-resolved row lets the destination mount its matching
+  /// Hero in the first route frame, rather than waiting for a second
+  /// database read.
   final Masterpiece masterpiece;
   final String masterpieceId;
   final String childId;
@@ -139,6 +158,10 @@ class ArtworkTile {
   final bool imageExists;
   final DateTime addedAt;
 
+  /// Date the child actually drew the artwork, if the parent set it.
+  /// The card shows this preferentially, and the age is computed on
+  /// the same basis: otherwise the same artwork would show two
+  /// different ages depending on the screen.
   final DateTime? drawnAt;
   final String age;
   final String? story;
@@ -161,6 +184,10 @@ class ArtworkTile {
   bool get hasAudio => masterpiece.hasAudio;
 }
 
+/// Keeps the gallery stable while images load. Ratios are computed
+/// from the local thumbnail once, then reused for the lifetime of the
+/// application. Remote or unreadable files deliberately fall back to
+/// a square tile.
 class ImageAspectRatioCache {
   final Map<String, double> _ratios = {};
 
@@ -190,6 +217,9 @@ class GalleryTilesState {
   const GalleryTilesState({required this.tiles, required this.totalCount});
 }
 
+/// Watches masterpieces for the current filter and joins them with
+/// their child, resolving file paths and computing ages once per
+/// emission.
 final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
   final filter = ref.watch(galleryFilterProvider);
   final childId = switch (filter) {
@@ -215,6 +245,15 @@ final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
     final tiles = <ArtworkTile>[];
     for (final m in masterpieces) {
       final child = childrenById[m.childId];
+      // The grid reads the thumbnail derivative, falling back to the
+      // untouched original when no derivative has been generated yet
+      // (fresh capture before the best-effort step ran, or a still-
+      // pending backfill row) — `bestThumbnailImagePath` makes that
+      // fallback the caller's only concern, not a per-screen `if`.
+      // `null` (a row pulled from another member's device whose
+      // thumbnail hasn't downloaded yet, or whose download failed)
+      // reuses the exact same "missing image" tile the grid already
+      // renders for a vanished local file — never an empty cell.
       final thumbnailPath = m.bestThumbnailImagePath;
       final file = thumbnailPath != null
           ? await vault.resolveFile(thumbnailPath)
@@ -251,6 +290,8 @@ final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
   }
 });
 
+/// Highlighted card id after a successful capture — consumed once by
+/// `HighlightOnce`.
 class HighlightNotifier extends Notifier<String?> {
   @override
   String? build() => null;

@@ -1,5 +1,12 @@
 import '../domain/app_failure.dart';
 
+/// Presentation-level state machine for a single asynchronous command.
+///
+/// The transition `idle -> busy` MUST happen synchronously in the
+/// controller, before the first `await` — this is the only recognized
+/// double-tap guard. A command received while `busy` is ignored silently.
+/// [ActionDone] is transitory: consumed once by the UI then the controller
+/// resets to [ActionIdle].
 sealed class AsyncAction {
   const AsyncAction();
 
@@ -16,6 +23,8 @@ class ActionBusy extends AsyncAction {
   const ActionBusy([this.progressLabel]);
 }
 
+/// Transitory: signals a just-completed success. The UI consumes it (shows
+/// its effect once) then the controller must move back to [ActionIdle].
 class ActionDone extends AsyncAction {
   const ActionDone();
 }

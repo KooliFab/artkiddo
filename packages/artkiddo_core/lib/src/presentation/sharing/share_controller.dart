@@ -21,11 +21,15 @@ final sharingServiceProvider = Provider<SharingService>((ref) {
 });
 
 /// Share flow steps.
+/// The sharing flow's steps.
 enum ShareStep { signedOut, choice, linkReady, error, childMissing }
 
 class ShareArgs {
   final String childId;
   final String childName;
+  // The choice screen shows a second, separately-labelled block
+  // ("Send this image") only when share was entered from the artwork
+  // detail for a specific piece. Non-null exactly in that case.
   final VoidCallback? sendImage;
 
   const ShareArgs({
@@ -34,6 +38,9 @@ class ShareArgs {
     this.sendImage,
   });
 
+  // Riverpod families key by `==`/`hashCode`. `sendImage` is deliberately
+  // excluded: two closures over the same (childId, name) must still hit
+  // the same controller instance.
   @override
   bool operator ==(Object other) =>
       other is ShareArgs &&
@@ -50,6 +57,10 @@ class ShareState {
   final AsyncAction revoke;
   final bool childHasSyncedArtworks;
   final bool loading;
+  // The sheet must show the *current* child name even when re-opened
+  // through a pending intent with an empty placeholder — resolved
+  // here from the repository instead of trusting `args.childName`
+  // verbatim.
   final String? resolvedChildName;
   final bool offline;
   final bool newLinkIncludeAudio;
@@ -107,6 +118,11 @@ class ShareController extends Notifier<ShareState> {
   }
 
   Future<void> _load() async {
+    // Re-derive the child's current name from the repository — never
+    // trust `args.childName` verbatim, which is an empty placeholder when
+    // share is reopened via a pending intent (the controller is keyed
+    // only by `childId`/`childName`, so a placeholder name at
+    // construction never gets corrected otherwise).
     final children = await ref
         .read(childrenRepositoryProvider)
         .watchAll()
@@ -132,6 +148,10 @@ class ShareController extends Notifier<ShareState> {
     final result = await service.listLinks(args.childId);
     switch (result) {
       case ActionSuccess(value: final links):
+        // The backend keeps a revoked link's row (audit trail) instead of
+        // deleting it, so a revoked link is still returned by `listLinks`
+        // — filtered out here so the "existing links" panel keeps its
+        // intended meaning: only links a member could still use today.
         final visibleLinks = links.where((l) => !l.revoked).toList();
         state = state.copyWith(
           links: visibleLinks,
@@ -159,6 +179,8 @@ class ShareController extends Notifier<ShareState> {
   }
 
   Future<ActionResult<ShareLink>> createLink() async {
+    // Only `busy` blocks a new command — retry must stay live after a
+    // failed create.
     if (state.create.isBusy) return const ActionCancelled();
     if (!state.childHasSyncedArtworks) return const ActionCancelled();
 
@@ -172,6 +194,7 @@ class ShareController extends Notifier<ShareState> {
       case ActionSuccess(value: final link):
         state = state.copyWith(
           create: const ActionDone(),
+          // At most 5, most recent first.
           links: [link, ...state.links].take(5).toList(),
           step: ShareStep.linkReady,
         );
@@ -215,12 +238,15 @@ class ShareController extends Notifier<ShareState> {
   }
 
   Future<ActionResult<void>> revokeLink(String linkId) async {
+    // Same fix as createLink — a failed revoke must stay retryable.
     if (state.revoke.isBusy) return const ActionCancelled();
     state = state.copyWith(revoke: const ActionBusy());
     final service = ref.read(sharingServiceProvider);
     final result = await service.revokeLink(linkId);
     switch (result) {
       case ActionSuccess():
+        // The link is only dropped from the list *after* the service
+        // confirms the revoke — never optimistically.
         final remaining = state.links.where((l) => l.id != linkId).toList();
         state = state.copyWith(
           revoke: const ActionDone(),
@@ -228,6 +254,7 @@ class ShareController extends Notifier<ShareState> {
           step: remaining.isEmpty ? ShareStep.choice : ShareStep.linkReady,
         );
       case ActionFailed(failure: final f):
+        // The link stays listed, and the failure is now surfaced.
         state = state.copyWith(revoke: ActionError(f));
       case ActionCancelled():
         state = state.copyWith(revoke: const ActionIdle());
@@ -238,6 +265,8 @@ class ShareController extends Notifier<ShareState> {
   void consumeRevokeError() =>
       state = state.copyWith(revoke: const ActionIdle());
 
+  /// Called after coming back signed-in from account settings via a
+  /// pending share intent.
   Future<void> refreshAfterSignIn() async {
     state = state.copyWith(loading: true);
     await _load();

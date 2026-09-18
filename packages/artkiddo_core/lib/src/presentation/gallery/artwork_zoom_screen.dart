@@ -10,6 +10,7 @@ import '../theme/app_tokens.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'gallery_providers.dart';
 
+/// The only dark screen in the app.
 class ArtworkZoomScreen extends ConsumerStatefulWidget {
   final String masterpieceId;
   final String childName;
@@ -44,6 +45,12 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
     super.dispose();
   }
 
+  // The `+`/`-` controls are an accessibility *requirement*, not an
+  // option — pinch-only zoom was the entire bug. `PhotoViewController.
+  // scale` starts null until the first frame resolves the `contained`
+  // computed scale; we capture that as `_initialScale` (the "fitted"
+  // state) the first time it's reported, then every button press and
+  // the double-tap toggle work off that anchor.
   void _onControllerUpdate() {
     final scale = _controller.scale;
     if (scale != null && _initialScale == null) {
@@ -74,6 +81,8 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
     final initial = _initialScale;
     if (initial == null) return;
     final current = _controller.scale ?? initial;
+    // "fitted <-> 2x": if we're at (or below) the fitted scale, jump
+    // to 2x; otherwise reset to fitted.
     _controller.scale = current > initial * 1.05 ? initial : initial * 2;
   }
 
@@ -114,8 +123,15 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
           }
           final masterpiece = snapshot.data;
           if (masterpiece == null) {
+            // `imageMissing` — catalog text, not a hardcoded literal.
             return _ZoomMessage(text: l10n.artworkZoomImageMissing);
           }
+          // Zoom wants the highest fidelity actually on this device — the
+          // untouched original when there is one, the display derivative
+          // otherwise (a converged row has no original here at all; the
+          // original downloaded at open time means the display
+          // derivative once the remote side stops holding true
+          // originals).
           final zoomPath =
               masterpiece.relativeImagePath ?? masterpiece.bestDisplayImagePath;
           return FutureBuilder<File>(
@@ -139,6 +155,10 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
                       backgroundDecoration: const BoxDecoration(
                         color: AppColors.immersive,
                       ),
+                      // No built-in double tap — it's handled by the
+                      // wrapping `GestureDetector` above so the toggle
+                      // can land on an exact 2x, not the package's own
+                      // covered/original cycle.
                       enablePanAlways: true,
                       loadingBuilder: (context, event) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
@@ -147,6 +167,8 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
                           _ZoomMessage(text: l10n.artworkZoomDecodeFailed),
                     ),
                   ),
+                  // Register for scale updates once the widget (and the
+                  // controller's initial scale) exists.
                   _ScaleListener(
                     controller: _controller,
                     onUpdate: _onControllerUpdate,
@@ -171,6 +193,9 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
   }
 }
 
+/// A no-op widget purely to attach/detach a controller listener tied
+/// to this element's lifecycle, without turning `PhotoView` itself
+/// into a stateful listener host.
 class _ScaleListener extends StatefulWidget {
   final PhotoViewController controller;
   final VoidCallback onUpdate;

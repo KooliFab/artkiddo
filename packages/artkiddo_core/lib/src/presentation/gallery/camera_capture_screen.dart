@@ -7,6 +7,8 @@ import '../ui/app_button.dart';
 import '../utils/app_settings_launcher.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
+/// Outcome of a [CameraCaptureScreen] round trip, popped back to whoever
+/// pushed it (`_acquirePhoto` in capture presentation).
 sealed class CameraCaptureOutcome {
   const CameraCaptureOutcome();
 }
@@ -24,6 +26,9 @@ class CameraCaptureCancelled extends CameraCaptureOutcome {
   const CameraCaptureCancelled();
 }
 
+/// Replaces the OS camera app (which shows its own "Retake / Use Photo"
+/// confirmation) with a live, in-app viewfinder. The only confirmation left for
+/// a camera-sourced photo is the crop step that follows (`CaptureController.cropDraft`).
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
