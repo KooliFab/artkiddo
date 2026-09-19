@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,13 +10,14 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 
 class _FakeSharingService implements SharingService {
   List<ShareLink> links = [];
+  ActionResult<List<ShareLink>>? listResult;
   bool lastCreatedIncludeAudio = false;
   String? lastUpdatedLinkId;
   bool? lastUpdatedIncludeAudio;
 
   @override
   Future<ActionResult<List<ShareLink>>> listLinks(String childId) async {
-    return ActionSuccess(links);
+    return listResult ?? ActionSuccess(links);
   }
 
   @override
@@ -64,6 +66,7 @@ void main() {
   late AppDatabase db;
   late LocalVault vault;
   late _FakeSharingService sharingService;
+  late ShareBackup backupAction;
   late ProviderContainer container;
 
   late String testChildId;
@@ -75,6 +78,7 @@ void main() {
         appDatabaseProvider.overrideWith((ref) => db),
         localVaultProvider.overrideWith((ref) => vault),
         sharingServiceProvider.overrideWith((ref) => sharingService),
+        shareBackupProvider.overrideWith((ref) => backupAction),
         sessionEmailProvider.overrideWith((ref) => 'parent@example.com'),
       ],
     );
@@ -111,6 +115,7 @@ void main() {
     );
     vault = LocalVault(documentsDirProvider: () async => docsDir);
     sharingService = _FakeSharingService();
+    backupAction = (childId) async => const ActionSuccess(null);
 
     // Insert child and a synced masterpiece
     await initContainer();
@@ -194,6 +199,156 @@ void main() {
           .links
           .first;
       expect(updatedLink.includeAudio, isTrue);
+    },
+  );
+
+  test('expired links are excluded at the exact expiry boundary', () async {
+    final now = DateTime.utc(2026, 9, 19);
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => db),
+        localVaultProvider.overrideWith((ref) => vault),
+        sharingServiceProvider.overrideWith((ref) => sharingService),
+        sessionEmailProvider.overrideWith((ref) => 'parent@example.com'),
+        shareClockProvider.overrideWithValue(() => now),
+      ],
+    );
+    sharingService.links = [
+      ShareLink(
+        id: 'expired',
+        url: 'https://example.com/expired',
+        createdAt: now.subtract(const Duration(days: 1)),
+        expiresAt: now,
+        revoked: false,
+      ),
+      ShareLink(
+        id: 'active',
+        url: 'https://example.com/active',
+        createdAt: now,
+        expiresAt: now.add(const Duration(seconds: 1)),
+        revoked: false,
+      ),
+    ];
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    container.read(shareControllerProvider(args));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(
+      container.read(shareControllerProvider(args)).links.map((l) => l.id),
+      ['active'],
+    );
+  });
+
+  test(
+    'backup prevents double submit and unlocks only the selected child',
+    () async {
+      final child = await container
+          .read(childrenRepositoryProvider)
+          .create(name: 'Bob', birthDate: DateTime(2021, 1, 1));
+      final childId = (child as ActionSuccess<String>).value;
+      final image = File(p.join(tempRoot.path, 'second.jpg'));
+      await image.writeAsBytes([1, 2, 3]);
+      final artwork = await container
+          .read(masterpiecesRepositoryProvider)
+          .create(
+            childId: childId,
+            sourceImageFile: image,
+            addedAt: DateTime.now(),
+          );
+      final artworkId = (artwork as ActionSuccess<String>).value;
+      final secondArgs = ShareArgs(childId: childId, childName: '');
+      final controller = container.read(
+        shareControllerProvider(secondArgs).notifier,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(
+        container
+            .read(shareControllerProvider(secondArgs))
+            .childHasSyncedArtworks,
+        isFalse,
+      );
+      expect(
+        container.read(shareControllerProvider(secondArgs)).resolvedChildName,
+        'Bob',
+      );
+
+      final gate = Completer<void>();
+      var calls = 0;
+      backupAction = (requestedChildId) async {
+        expect(requestedChildId, childId);
+        calls++;
+        await gate.future;
+        await container
+            .read(masterpiecesRepositoryProvider)
+            .markSynced(artworkId);
+        return const ActionFailed(ServiceFailure());
+      };
+      final first = controller.backupNow();
+      expect(
+        container.read(shareControllerProvider(secondArgs)).backup.isBusy,
+        isTrue,
+      );
+      expect(await controller.backupNow(), isA<ActionCancelled<void>>());
+      gate.complete();
+      expect(await first, isA<ActionSuccess<void>>());
+      expect(calls, 1);
+      expect(
+        container
+            .read(shareControllerProvider(secondArgs))
+            .childHasSyncedArtworks,
+        isTrue,
+      );
+    },
+  );
+
+  test('backup without synced artwork shows a retryable error', () async {
+    final child = await container
+        .read(childrenRepositoryProvider)
+        .create(name: 'Bob', birthDate: DateTime(2021, 1, 1));
+    final childId = (child as ActionSuccess<String>).value;
+    final secondArgs = ShareArgs(childId: childId, childName: 'Bob');
+    final controller = container.read(
+      shareControllerProvider(secondArgs).notifier,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    backupAction = (id) async => const ActionSuccess(null);
+    expect(await controller.backupNow(), isA<ActionFailed<void>>());
+    expect(
+      container.read(shareControllerProvider(secondArgs)).backup,
+      isA<ActionError>(),
+    );
+    expect(await controller.backupNow(), isA<ActionFailed<void>>());
+    expect(
+      container
+          .read(shareControllerProvider(secondArgs))
+          .childHasSyncedArtworks,
+      isFalse,
+    );
+  });
+
+  test(
+    'backup retries after a link-list network error and clears offline',
+    () async {
+      final child = await container
+          .read(childrenRepositoryProvider)
+          .create(name: 'Bob', birthDate: DateTime(2021, 1, 1));
+      final childId = (child as ActionSuccess<String>).value;
+      final secondArgs = ShareArgs(childId: childId, childName: 'Bob');
+      sharingService.listResult = const ActionFailed(NetworkFailure());
+      final controller = container.read(
+        shareControllerProvider(secondArgs).notifier,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(
+        container.read(shareControllerProvider(secondArgs)).offline,
+        isTrue,
+      );
+
+      backupAction = (id) async => const ActionSuccess(null);
+      expect(await controller.backupNow(), isA<ActionFailed<void>>());
+      final state = container.read(shareControllerProvider(secondArgs));
+      expect(state.offline, isFalse);
+      expect(state.backup, isA<ActionError>());
     },
   );
 }

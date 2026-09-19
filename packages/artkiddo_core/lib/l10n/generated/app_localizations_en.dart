@@ -1258,6 +1258,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareNotSyncedAction => 'Back up now';
 
   @override
+  String get shareBackupRunning => 'Backing up…';
+
+  @override
   String get shareChildMissing => 'This profile no longer exists.';
 
   @override

@@ -20,6 +20,14 @@ final sharingServiceProvider = Provider<SharingService>((ref) {
   return const NoSharingService();
 });
 
+/// Optional backup action supplied by a composition with web gallery links.
+typedef ShareBackup = Future<ActionResult<void>> Function(String childId);
+
+final shareBackupProvider = Provider<ShareBackup?>((ref) => null);
+
+/// Clock used to decide whether a previously created link is still usable.
+final shareClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
 /// Share flow steps.
 /// The sharing flow's steps.
 enum ShareStep { signedOut, choice, linkReady, error, childMissing }
@@ -55,6 +63,7 @@ class ShareState {
   final List<ShareLink> links;
   final AsyncAction create;
   final AsyncAction revoke;
+  final AsyncAction backup;
   final bool childHasSyncedArtworks;
   final bool loading;
   // The sheet must show the *current* child name even when re-opened
@@ -71,6 +80,7 @@ class ShareState {
     this.links = const [],
     this.create = const ActionIdle(),
     this.revoke = const ActionIdle(),
+    this.backup = const ActionIdle(),
     this.childHasSyncedArtworks = true,
     this.loading = true,
     this.resolvedChildName,
@@ -84,6 +94,7 @@ class ShareState {
     List<ShareLink>? links,
     AsyncAction? create,
     AsyncAction? revoke,
+    AsyncAction? backup,
     bool? childHasSyncedArtworks,
     bool? loading,
     String? resolvedChildName,
@@ -96,6 +107,7 @@ class ShareState {
       links: links ?? this.links,
       create: create ?? this.create,
       revoke: revoke ?? this.revoke,
+      backup: backup ?? this.backup,
       childHasSyncedArtworks:
           childHasSyncedArtworks ?? this.childHasSyncedArtworks,
       loading: loading ?? this.loading,
@@ -140,9 +152,7 @@ class ShareController extends Notifier<ShareState> {
       return;
     }
 
-    final repo = ref.read(masterpiecesRepositoryProvider);
-    final masterpieces = await repo.watch(childId: args.childId).first;
-    final hasSynced = masterpieces.any((m) => m.syncState == SyncState.synced);
+    final hasSynced = await _childHasSyncedArtworks();
 
     final service = ref.read(sharingServiceProvider);
     final result = await service.listLinks(args.childId);
@@ -152,7 +162,10 @@ class ShareController extends Notifier<ShareState> {
         // deleting it, so a revoked link is still returned by `listLinks`
         // — filtered out here so the "existing links" panel keeps its
         // intended meaning: only links a member could still use today.
-        final visibleLinks = links.where((l) => !l.revoked).toList();
+        final now = ref.read(shareClockProvider)();
+        final visibleLinks = links
+            .where((l) => !l.revoked && l.expiresAt.isAfter(now))
+            .toList();
         state = state.copyWith(
           links: visibleLinks,
           childHasSyncedArtworks: hasSynced,
@@ -178,11 +191,58 @@ class ShareController extends Notifier<ShareState> {
     state = state.copyWith(newLinkIncludeAudio: value);
   }
 
+  Future<bool> _childHasSyncedArtworks() async {
+    final artworks = await ref
+        .read(masterpiecesRepositoryProvider)
+        .watch(childId: args.childId)
+        .first;
+    return artworks.any((artwork) => artwork.syncState == SyncState.synced);
+  }
+
+  /// Starts backup and checks this child's persisted sync state afterwards.
+  /// A partial household backup may still make this child shareable.
+  Future<ActionResult<void>> backupNow() async {
+    if (state.backup.isBusy) return const ActionCancelled();
+    final backup = ref.read(shareBackupProvider);
+    if (backup == null) {
+      const failure = UnavailableFailure();
+      state = state.copyWith(backup: const ActionError(failure));
+      return const ActionFailed(failure);
+    }
+    state = state.copyWith(backup: const ActionBusy());
+    ActionResult<void> result;
+    try {
+      result = await backup(args.childId);
+      final hasSynced = await _childHasSyncedArtworks();
+      if (hasSynced) {
+        state = state.copyWith(
+          backup: const ActionDone(),
+          childHasSyncedArtworks: true,
+          offline: false,
+        );
+        return const ActionSuccess(null);
+      }
+    } catch (error, stack) {
+      result = ActionFailed(UnknownFailure(cause: error, stack: stack));
+    }
+    final failure = switch (result) {
+      ActionFailed(failure: final failure) => failure,
+      _ => const ServiceFailure(),
+    };
+    state = state.copyWith(
+      backup: ActionError(failure),
+      offline: failure is NetworkFailure,
+    );
+    return ActionFailed(failure);
+  }
+
   Future<ActionResult<ShareLink>> createLink() async {
     // Only `busy` blocks a new command — retry must stay live after a
     // failed create.
     if (state.create.isBusy) return const ActionCancelled();
-    if (!state.childHasSyncedArtworks) return const ActionCancelled();
+    if (!state.childHasSyncedArtworks || state.backup.isBusy) {
+      return const ActionCancelled();
+    }
 
     state = state.copyWith(create: const ActionBusy());
     final service = ref.read(sharingServiceProvider);

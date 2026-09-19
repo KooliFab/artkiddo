@@ -1280,6 +1280,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shareNotSyncedAction => 'Sauvegarder maintenant';
 
   @override
+  String get shareBackupRunning => 'Sauvegarde en cours…';
+
+  @override
   String get shareChildMissing => 'Ce profil n\'existe plus.';
 
   @override

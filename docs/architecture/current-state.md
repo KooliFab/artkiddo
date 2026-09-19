@@ -100,6 +100,12 @@ write.
   the local default never fetches anything.
 - `FoyerApi` models household membership and invites.
 - `SharingService` models web gallery-link creation, listing, and revocation.
+- `ShareBackup` is an optional presentation action supplied by the private
+  composition when web gallery links are enabled. The share controller invokes
+  it for one child, then checks that child's persisted artwork sync state before
+  allowing link creation. The bootstrap rejects a web-link composition without
+  this action. Link visibility is evaluated against an injectable clock and
+  excludes revoked and expired links.
 
 Contracts intentionally do not name a database, object store, endpoint,
 authentication system, transport, or remote payload format.

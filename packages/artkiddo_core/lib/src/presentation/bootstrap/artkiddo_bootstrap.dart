@@ -13,7 +13,8 @@ import '../../contracts/remote_media.dart';
 import '../../contracts/household.dart';
 import '../../contracts/gallery_sharing.dart';
 import '../foyer/foyer_controller.dart' show foyerApiProvider;
-import '../sharing/share_controller.dart' show sharingServiceProvider;
+import '../sharing/share_controller.dart'
+    show sharingServiceProvider, shareBackupProvider;
 import '../../local/repositories/trash_repository.dart';
 
 /// Creates the provider graph after validating capabilities and services.
@@ -77,6 +78,10 @@ abstract final class ArtKiddoBootstrap {
     if (capabilities.webGalleryLinks &&
         container.read(sharingServiceProvider) is NoSharingService) {
       failures.add('webGalleryLinks requires a SharingService binding');
+    }
+    if (capabilities.webGalleryLinks &&
+        container.read(shareBackupProvider) == null) {
+      failures.add('webGalleryLinks requires a ShareBackup binding');
     }
 
     if (failures.isNotEmpty) {

@@ -2125,6 +2125,12 @@ abstract class AppLocalizations {
   /// **'Sauvegarder maintenant'**
   String get shareNotSyncedAction;
 
+  /// No description provided for @shareBackupRunning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde en cours…'**
+  String get shareBackupRunning;
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:

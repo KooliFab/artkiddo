@@ -1608,6 +1608,7 @@
     "description": "Localized user-facing copy."
   },
   "shareNotSyncedAction": "Back up now",
+  "shareBackupRunning": "Backing up…",
   "@shareNotSyncedAction": {
     "description": "Localized user-facing copy."
   },

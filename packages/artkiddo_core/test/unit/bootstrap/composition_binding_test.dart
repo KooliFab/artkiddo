@@ -51,6 +51,7 @@ void main() {
               contains('remoteBackup requires a RemoteMediaFetcher binding'),
               contains('household requires a FoyerApi binding'),
               contains('webGalleryLinks requires a SharingService binding'),
+              contains('webGalleryLinks requires a ShareBackup binding'),
             ),
           ),
         ),
@@ -68,6 +69,9 @@ void main() {
                   _StubRemoteMediaFetcher(),
                 ),
                 sharingServiceProvider.overrideWithValue(_StubSharingService()),
+                shareBackupProvider.overrideWithValue(
+                  (childId) async => const ActionSuccess(null),
+                ),
                 compositionActionsProvider.overrideWithValue(
                   CompositionActions(
                     openAccount: (context) {},
@@ -99,6 +103,9 @@ void main() {
               ),
               foyerApiProvider.overrideWithValue(_StubFoyerApi()),
               sharingServiceProvider.overrideWithValue(_StubSharingService()),
+              shareBackupProvider.overrideWithValue(
+                (childId) async => const ActionSuccess(null),
+              ),
               compositionActionsProvider.overrideWithValue(
                 CompositionActions(
                   openAccount: (context) {},
@@ -129,6 +136,9 @@ void main() {
             ),
             foyerApiProvider.overrideWithValue(_StubFoyerApi()),
             sharingServiceProvider.overrideWithValue(_StubSharingService()),
+            shareBackupProvider.overrideWithValue(
+              (childId) async => const ActionSuccess(null),
+            ),
             compositionActionsProvider.overrideWithValue(
               CompositionActions(
                 openAccount: (context) {},

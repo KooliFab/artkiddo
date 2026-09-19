@@ -1608,6 +1608,7 @@
     "description": "Localized user-facing copy."
   },
   "shareNotSyncedAction": "Sauvegarder maintenant",
+  "shareBackupRunning": "Sauvegarde en cours…",
   "@shareNotSyncedAction": {
     "description": "Localized user-facing copy."
   },

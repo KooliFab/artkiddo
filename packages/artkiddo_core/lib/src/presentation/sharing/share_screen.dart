@@ -64,7 +64,7 @@ class _ShareSheetContent extends ConsumerWidget {
     }
     final state = ref.watch(shareControllerProvider(args));
     final controller = ref.read(shareControllerProvider(args).notifier);
-    final creating = state.create.isBusy;
+    final creating = state.create.isBusy || state.backup.isBusy;
     final childName = state.resolvedChildName ?? args.childName;
 
     return SafeArea(
@@ -230,23 +230,45 @@ class _ShareSheetContent extends ConsumerWidget {
     ];
 
     if (!state.childHasSyncedArtworks && state.step == ShareStep.choice) {
+      if (state.backup case ActionError(failure: final failure)) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+            child: StateBlock(
+              intent: ErrorPresenter.intentFor(failure),
+              title: ErrorPresenter.present(l10n, failure).title,
+              body: l10n.settingsBackupFailed,
+            ),
+          ),
+        );
+      }
       children.add(
         StateBlock(
           intent: StateBlockIntent.warning,
           title: l10n.shareNotSyncedTitle(childName),
           body: l10n.shareNotSyncedBody,
           actionLabel: l10n.shareNotSyncedAction,
-          onAction: () {
-            // This action re-poses the same "sign in first" style
-            // deferred flow used for backup — the backup itself lives in
-            // account settings.
-            ref
-                .read(pendingIntentProvider.notifier)
-                .pose(const SyncNowIntent());
-            Navigator.of(context).pop();
-          },
+          onAction: state.backup.isBusy ? null : controller.backupNow,
         ),
       );
+      if (state.backup.isBusy) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s3),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: AppSpacing.s2),
+                Text(l10n.shareBackupRunning),
+              ],
+            ),
+          ),
+        );
+      }
     } else if (state.step == ShareStep.linkReady && state.links.isNotEmpty) {
       if (state.create case ActionError(failure: final f)) {
         children.add(
@@ -308,7 +330,10 @@ class _ShareSheetContent extends ConsumerWidget {
           busyLabel: l10n.shareGalleryCreating,
           variant: AppButtonVariant.share,
           fullWidth: true,
-          enabled: state.childHasSyncedArtworks && !state.offline,
+          enabled:
+              state.childHasSyncedArtworks &&
+              !state.offline &&
+              !state.backup.isBusy,
           disabledReason: state.offline ? l10n.settingsOffline : null,
           onPressed: controller.createLink,
         ),
@@ -412,7 +437,10 @@ class _LinkRow extends ConsumerWidget {
                   onPressed: () {
                     SharePlus.instance.share(
                       ShareParams(
-                        text: l10n.shareMessage(controller.args.childName, url),
+                        text: l10n.shareMessage(
+                          state.resolvedChildName ?? controller.args.childName,
+                          url,
+                        ),
                       ),
                     );
                   },
