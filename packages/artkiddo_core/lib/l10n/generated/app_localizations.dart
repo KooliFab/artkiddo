@@ -1060,7 +1060,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Partager sa galerie'**
+  /// **'Partager'**
   String get artworkShareGallery;
 
   /// Localized user-facing copy.
@@ -1222,7 +1222,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Partager sa galerie'**
+  /// **'Partager'**
   String get childrenActionsShare;
 
   /// Localized user-facing copy.
@@ -1888,7 +1888,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Partager sa galerie'**
+  /// **'Partager'**
   String get shareGalleryHeading;
 
   /// Localized user-facing copy.

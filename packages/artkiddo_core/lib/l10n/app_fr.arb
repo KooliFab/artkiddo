@@ -770,7 +770,7 @@
   "@artworkSendImageHelp": {
     "description": "Localized user-facing copy."
   },
-  "artworkShareGallery": "Partager sa galerie",
+  "artworkShareGallery": "Partager",
   "@artworkShareGallery": {
     "description": "Localized user-facing copy."
   },
@@ -908,7 +908,7 @@
   "@childrenActionsEdit": {
     "description": "Localized user-facing copy."
   },
-  "childrenActionsShare": "Partager sa galerie",
+  "childrenActionsShare": "Partager",
   "@childrenActionsShare": {
     "description": "Localized user-facing copy."
   },
@@ -1420,7 +1420,7 @@
   "@shareSignedOutAlternative": {
     "description": "Localized user-facing copy."
   },
-  "shareGalleryHeading": "Partager sa galerie",
+  "shareGalleryHeading": "Partager",
   "@shareGalleryHeading": {
     "description": "Localized user-facing copy."
   },

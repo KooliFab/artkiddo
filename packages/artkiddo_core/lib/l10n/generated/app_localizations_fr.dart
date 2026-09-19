@@ -619,7 +619,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'image part par votre application de messagerie.';
 
   @override
-  String get artworkShareGallery => 'Partager sa galerie';
+  String get artworkShareGallery => 'Partager';
 
   @override
   String get artworkShareGalleryHelp =>
@@ -730,7 +730,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get childrenActionsEdit => 'Modifier le profil';
 
   @override
-  String get childrenActionsShare => 'Partager sa galerie';
+  String get childrenActionsShare => 'Partager';
 
   @override
   String get childrenActionsDelete => 'Supprimer le profil';
@@ -1130,7 +1130,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shareSignedOutAlternative => 'Plutôt envoyer une image';
 
   @override
-  String get shareGalleryHeading => 'Partager sa galerie';
+  String get shareGalleryHeading => 'Partager';
 
   @override
   String shareGalleryBody(String childName) {
