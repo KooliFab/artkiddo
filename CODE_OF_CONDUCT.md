@@ -11,8 +11,8 @@ act professionally and in good faith.
 - Use inclusive language and respect different backgrounds and viewpoints.
 - Give and receive technical feedback constructively.
 - Keep discussions focused on the work, with no personal attacks or harassment.
-- Respect privacy: never post real family data, credentials, or private backend
-  details in a public issue or pull request.
+- Respect privacy: never post real family data, credentials, or service
+  implementation details in a public issue or pull request.
 - Follow the repository's license, contribution agreement, and security policy.
 
 ## Unacceptable behavior

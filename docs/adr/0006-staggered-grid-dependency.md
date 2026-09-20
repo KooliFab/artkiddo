@@ -12,7 +12,9 @@ The offline-first public core package (`artkiddo_core`) contains the domain mode
 Under the consolidation architecture:
 - **Generic never knows specific**: `artkiddo_core` owns the complete visual and interactive presentation for all neutral features (Gallery, Artwork viewer/editor, Capture flow, Audio recording, Children/Trash management, Settings About/Language, and account-free Share & Family interfaces).
 - **Core declares slots, compositions fill them**: generic controllers and screens declare honest default affordances and abstract hooks (`GalleryActions`, `CompositionActions`, `foyerConvergenceProvider`, `RemoteMediaFetcher`). When a destination or capability is unsupported in local offline mode, affordances are hidden or display honest account-free interfaces—they never crash or present inert broken controls.
-- Private compositions (`artkiddo-cloud`) override these contracts via typed Riverpod overrides and action callbacks to connect proprietary backend features (Supabase sync, cloud foyer join/invite, web gallery public links, R2 remote media downloading).
+- Application compositions may override these contracts via typed Riverpod
+  overrides and action callbacks to connect optional external features. The
+  public core does not name or implement those external services.
 
 Under `public-code-rules.md`, public dependencies must satisfy four strict criteria:
 1. **Product necessity**: Required for offline product behavior, local media capture/playback, or offline UI rendering.
@@ -42,14 +44,16 @@ The following third-party dependencies are declared in `artkiddo_core/pubspec.ya
 
 ### 4. Deliberately excluded
 
-- `mobile_scanner`: **stays private.** Rendering a QR code is a pure Dart
-  drawing operation, but reading one requires the camera for a purpose the
-  account-free product never has: joining a household. The public core exposes
-  `CompositionActions.openQrScanner`, and only the private mobile composition
-  binds it. A local build therefore ships no scanning code and requests no
-  permission for it.
+- `mobile_scanner`: stays outside the public package. Rendering a QR code is a
+  pure Dart drawing operation, but reading one requires a device capability the
+  account-free product does not need. The public core exposes
+  `CompositionActions.openQrScanner`; an application composition may bind it.
+  A local build therefore ships no scanning code and requests no permission for
+  it.
 
-## Cross-repository impact
+## Boundary impact
 
-- `artkiddo_core` remains completely self-contained and account-free. None of these packages communicate with any remote backend.
-- Private mobile compositions (`artkiddo-cloud`) consume these features directly from `artkiddo_core` while injecting backend capabilities (cloud synchronization, authentication, and QR scanning) via clean composition seams (`overrides` and `CompositionActions`).
+- `artkiddo_core` remains self-contained and account-free. None of these
+  packages communicate with an external service.
+- Optional application compositions consume the public contracts and inject
+  capabilities through `overrides` and `CompositionActions`.

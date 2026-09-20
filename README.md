@@ -25,14 +25,14 @@ The public package has no provider SDK, remote URL, credential, backend schema,
 or monetization code. `app` composes `AppCapabilities.local`, so it never
 touches an optional remote service.
 
-## Optional remote integrations
+## Optional integrations
 
-The local application is the product baseline. A private client may add remote
-features by implementing the public contracts and passing those implementations
-at its composition root:
+The local application is the product baseline. An integrating application may
+add optional features by implementing the public contracts and passing those
+implementations at its composition root:
 
 ```text
-private client
+application composition
   ├─ implements SyncBackend       ← metadata sync and remote mutations
   ├─ implements ObjectUploader    ← opaque object-key upload
   ├─ implements ObjectDownloader  ← authorized object-key download
@@ -46,24 +46,8 @@ artkiddo_core
 `ObjectDownloader` deal only in bytes and opaque object keys. Their API makes
 no assumption about a database, object store, authentication system, or cloud
 vendor. The public core does not silently change between local and remote
-behavior: the private composition must enable a capability and supply every
-required adapter before any remote call is reachable.
-
-## Repository split
-
-The working container is intentionally not a Git repository:
-
-```text
-artkiddo-workspace/
-  artkiddo/           this public, source-available local foundation
-  artkiddo-cloud/     private distributed mobile app and monetization
-  artkiddo-web/       private Astro site and family gallery
-  artkiddo-backend/   private backend deployments and contracts
-```
-
-The public repository starts with a fresh, auditable history. It contains no
-copy of private history. Private repositories depend on a pinned public commit
-or release; the public repository never depends on private code.
+behavior: the application composition must enable a capability and supply
+every required adapter before any remote call is reachable.
 
 ## Run locally
 

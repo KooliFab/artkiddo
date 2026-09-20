@@ -5,7 +5,7 @@ account-free gallery experience (feed, capture, sharing, and household UI
 behind capability gates). This document is the entry point for a fresh
 conversation; read it before scanning the source tree.
 
-Verified on: 2026-09-17
+Verified on: 2026-09-20 — HEAD `6f019b6de6b3fec384e3d64111e4dc4b3a5af79c`
 
 ## Repository shape
 
@@ -30,6 +30,24 @@ docs/                             ADRs, operating rules, generated inventory
 
 `app/lib/main.dart` creates only `AppCapabilities.local`. It does not require
 an account, environment values, network, database server, or object storage.
+
+## Visual overview — local application
+
+```mermaid
+flowchart TD
+  App["app/lib/main.dart\nlocal composition"] --> Bootstrap["ArtKiddoBootstrap\ncapabilities + providers"]
+  Bootstrap --> UI["Core presentation\ngallery · capture · trash · local sharing"]
+  UI --> Repos["Local repositories\nchildren + masterpieces"]
+  Repos --> DB["AppDatabase\nDrift schema v11"]
+  Repos --> Vault["LocalVault\noriginals · derivatives · audio"]
+  DB --> Outbox["SyncOutbox + cursors\npresent but inactive locally"]
+  Vault --> Rescue["VaultRescueExport\nfile-only ZIP, no database"]
+  Bootstrap -. "optional capabilities disabled" .-> NoRemote["NoFoyerApi / NoSharingService\nno fabricated external state"]
+```
+
+This separation keeps the application usable and testable without an account,
+configuration, or network. Optional contracts remain abstract and contain no
+provider or protocol details.
 
 ## Composition seam
 
@@ -57,7 +75,7 @@ defaults to an honest local implementation — `NoRemoteMediaFetcher`,
 `NoFoyerApi`, `NoSharingService`, `CompositionActions.none` — none of which
 fabricate remote state. `NoFoyerApi`/`NoSharingService` throw or return a
 typed `ActionFailed` failure rather than a fake success; `CompositionActions`
-simply renders nothing when an action is null. A private composition
+simply renders nothing when an action is null. An application composition
 overrides exactly the providers its enabled capabilities need.
 
 ## Dependency direction
@@ -65,32 +83,55 @@ overrides exactly the providers its enabled capabilities need.
 ```text
 presentation → domain / contracts → local repositories → database + local vault
 
-app transfer adapter → local_data_transfer (external package, optional)
-
-private mobile adapters → public contracts and core
-private web client      → private backend contract
-private backend         → no client repository
+application composition → public contracts and core
+external implementation → public contracts only
 ```
 
-The public repository has no dependency on a private repository. Optional
-remote behavior is explicit: a private composition supplies compatible adapter
-implementations and enables the matching capability before a provider is read.
+The core has no dependency on an external repository. Optional behavior is
+explicit: an application composition supplies compatible implementations and
+enables the matching capability before a provider is read.
 
-Manual local transfer is also opt-in. It does not alter the local database or
-vault until the application validates a received manifest and explicitly
-commits staged files.
+The rescue export is local-only: it reads vault files and never opens or
+reconstructs the database.
 
 ## Local persistence
 
 `AppDatabase` is Drift schema v11. `ChildrenTable` and `MasterpiecesTable`
 persist the account-free experience. The artwork table stores neutral opaque
 object keys only (`displayObjectKey`, `thumbnailObjectKey`, `audioObjectKey`);
-their meaning and lifecycle belong to a private adapter. v11 renames historical
+their meaning and lifecycle belong to an external implementation. v11 renames historical
 provider-named columns without losing data.
 
 `LocalVault` owns local image and audio files. Local deletion is recoverable for
 30 days and cleanup is journaled. Local success is reported only after a durable
 write.
+
+`VaultRescueExport` parcourt `masterpieces/`,
+`masterpieces_derivatives/` and `audio/`, optionally adds in-flight capture
+files, splits ZIPs around 3.5 GB, and shares the archives through the native
+share sheet. It can recover originals even when `AppDatabase` is unreadable;
+in return, the archive contains no child, date, or story metadata because that
+information lives in SQLite. Drift migrations v5 through v11 have dedicated
+snapshots and test fixtures.
+
+## Flux locaux importants
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant C as Capture / editing
+  participant R as Repository
+  participant D as Drift v11
+  participant V as LocalVault
+
+  U->>C: photo, recadrage, audio, anecdote
+  C->>V: write original + derivatives
+  C->>R: persist relative paths
+  R->>D: transaction metadata + outbox
+  D-->>U: success after durable write
+  U->>V: request rescue export
+  V-->>U: file-only ZIP(s), without opening D
+```
 
 ## Public contracts
 
@@ -100,8 +141,8 @@ write.
   the local default never fetches anything.
 - `FoyerApi` models household membership and invites.
 - `SharingService` models web gallery-link creation, listing, and revocation.
-- `ShareBackup` is an optional presentation action supplied by the private
-  composition when web gallery links are enabled. The share controller invokes
+- `ShareBackup` is an optional presentation action supplied by an application
+  composition when gallery links are enabled. The share controller invokes
   it for one child, then checks that child's persisted artwork sync state before
   allowing link creation. The bootstrap rejects a web-link composition without
   this action. Link visibility is evaluated against an injectable clock and
@@ -126,14 +167,12 @@ authentication system, transport, or remote payload format.
   parser, or monetization.
 - There is no implicit fallback between remote and local authority — enforced
   both by capability gating in the UI and by `_validateComposition` at boot.
-- A feature is not complete until its public/local, private mobile, private web,
-  and private backend impacts and release order are stated.
+- A feature is not complete until its local behavior, optional capabilities,
+  compatibility impact, and rollback are stated.
 
 ## Publication note
 
-This package is not yet re-published. The private `artkiddo-cloud` checkout
-still consumes it through a local `path:` override
-(`docs/architecture/public-core-pin.md` records the last published pin,
-`core-v0.1.0`). Tagging and pushing a new public revision that includes the
-gallery/sharing/foyer consolidation is a separate, explicit step — not
-something a change in this repository does on its own.
+Package distribution is independent from the internal architecture.
+This documentation describes only the code in this repository; integrating
+applications must provide their own compositions and implementations of the
+optional contracts.

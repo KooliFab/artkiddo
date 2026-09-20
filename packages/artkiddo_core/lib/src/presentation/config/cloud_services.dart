@@ -27,7 +27,7 @@ final class CloudServices {
   /// accidental provider read fails loudly.
   static const none = CloudServices(available: <CloudService>{});
 
-  /// All service slots used by the current private mobile application.
+  /// All service slots used by an application composition.
   static const production = CloudServices(
     available: <CloudService>{
       CloudService.auth,

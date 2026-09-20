@@ -1,8 +1,5 @@
-// Recovered during T5.1 cleanup: this test existed in artkiddo-cloud before
-// the gallery/artwork screens moved into artkiddo_core (T3.4) and was
-// dropped by the same commit that deduplicated the cloud test suite,
-// without a matching migration. AppShell now lives in the core, so this is
-// where the coverage belongs.
+// Recovered during the public-core cleanup. AppShell lives in the core, so
+// this is where the coverage belongs.
 
 import 'dart:io';
 

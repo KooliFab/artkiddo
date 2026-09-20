@@ -1,8 +1,8 @@
 /// Public surface of the account-free ArtKiddo core.
 ///
-/// Files under `src/` remain implementation details. Private mobile adapters
+/// Files under `src/` remain implementation details. Application compositions
 /// may depend on these typed contracts and repositories, but this package never
-/// imports a provider SDK or a private backend identifier.
+/// imports a provider SDK or an external service identifier.
 library;
 
 export 'src/presentation/config/app_capabilities.dart';
