@@ -1326,6 +1326,62 @@
   "@accountSubmitting": {
     "description": "Localized user-facing copy."
   },
+  "accountForgotPassword": "Mot de passe oublié ?",
+  "@accountForgotPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryTitle": "Réinitialiser votre mot de passe",
+  "@accountRecoveryTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryBody": "Nous vous enverrons un lien si un compte utilise cette adresse courriel.",
+  "@accountRecoveryBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySend": "Envoyer le lien",
+  "@accountRecoverySend": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySending": "Envoi…",
+  "@accountRecoverySending": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentTitle": "Vérifiez votre courriel",
+  "@accountRecoverySentTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentBody": "Si un compte utilise cette adresse, vous recevrez un lien. Vérifiez aussi les indésirables.",
+  "@accountRecoverySentBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryNewPassword": "Nouveau mot de passe",
+  "@accountRecoveryNewPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryConfirmPassword": "Confirmer le mot de passe",
+  "@accountRecoveryConfirmPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdate": "Choisir ce mot de passe",
+  "@accountRecoveryUpdate": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdating": "Mise à jour…",
+  "@accountRecoveryUpdating": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryMismatch": "Les mots de passe ne correspondent pas.",
+  "@accountRecoveryMismatch": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdated": "Votre mot de passe a été mis à jour.",
+  "@accountRecoveryUpdated": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryError": "La demande n’a pas abouti. Réessayez plus tard.",
+  "@accountRecoveryError": {
+    "description": "Localized user-facing copy."
+  },
   "accountErrorInvalidCredentials": "Adresse ou mot de passe incorrect.",
   "@accountErrorInvalidCredentials": {
     "description": "Localized user-facing copy."

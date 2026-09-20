@@ -1326,6 +1326,62 @@
   "@accountSubmitting": {
     "description": "Localized user-facing copy."
   },
+  "accountForgotPassword": "Forgot your password?",
+  "@accountForgotPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryTitle": "Reset your password",
+  "@accountRecoveryTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryBody": "We will send a reset link if an account uses this email address.",
+  "@accountRecoveryBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySend": "Send reset link",
+  "@accountRecoverySend": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySending": "Sending…",
+  "@accountRecoverySending": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentTitle": "Check your email",
+  "@accountRecoverySentTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentBody": "If an account uses this address, you will receive a reset link. Check your spam and Promotions folders too.",
+  "@accountRecoverySentBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryNewPassword": "New password",
+  "@accountRecoveryNewPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryConfirmPassword": "Confirm your password",
+  "@accountRecoveryConfirmPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdate": "Choose this password",
+  "@accountRecoveryUpdate": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdating": "Updating…",
+  "@accountRecoveryUpdating": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryMismatch": "The passwords do not match.",
+  "@accountRecoveryMismatch": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdated": "Your password has been updated.",
+  "@accountRecoveryUpdated": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryError": "We could not complete this request. Please try again later.",
+  "@accountRecoveryError": {
+    "description": "Localized user-facing copy."
+  },
   "accountErrorInvalidCredentials": "Wrong email or password.",
   "@accountErrorInvalidCredentials": {
     "description": "Localized user-facing copy."

@@ -1762,6 +1762,90 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Mot de passe oublié ?'**
+  String get accountForgotPassword;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser votre mot de passe'**
+  String get accountRecoveryTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nous vous enverrons un lien si un compte utilise cette adresse courriel.'**
+  String get accountRecoveryBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le lien'**
+  String get accountRecoverySend;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi…'**
+  String get accountRecoverySending;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez votre courriel'**
+  String get accountRecoverySentTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Si un compte utilise cette adresse, vous recevrez un lien. Vérifiez aussi les indésirables.'**
+  String get accountRecoverySentBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
+  String get accountRecoveryNewPassword;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer le mot de passe'**
+  String get accountRecoveryConfirmPassword;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir ce mot de passe'**
+  String get accountRecoveryUpdate;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mise à jour…'**
+  String get accountRecoveryUpdating;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les mots de passe ne correspondent pas.'**
+  String get accountRecoveryMismatch;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre mot de passe a été mis à jour.'**
+  String get accountRecoveryUpdated;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'La demande n’a pas abouti. Réessayez plus tard.'**
+  String get accountRecoveryError;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Adresse ou mot de passe incorrect.'**
   String get accountErrorInvalidCredentials;
 
