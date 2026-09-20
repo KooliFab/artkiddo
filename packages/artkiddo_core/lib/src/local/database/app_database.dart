@@ -127,6 +127,9 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      // Keep the from >= 5 guards on every later migration step. The from < 5
+      // branch rebuilds masterpieces_table and must not receive columns that
+      // only exist in a schema version introduced after the rebuild.
       if (from < 2) {
         await m.createTable(pendingFileCleanupsTable);
       }
@@ -170,30 +173,36 @@ class AppDatabase extends _$AppDatabase {
             ''');
         await customStatement('DROP TABLE masterpieces_table_v4');
       }
-      if (from < 6) {
+      if (from < 6 && to >= 6) {
         await m.createTable(shareLinkUrlCacheTable);
       }
-      if (from < 7 && from >= 5) {
+      if (from < 7 && from >= 5 && to >= 7) {
         await m.addColumn(masterpiecesTable, masterpiecesTable.byteSize);
       }
-      if (from < 8 && from >= 5) {
+      if (from < 8 && from >= 5 && to >= 8) {
         await customStatement(
-          'ALTER TABLE masterpieces_table ADD COLUMN image_width INTEGER',
+          'ALTER TABLE masterpieces_table ADD COLUMN image_width INTEGER NULL',
         );
         await customStatement(
-          'ALTER TABLE masterpieces_table ADD COLUMN image_height INTEGER',
+          'ALTER TABLE masterpieces_table ADD COLUMN image_height INTEGER NULL',
         );
       }
-      if (from < 9 && from >= 5) {
+      if (from < 9 && from >= 5 && to >= 9) {
         await m.addColumn(
           masterpiecesTable,
           masterpiecesTable.relativeAudioPath,
         );
         await m.addColumn(masterpiecesTable, masterpiecesTable.audioDurationMs);
-        await m.addColumn(masterpiecesTable, masterpiecesTable.audioObjectKey);
+        // This column was historically called r2_key_audio. Keep that name
+        // until the v11 rename below, even though the current Dart table uses
+        // audio_object_key.
+        await customStatement(
+          'ALTER TABLE masterpieces_table '
+          'ADD COLUMN r2_key_audio TEXT NULL',
+        );
         await m.addColumn(masterpiecesTable, masterpiecesTable.audioByteSize);
       }
-      if (from < 10) {
+      if (from < 10 && to >= 10) {
         if (from >= 5) {
           await m.addColumn(masterpiecesTable, masterpiecesTable.deletedAt);
           await m.addColumn(vaultMetaTable, vaultMetaTable.childrenPullCursor);
@@ -204,18 +213,16 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(vaultMetaTable, vaultMetaTable.purgedPullCursor);
         }
       }
-      if (from < 11 && from >= 5) {
+      if (from < 11 && from >= 5 && to >= 11) {
         await customStatement(
           'ALTER TABLE masterpieces_table RENAME COLUMN r2_key_display TO display_object_key',
         );
         await customStatement(
           'ALTER TABLE masterpieces_table RENAME COLUMN r2_key_thumbnail TO thumbnail_object_key',
         );
-        if (from >= 9) {
-          await customStatement(
-            'ALTER TABLE masterpieces_table RENAME COLUMN r2_key_audio TO audio_object_key',
-          );
-        }
+        await customStatement(
+          'ALTER TABLE masterpieces_table RENAME COLUMN r2_key_audio TO audio_object_key',
+        );
       }
     },
     beforeOpen: (details) async {

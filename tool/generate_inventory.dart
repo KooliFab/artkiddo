@@ -22,7 +22,7 @@ void main(List<String> arguments) {
     'pubspec.yaml',
     'app/pubspec.yaml',
     'packages/artkiddo_core/pubspec.yaml',
-    'packages/artkiddo_core/drift_schemas/v11.json',
+    'packages/artkiddo_core/drift_schemas/drift_schema_v11.json',
   ]) {
     final file = File('${root.path}/$path');
     if (file.existsSync()) inputFiles.add(file);
