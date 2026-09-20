@@ -53,8 +53,11 @@ all code in the public repository after the split.
 
 ## Data, sync, and files
 
-- Give every Drift schema change an exported schema snapshot, migration test,
-  integrity check, forward-only production recovery plan, and realistic fixture.
+- The local database is a clean-break baseline (`schemaVersion = 1`, ADR 0007):
+  no migration history is retained and no upgrade path from a prior schema is
+  supported. Give every Drift schema change an exported schema snapshot,
+  integrity check, forward-only production recovery plan, and realistic
+  fixture. A migration test applies only once a second schema version exists.
 - Make active-record queries explicitly exclude soft-deleted rows.
 - Keep slow image/audio/network work outside database transactions.
 - Use write-then-rename or an equivalent atomic file strategy; persist deferred

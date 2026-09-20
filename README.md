@@ -25,6 +25,33 @@ The public package has no provider SDK, remote URL, credential, backend schema,
 or monetization code. `app` composes `AppCapabilities.local`, so it never
 touches an optional remote service.
 
+## Local architecture
+
+```mermaid
+flowchart LR
+  APP["Flutter app<br/>Displays the local-first experience"]
+  CORE["artkiddo_core<br/>Contains domain rules, UI and neutral contracts"]
+  REPOS["Local repositories<br/>Coordinate children and artwork data"]
+  DB["Drift / SQLite<br/>Stores metadata, sync state and the outbox"]
+  VAULT["LocalVault<br/>Stores original images, derivatives and audio"]
+  OUTBOX["Sync outbox<br/>Keeps local operations ready for a future sync"]
+
+  APP --> CORE
+  CORE --> REPOS
+  REPOS --> DB
+  REPOS --> VAULT
+  DB --> OUTBOX
+
+  classDef main fill:#E8F1FF,stroke:#3674D9,color:#12305C
+  classDef storage fill:#EAF7EF,stroke:#3A9B5F,color:#174B2A
+  class APP,CORE,REPOS main
+  class DB,VAULT,OUTBOX storage
+```
+
+The public repository stops at the neutral contracts. It does not know which
+account system, backend, database server, or object storage a consuming app may
+add later.
+
 ## Optional integrations
 
 The local application is the product baseline. An integrating application may

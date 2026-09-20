@@ -84,8 +84,13 @@ depends on those implementations.
 
 ## 5. Design compatibility
 
-- Keep local schema migrations deterministic and backward compatible.
-- Add a schema snapshot and migration test for every Drift schema change.
+- The local database is a clean-break baseline (`schemaVersion = 1`, ADR 0007):
+  there is no migration history and no upgrade path from a prior schema.
+  Existing local databases are unsupported and must be cleared, not migrated.
+- Add or update the exported schema snapshot for every Drift schema change so
+  it accurately reflects the current baseline. A migration test does not apply
+  while there is a single schema version; add one only once a second version
+  exists and an upgrade path must be exercised.
 - Use opaque identifiers and typed contracts when an optional capability needs
   to cross the composition boundary.
 - Never introduce an implicit fallback between local authority and an optional

@@ -5,7 +5,8 @@ account-free gallery experience (feed, capture, sharing, and household UI
 behind capability gates). This document is the entry point for a fresh
 conversation; read it before scanning the source tree.
 
-Verified on: 2026-09-20 — HEAD `6f019b6de6b3fec384e3d64111e4dc4b3a5af79c`
+Verified on: 2026-09-20 — HEAD `af37943a20775fa314872205d4cf6d36105c8e58`
+(parent of the clean-name-baseline documentation commit)
 
 ## Repository shape
 
