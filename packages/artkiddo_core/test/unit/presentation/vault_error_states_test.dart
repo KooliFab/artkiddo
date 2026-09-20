@@ -154,4 +154,38 @@ void main() {
       expect(rescueExport.receivedExtraFiles, [draftPath]);
     },
   );
+
+  testWidgets('capture source sheet scrolls at 200% in English', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(414, 896)
+      ..devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2.0)),
+            child: child!,
+          ),
+          home: const CaptureScreen(
+            entry: CaptureEntry(origin: CaptureOrigin.galleryFab),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Take a photo'), findsOneWidget);
+    expect(find.text('Choose from my photos'), findsOneWidget);
+  });
 }

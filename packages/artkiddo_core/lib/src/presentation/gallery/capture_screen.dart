@@ -1023,7 +1023,7 @@ class _SourceChoiceSheet extends ConsumerWidget {
     final bothDenied = cameraDenied && photosDenied;
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.s6,
           AppSpacing.s4,
