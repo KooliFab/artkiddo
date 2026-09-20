@@ -1717,12 +1717,12 @@
   "@errorUnavailableBody": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchTitle": "This device is linked elsewhere",
-  "@errorFoyerMismatchTitle": {
+  "errorFamilyMismatchTitle": "This device is linked elsewhere",
+  "@errorFamilyMismatchTitle": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchBody": "This vault is already linked to a different household. Sign out to keep working locally, or contact us to start a new vault for this account.",
-  "@errorFoyerMismatchBody": {
+  "errorFamilyMismatchBody": "This vault is already linked to a different household. Sign out to keep working locally, or contact us to start a new vault for this account.",
+  "@errorFamilyMismatchBody": {
     "description": "Localized user-facing copy."
   },
   "errorQuotaExceededTitle": "Household storage is full",

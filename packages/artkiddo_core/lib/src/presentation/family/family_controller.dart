@@ -10,25 +10,25 @@ import '../async_action.dart';
 export '../../contracts/household.dart'
     show
         FamilyInfo,
-        FoyerApi,
-        FoyerMemberRole,
-        FoyerMembership,
+        FamilyApi,
+        FamilyMemberRole,
+        FamilyMembership,
         RedeemOutcome,
         RedeemState;
 
-/// Provider for [FoyerApi], defaulting to [NoFoyerApi].
+/// Provider for [FamilyApi], defaulting to [NoFamilyApi].
 /// Compositions enabling [AppCapabilities.household] must override this provider.
-final foyerApiProvider = Provider<FoyerApi>((ref) {
-  return const NoFoyerApi();
+final familyApiProvider = Provider<FamilyApi>((ref) {
+  return const NoFamilyApi();
 });
 
-/// Callback executed after a confirmed foyer redeem to converge data.
+/// Callback executed after a confirmed family redeem to converge data.
 /// Defaults to a no-op in local compositions; overridden in cloud compositions.
-final foyerConvergenceProvider = Provider<Future<void> Function()>((ref) {
+final familyConvergenceProvider = Provider<Future<void> Function()>((ref) {
   return () async {};
 });
 
-class FoyerState {
+class FamilyState {
   /// Loads (and, server-side, bootstraps) the caller's family — name,
   /// invite code, own role — in one call.
   final AsyncAction family;
@@ -41,11 +41,11 @@ class FoyerState {
 
   /// Runs right after a confirmed redemption. Tracked separately from
   /// [redeem] so the screen can show "code accepted, now converging
-  /// your foyer" as a distinct step rather than folding it into the
+  /// your family" as a distinct step rather than folding it into the
   /// same spinner.
   final AsyncAction convergence;
 
-  const FoyerState({
+  const FamilyState({
     this.family = const ActionIdle(),
     this.familyInfo,
     this.rename = const ActionIdle(),
@@ -54,7 +54,7 @@ class FoyerState {
     this.convergence = const ActionIdle(),
   });
 
-  FoyerState copyWith({
+  FamilyState copyWith({
     AsyncAction? family,
     FamilyInfo? familyInfo,
     AsyncAction? rename,
@@ -62,7 +62,7 @@ class FoyerState {
     RedeemOutcome? redeemOutcome,
     AsyncAction? convergence,
   }) {
-    return FoyerState(
+    return FamilyState(
       family: family ?? this.family,
       familyInfo: familyInfo ?? this.familyInfo,
       rename: rename ?? this.rename,
@@ -80,19 +80,19 @@ class FoyerState {
 /// artworks into the joined household itself — this controller only
 /// ever calls the convergence hook after a confirmed redemption, and
 /// lets whatever that hook already does happen as-is.
-class FoyerController extends Notifier<FoyerState> {
+class FamilyController extends Notifier<FamilyState> {
   @override
-  FoyerState build() => const FoyerState();
+  FamilyState build() => const FamilyState();
 
   Future<void> loadFamilyInfo() async {
     if (state.family.isBusy) return;
     state = state.copyWith(family: const ActionBusy());
     try {
-      final info = await ref.read(foyerApiProvider).getFamilyInfo();
-      Log.i('Family loaded: ${info.foyerId}', 'Foyer');
+      final info = await ref.read(familyApiProvider).getFamilyInfo();
+      Log.i('Family loaded: ${info.familyId}', 'Family');
       state = state.copyWith(family: const ActionDone(), familyInfo: info);
     } catch (e, st) {
-      Log.e('Failed to load family info', e, st, 'Foyer');
+      Log.e('Failed to load family info', e, st, 'Family');
       state = state.copyWith(
         family: ActionError(NetworkFailure(cause: e, stack: st)),
       );
@@ -103,22 +103,22 @@ class FoyerController extends Notifier<FoyerState> {
     if (state.rename.isBusy) return;
     state = state.copyWith(rename: const ActionBusy());
     try {
-      await ref.read(foyerApiProvider).renameFamily(name);
-      Log.i('Family renamed', 'Foyer');
+      await ref.read(familyApiProvider).renameFamily(name);
+      Log.i('Family renamed', 'Family');
       final current = state.familyInfo;
       state = state.copyWith(
         rename: const ActionDone(),
         familyInfo: current == null
             ? null
             : FamilyInfo(
-                foyerId: current.foyerId,
+                familyId: current.familyId,
                 name: name,
                 code: current.code,
                 role: current.role,
               ),
       );
     } catch (e, st) {
-      Log.e('Failed to rename family', e, st, 'Foyer');
+      Log.e('Failed to rename family', e, st, 'Family');
       state = state.copyWith(
         rename: ActionError(NetworkFailure(cause: e, stack: st)),
       );
@@ -136,8 +136,10 @@ class FoyerController extends Notifier<FoyerState> {
       convergence: const ActionIdle(),
     );
     try {
-      final outcome = await ref.read(foyerApiProvider).redeemInvite(code: code);
-      Log.i('Invite processed: ${outcome.state.name}', 'Foyer');
+      final outcome = await ref
+          .read(familyApiProvider)
+          .redeemInvite(code: code);
+      Log.i('Invite processed: ${outcome.state.name}', 'Family');
       state = state.copyWith(
         redeem: const ActionDone(),
         redeemOutcome: outcome,
@@ -146,7 +148,7 @@ class FoyerController extends Notifier<FoyerState> {
         await _joinOrRestore();
       }
     } catch (e, st) {
-      Log.e('Failed to redeem invite', e, st, 'Foyer');
+      Log.e('Failed to redeem invite', e, st, 'Family');
       state = state.copyWith(
         redeem: ActionError(NetworkFailure(cause: e, stack: st)),
       );
@@ -156,16 +158,16 @@ class FoyerController extends Notifier<FoyerState> {
   Future<void> _joinOrRestore() async {
     state = state.copyWith(convergence: const ActionBusy());
     try {
-      final converge = ref.read(foyerConvergenceProvider);
+      final converge = ref.read(familyConvergenceProvider);
       await converge();
-      Log.i('Foyer convergence completed', 'Foyer');
+      Log.i('Family convergence completed', 'Family');
       state = state.copyWith(convergence: const ActionDone());
-      // A successful join changes the caller's active foyer — refresh
+      // A successful join changes the caller's active family — refresh
       // name/code/role so the screen reflects the family just joined,
       // not the one that was displayed before redeeming.
       unawaited(loadFamilyInfo());
     } catch (e, st) {
-      Log.e('Failed to converge after join', e, st, 'Foyer');
+      Log.e('Failed to converge after join', e, st, 'Family');
       // The membership itself is already durably created server-side at
       // this point — a convergence failure here is retryable (the
       // existing "sync now" path already drains the same outbox/pull
@@ -177,6 +179,5 @@ class FoyerController extends Notifier<FoyerState> {
   }
 }
 
-final foyerControllerProvider = NotifierProvider<FoyerController, FoyerState>(
-  FoyerController.new,
-);
+final familyControllerProvider =
+    NotifierProvider<FamilyController, FamilyState>(FamilyController.new);

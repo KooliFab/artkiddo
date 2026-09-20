@@ -28,7 +28,7 @@ class LocalTrashRepository implements TrashRepository {
   }) async {
     try {
       final rows =
-          await (_db.select(_db.masterpiecesTable)
+          await (_db.select(_db.artworksTable)
                 ..where((t) => t.deletedAt.isNotNull())
                 ..orderBy([
                   (t) => OrderingTerm(
@@ -63,52 +63,52 @@ class LocalTrashRepository implements TrashRepository {
   }
 
   @override
-  Future<ActionResult<void>> restore(String masterpieceId) async {
+  Future<ActionResult<void>> restore(String artworkId) async {
     try {
       final row = await (_db.select(
-        _db.masterpiecesTable,
-      )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+        _db.artworksTable,
+      )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
       // Restoring an already-restored or already-purged item is an
       // idempotent no-op, as required by the local trash contract.
       if (row == null || row.deletedAt == null) {
         return const ActionSuccess(null);
       }
       final count =
-          await (_db.update(_db.masterpiecesTable)..where(
-                (t) => t.id.equals(masterpieceId) & t.deletedAt.isNotNull(),
-              ))
+          await (_db.update(
+                _db.artworksTable,
+              )..where((t) => t.id.equals(artworkId) & t.deletedAt.isNotNull()))
               .write(
-                const MasterpiecesTableCompanion(
+                const ArtworksTableCompanion(
                   deletedAt: Value(null),
                   syncState: Value('localOnly'),
                 ),
               );
       if (count == 0) return const ActionSuccess(null);
       final restored = await (_db.select(
-        _db.masterpiecesTable,
-      )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+        _db.artworksTable,
+      )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
       if (restored?.deletedAt != null) {
         return const ActionFailed(LocalWriteFailure());
       }
       return const ActionSuccess(null);
     } catch (e, st) {
-      Log.e('Restauration locale impossible ($masterpieceId)', e, st, 'Trash');
+      Log.e('Restauration locale impossible ($artworkId)', e, st, 'Trash');
       return ActionFailed(_mapException(e, st));
     }
   }
 
   @override
-  Future<ActionResult<void>> purge(String masterpieceId) async {
+  Future<ActionResult<void>> purge(String artworkId) async {
     try {
       final row = await (_db.select(
-        _db.masterpiecesTable,
-      )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+        _db.artworksTable,
+      )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
       if (row == null || row.deletedAt == null) {
         return const ActionSuccess(null);
       }
       return await _purgeRows([row]);
     } catch (e, st) {
-      Log.e('Purge locale impossible ($masterpieceId)', e, st, 'Trash');
+      Log.e('Purge locale impossible ($artworkId)', e, st, 'Trash');
       return ActionFailed(_mapException(e, st));
     }
   }
@@ -117,7 +117,7 @@ class LocalTrashRepository implements TrashRepository {
   Future<ActionResult<void>> purgeAll({String? scopeId}) async {
     try {
       final rows = await (_db.select(
-        _db.masterpiecesTable,
+        _db.artworksTable,
       )..where((t) => t.deletedAt.isNotNull())).get();
       return await _purgeRows(rows);
     } catch (e, st) {
@@ -131,7 +131,7 @@ class LocalTrashRepository implements TrashRepository {
     final cutoff = (now ?? _now()).subtract(retention);
     try {
       final rows =
-          await (_db.select(_db.masterpiecesTable)..where(
+          await (_db.select(_db.artworksTable)..where(
                 (t) =>
                     t.deletedAt.isNotNull() &
                     t.deletedAt.isSmallerOrEqualValue(cutoff),
@@ -149,12 +149,12 @@ class LocalTrashRepository implements TrashRepository {
     }
   }
 
-  Future<ActionResult<void>> _purgeRows(List<MasterpieceEntity> rows) async {
+  Future<ActionResult<void>> _purgeRows(List<ArtworkEntity> rows) async {
     if (rows.isEmpty) return const ActionSuccess(null);
     try {
       await _db.transaction(() async {
         await (_db.delete(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.id.isIn(rows.map((row) => row.id)))).go();
       });
     } catch (e, st) {

@@ -95,9 +95,9 @@ class ErrorPresenter {
       ),
       // Never retryable on its own — the action offered is the way
       // out (sign out and keep working locally), not another attempt.
-      FoyerMismatchFailure() => PresentedError(
-        title: l10n.errorFoyerMismatchTitle,
-        body: l10n.errorFoyerMismatchBody,
+      FamilyMismatchFailure() => PresentedError(
+        title: l10n.errorFamilyMismatchTitle,
+        body: l10n.errorFamilyMismatchBody,
         actionLabel: l10n.accountSignOut,
       ),
       // Retryable on its own (a purge or an expiry frees space) —

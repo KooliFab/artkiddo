@@ -20,8 +20,8 @@ class TrashedArtwork {
 
 abstract class TrashRepository {
   Future<ActionResult<List<TrashedArtwork>>> listTrash({String? scopeId});
-  Future<ActionResult<void>> restore(String masterpieceId);
-  Future<ActionResult<void>> purge(String masterpieceId);
+  Future<ActionResult<void>> restore(String artworkId);
+  Future<ActionResult<void>> purge(String artworkId);
   Future<ActionResult<void>> purgeAll({String? scopeId});
 
   Future<ActionResult<int>> purgeExpired({DateTime? now});

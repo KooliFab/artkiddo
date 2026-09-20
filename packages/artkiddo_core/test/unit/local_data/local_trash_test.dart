@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -11,16 +11,15 @@ import 'package:artkiddo_core/src/domain/action_result.dart';
 import 'package:artkiddo_core/src/local/storage/local_vault.dart';
 import 'package:artkiddo_core/src/local/repositories/children_repository.dart';
 import 'package:artkiddo_core/src/local/repositories/local_trash_repository.dart';
-import 'package:artkiddo_core/src/local/repositories/masterpieces_repository.dart';
+import 'package:artkiddo_core/src/local/repositories/artworks_repository.dart';
 import 'package:artkiddo_core/src/sync/sync_outbox.dart';
-import 'package:artkiddo_core/src/sync/vault_meta.dart';
 
 void main() {
   late Directory root;
   late AppDatabase db;
   late LocalVault vault;
   late DriftChildrenRepository children;
-  late DriftMasterpiecesRepository masterpieces;
+  late DriftArtworksRepository artworks;
   late LocalTrashRepository trash;
 
   final clock = DateTime.utc(2026, 9, 11, 12);
@@ -35,7 +34,7 @@ void main() {
     );
     final outbox = SyncOutboxRepository(db);
     children = DriftChildrenRepository(db, vault, outbox: outbox);
-    masterpieces = DriftMasterpiecesRepository(
+    artworks = DriftArtworksRepository(
       db,
       vault,
       outbox: outbox,
@@ -57,7 +56,7 @@ void main() {
             .value;
     final source = File(p.join(root.path, 'source-${addedAt?.day ?? 1}.jpg'))
       ..writeAsStringSync('image bytes');
-    return (await masterpieces.create(
+    return (await artworks.create(
               childId: childId,
               sourceImageFile: source,
               addedAt: addedAt ?? clock,
@@ -70,11 +69,11 @@ void main() {
     'local delete is recoverable, active reads exclude it, and restore is idempotent',
     () async {
       final id = await createArtwork();
-      final before = await masterpieces.getById(id);
+      final before = await artworks.getById(id);
       final imageFile = await vault.resolveFile(before!.relativeImagePath!);
 
-      expect(await masterpieces.count(), 1);
-      final deletion = await masterpieces.delete(id);
+      expect(await artworks.count(), 1);
+      final deletion = await artworks.delete(id);
       expect(
         deletion,
         isA<ActionSuccess<void>>(),
@@ -82,12 +81,12 @@ void main() {
             ? 'failure=${deletion.failure.runtimeType} cause=${deletion.failure.cause}'
             : null,
       );
-      expect(await masterpieces.getById(id), isNull);
-      expect(await masterpieces.count(), 0);
+      expect(await artworks.getById(id), isNull);
+      expect(await artworks.count(), 0);
       expect(await imageFile.exists(), isTrue, reason: 'trash keeps files');
 
       final rows = await (db.select(
-        db.masterpiecesTable,
+        db.artworksTable,
       )..where((t) => t.id.equals(id))).get();
       expect(rows.single.deletedAt!.isAtSameMomentAs(clock), isTrue);
 
@@ -103,7 +102,7 @@ void main() {
       );
 
       expect(await trash.restore(id), isA<ActionSuccess<void>>());
-      expect((await masterpieces.getById(id))!.id, id);
+      expect((await artworks.getById(id))!.id, id);
       expect(await trash.restore(id), isA<ActionSuccess<void>>());
       expect(await imageFile.exists(), isTrue);
     },
@@ -113,31 +112,31 @@ void main() {
     'purge removes the row and all files, and repeated purge is a no-op',
     () async {
       final id = await createArtwork();
-      final before = await masterpieces.getById(id);
+      final before = await artworks.getById(id);
       final imageFile = await vault.resolveFile(before!.relativeImagePath!);
-      await masterpieces.delete(id);
+      await artworks.delete(id);
 
       expect(await trash.purge(id), isA<ActionSuccess<void>>());
       expect(await trash.purge(id), isA<ActionSuccess<void>>());
-      expect(await masterpieces.getById(id), isNull);
+      expect(await artworks.getById(id), isNull);
       expect(await imageFile.exists(), isFalse);
       expect((await trash.listTrash() as ActionSuccess).value, isEmpty);
     },
   );
 
   test(
-    'purgeAll removes every trashed artwork without a foyer scope',
+    'purgeAll removes every trashed artwork without a family scope',
     () async {
       final first = await createArtwork();
       final second = await createArtwork(
         addedAt: clock.add(const Duration(days: 1)),
       );
-      await masterpieces.delete(first);
-      await masterpieces.delete(second);
+      await artworks.delete(first);
+      await artworks.delete(second);
 
       expect(await trash.purgeAll(), isA<ActionSuccess<void>>());
       expect((await trash.listTrash() as ActionSuccess).value, isEmpty);
-      final rows = await db.select(db.masterpiecesTable).get();
+      final rows = await db.select(db.artworksTable).get();
       expect(rows.where((row) => row.id == first || row.id == second), isEmpty);
     },
   );
@@ -149,13 +148,13 @@ void main() {
       final newId = await createArtwork(
         addedAt: clock.add(const Duration(days: 1)),
       );
-      await masterpieces.delete(oldId);
-      await masterpieces.delete(newId);
+      await artworks.delete(oldId);
+      await artworks.delete(newId);
 
       await (db.update(
-        db.masterpiecesTable,
+        db.artworksTable,
       )..where((t) => t.id.equals(oldId))).write(
-        MasterpiecesTableCompanion(
+        ArtworksTableCompanion(
           deletedAt: Value(clock.subtract(const Duration(days: 31))),
         ),
       );
@@ -174,82 +173,17 @@ void main() {
     },
   );
 
-  test(
-    'v10 -> v11 renames legacy provider object-key columns without data loss',
-    () async {
-      final migrationRoot = await Directory.systemTemp.createTemp(
-        'artkiddo_v11_migration_',
-      );
-      final file = File(p.join(migrationRoot.path, 'legacy.sqlite'));
-      addTearDown(() async {
-        if (await migrationRoot.exists()) {
-          await migrationRoot.delete(recursive: true);
-        }
-      });
-
-      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-      addTearDown(
-        () => driftRuntimeOptions.dontWarnAboutMultipleDatabases = false,
-      );
-
-      var legacy = AppDatabase.forTesting(NativeDatabase(file));
-      final oldCursor = DateTime.utc(2026, 1, 1);
-      await legacy
-          .into(legacy.vaultMetaTable)
-          .insert(
-            VaultMetaTableCompanion.insert(
-              id: 'singleton',
-              lastPullCursor: Value(oldCursor),
-            ),
-          );
-      await legacy.customStatement(
-        'ALTER TABLE masterpieces_table RENAME COLUMN display_object_key TO r2_key_display',
-      );
-      await legacy.customStatement(
-        'ALTER TABLE masterpieces_table RENAME COLUMN thumbnail_object_key TO r2_key_thumbnail',
-      );
-      await legacy.customStatement(
-        'ALTER TABLE masterpieces_table RENAME COLUMN audio_object_key TO r2_key_audio',
-      );
-      await legacy.customStatement('PRAGMA user_version = 10');
-      await legacy.close();
-
-      legacy = AppDatabase.forTesting(NativeDatabase(file));
-      final cursors = await VaultMetaRepository(legacy).getPullCursors();
-      expect(cursors.children, isNull);
-      expect(cursors.masterpieces, isNull);
-      expect(cursors.purged, isNull);
-      expect(await VaultMetaRepository(legacy).getLastPullCursor(), isNull);
-      final columns = await legacy
-          .customSelect('PRAGMA table_info(masterpieces_table)')
-          .get();
-      final names = columns.map((row) => row.data['name']).toSet();
-      expect(
-        names,
-        containsAll(<String>{
-          'display_object_key',
-          'thumbnail_object_key',
-          'audio_object_key',
-        }),
-      );
-      expect(names, isNot(contains('r2_key_display')));
-      final fk = await legacy.customSelect('PRAGMA foreign_key_check').get();
-      expect(fk, isEmpty);
-      await legacy.close();
-    },
-  );
-
   test('deleteAllPhotos clears database records and local photos', () async {
     final id = await createArtwork();
-    final artwork = await masterpieces.getById(id);
+    final artwork = await artworks.getById(id);
     final photo = await vault.resolveFile(artwork!.relativeImagePath!);
     expect(await photo.exists(), isTrue);
 
-    final result = await masterpieces.deleteAllPhotos();
+    final result = await artworks.deleteAllPhotos();
     expect(result, isA<ActionSuccess<int>>());
     expect((result as ActionSuccess<int>).value, equals(1));
 
-    final count = await (db.select(db.masterpiecesTable)).get();
+    final count = await (db.select(db.artworksTable)).get();
     expect(count, isEmpty);
     expect(await photo.exists(), isFalse);
   });

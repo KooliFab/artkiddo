@@ -1717,12 +1717,12 @@
   "@errorUnavailableBody": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchTitle": "Cet appareil est lié ailleurs",
-  "@errorFoyerMismatchTitle": {
+  "errorFamilyMismatchTitle": "Cet appareil est lié ailleurs",
+  "@errorFamilyMismatchTitle": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchBody": "Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.",
-  "@errorFoyerMismatchBody": {
+  "errorFamilyMismatchBody": "Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.",
+  "@errorFamilyMismatchBody": {
     "description": "Localized user-facing copy."
   },
   "errorQuotaExceededTitle": "Espace de stockage du foyer atteint",

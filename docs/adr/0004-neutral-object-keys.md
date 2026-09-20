@@ -8,6 +8,7 @@ The local schema and public interfaces use `displayObjectKey`,
 ## Consequences
 
 Public code does not infer an object path, URL, vendor, bucket, or access policy.
-Schema v11 renames historical provider-specific columns in place. Private
-adapters translate object keys to their own storage operations and authorization
-model.
+Local schema v1 declares these columns as `display_object_key`,
+`thumbnail_object_key`, and `audio_object_key`; no provider-specific column name
+exists in the baseline. Private adapters translate object keys to their own
+storage operations and authorization model.

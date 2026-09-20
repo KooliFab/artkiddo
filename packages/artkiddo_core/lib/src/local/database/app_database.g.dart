@@ -89,7 +89,7 @@ class $ChildrenTableTable extends ChildrenTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'children_table';
+  static const String $name = 'children';
   @override
   VerificationContext validateIntegrity(
     Insertable<ChildEntity> instance, {
@@ -413,12 +413,12 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
   }
 }
 
-class $MasterpiecesTableTable extends MasterpiecesTable
-    with TableInfo<$MasterpiecesTableTable, MasterpieceEntity> {
+class $ArtworksTableTable extends ArtworksTable
+    with TableInfo<$ArtworksTableTable, ArtworkEntity> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $MasterpiecesTableTable(this.attachedDatabase, [this._alias]);
+  $ArtworksTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -439,7 +439,7 @@ class $MasterpiecesTableTable extends MasterpiecesTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES children_table (id) ON DELETE CASCADE',
+      'REFERENCES children (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _relativeImagePathMeta = const VerificationMeta(
@@ -658,10 +658,10 @@ class $MasterpiecesTableTable extends MasterpiecesTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'masterpieces_table';
+  static const String $name = 'artworks';
   @override
   VerificationContext validateIntegrity(
-    Insertable<MasterpieceEntity> instance, {
+    Insertable<ArtworkEntity> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -819,9 +819,9 @@ class $MasterpiecesTableTable extends MasterpiecesTable
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  MasterpieceEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ArtworkEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return MasterpieceEntity(
+    return ArtworkEntity(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -902,13 +902,12 @@ class $MasterpiecesTableTable extends MasterpiecesTable
   }
 
   @override
-  $MasterpiecesTableTable createAlias(String alias) {
-    return $MasterpiecesTableTable(attachedDatabase, alias);
+  $ArtworksTableTable createAlias(String alias) {
+    return $ArtworksTableTable(attachedDatabase, alias);
   }
 }
 
-class MasterpieceEntity extends DataClass
-    implements Insertable<MasterpieceEntity> {
+class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
   final String id;
   final String childId;
   final String? relativeImagePath;
@@ -920,6 +919,9 @@ class MasterpieceEntity extends DataClass
   final String? thumbnailImagePath;
   final int? imageWidth;
   final int? imageHeight;
+
+  /// Opaque object-storage keys. The public core never encodes a provider
+  /// specific key format; an optional capability owns their meaning.
   final String? displayObjectKey;
   final String? thumbnailObjectKey;
   final int byteSize;
@@ -928,7 +930,7 @@ class MasterpieceEntity extends DataClass
   final String? audioObjectKey;
   final int audioByteSize;
   final DateTime? deletedAt;
-  const MasterpieceEntity({
+  const ArtworkEntity({
     required this.id,
     required this.childId,
     this.relativeImagePath,
@@ -1000,8 +1002,8 @@ class MasterpieceEntity extends DataClass
     return map;
   }
 
-  MasterpiecesTableCompanion toCompanion(bool nullToAbsent) {
-    return MasterpiecesTableCompanion(
+  ArtworksTableCompanion toCompanion(bool nullToAbsent) {
+    return ArtworksTableCompanion(
       id: Value(id),
       childId: Value(childId),
       relativeImagePath: relativeImagePath == null && nullToAbsent
@@ -1050,12 +1052,12 @@ class MasterpieceEntity extends DataClass
     );
   }
 
-  factory MasterpieceEntity.fromJson(
+  factory ArtworkEntity.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return MasterpieceEntity(
+    return ArtworkEntity(
       id: serializer.fromJson<String>(json['id']),
       childId: serializer.fromJson<String>(json['childId']),
       relativeImagePath: serializer.fromJson<String?>(
@@ -1111,7 +1113,7 @@ class MasterpieceEntity extends DataClass
     };
   }
 
-  MasterpieceEntity copyWith({
+  ArtworkEntity copyWith({
     String? id,
     String? childId,
     Value<String?> relativeImagePath = const Value.absent(),
@@ -1131,7 +1133,7 @@ class MasterpieceEntity extends DataClass
     Value<String?> audioObjectKey = const Value.absent(),
     int? audioByteSize,
     Value<DateTime?> deletedAt = const Value.absent(),
-  }) => MasterpieceEntity(
+  }) => ArtworkEntity(
     id: id ?? this.id,
     childId: childId ?? this.childId,
     relativeImagePath: relativeImagePath.present
@@ -1168,8 +1170,8 @@ class MasterpieceEntity extends DataClass
     audioByteSize: audioByteSize ?? this.audioByteSize,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
-  MasterpieceEntity copyWithCompanion(MasterpiecesTableCompanion data) {
-    return MasterpieceEntity(
+  ArtworkEntity copyWithCompanion(ArtworksTableCompanion data) {
+    return ArtworkEntity(
       id: data.id.present ? data.id.value : this.id,
       childId: data.childId.present ? data.childId.value : this.childId,
       relativeImagePath: data.relativeImagePath.present
@@ -1216,7 +1218,7 @@ class MasterpieceEntity extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('MasterpieceEntity(')
+    return (StringBuffer('ArtworkEntity(')
           ..write('id: $id, ')
           ..write('childId: $childId, ')
           ..write('relativeImagePath: $relativeImagePath, ')
@@ -1265,7 +1267,7 @@ class MasterpieceEntity extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is MasterpieceEntity &&
+      (other is ArtworkEntity &&
           other.id == this.id &&
           other.childId == this.childId &&
           other.relativeImagePath == this.relativeImagePath &&
@@ -1287,7 +1289,7 @@ class MasterpieceEntity extends DataClass
           other.deletedAt == this.deletedAt);
 }
 
-class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
+class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
   final Value<String> id;
   final Value<String> childId;
   final Value<String?> relativeImagePath;
@@ -1308,7 +1310,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
   final Value<int> audioByteSize;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
-  const MasterpiecesTableCompanion({
+  const ArtworksTableCompanion({
     this.id = const Value.absent(),
     this.childId = const Value.absent(),
     this.relativeImagePath = const Value.absent(),
@@ -1330,7 +1332,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  MasterpiecesTableCompanion.insert({
+  ArtworksTableCompanion.insert({
     required String id,
     required String childId,
     this.relativeImagePath = const Value.absent(),
@@ -1354,7 +1356,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
   }) : id = Value(id),
        childId = Value(childId),
        addedAt = Value(addedAt);
-  static Insertable<MasterpieceEntity> custom({
+  static Insertable<ArtworkEntity> custom({
     Expression<String>? id,
     Expression<String>? childId,
     Expression<String>? relativeImagePath,
@@ -1402,7 +1404,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
     });
   }
 
-  MasterpiecesTableCompanion copyWith({
+  ArtworksTableCompanion copyWith({
     Value<String>? id,
     Value<String>? childId,
     Value<String?>? relativeImagePath,
@@ -1424,7 +1426,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
-    return MasterpiecesTableCompanion(
+    return ArtworksTableCompanion(
       id: id ?? this.id,
       childId: childId ?? this.childId,
       relativeImagePath: relativeImagePath ?? this.relativeImagePath,
@@ -1516,7 +1518,7 @@ class MasterpiecesTableCompanion extends UpdateCompanion<MasterpieceEntity> {
 
   @override
   String toString() {
-    return (StringBuffer('MasterpiecesTableCompanion(')
+    return (StringBuffer('ArtworksTableCompanion(')
           ..write('id: $id, ')
           ..write('childId: $childId, ')
           ..write('relativeImagePath: $relativeImagePath, ')
@@ -1576,7 +1578,7 @@ class $PendingFileCleanupsTableTable extends PendingFileCleanupsTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'pending_file_cleanups_table';
+  static const String $name = 'pending_file_cleanups';
   @override
   VerificationContext validateIntegrity(
     Insertable<PendingFileCleanupEntity> instance, {
@@ -1886,7 +1888,7 @@ class $SyncOutboxTableTable extends SyncOutboxTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'sync_outbox_table';
+  static const String $name = 'sync_outbox';
   @override
   VerificationContext validateIntegrity(
     Insertable<SyncOutboxEntryEntity> instance, {
@@ -2299,12 +2301,12 @@ class $VaultMetaTableTable extends VaultMetaTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _foyerIdMeta = const VerificationMeta(
-    'foyerId',
+  static const VerificationMeta _familyIdMeta = const VerificationMeta(
+    'familyId',
   );
   @override
-  late final GeneratedColumn<String> foyerId = GeneratedColumn<String>(
-    'foyer_id',
+  late final GeneratedColumn<String> familyId = GeneratedColumn<String>(
+    'family_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -2333,12 +2335,12 @@ class $VaultMetaTableTable extends VaultMetaTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
-  static const VerificationMeta _masterpiecesPullCursorMeta =
-      const VerificationMeta('masterpiecesPullCursor');
+  static const VerificationMeta _artworksPullCursorMeta =
+      const VerificationMeta('artworksPullCursor');
   @override
-  late final GeneratedColumn<DateTime> masterpiecesPullCursor =
+  late final GeneratedColumn<DateTime> artworksPullCursor =
       GeneratedColumn<DateTime>(
-        'masterpieces_pull_cursor',
+        'artworks_pull_cursor',
         aliasedName,
         true,
         type: DriftSqlType.dateTime,
@@ -2359,17 +2361,17 @@ class $VaultMetaTableTable extends VaultMetaTable
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    foyerId,
+    familyId,
     lastPullCursor,
     childrenPullCursor,
-    masterpiecesPullCursor,
+    artworksPullCursor,
     purgedPullCursor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'vault_meta_table';
+  static const String $name = 'vault_meta';
   @override
   VerificationContext validateIntegrity(
     Insertable<VaultMetaEntity> instance, {
@@ -2382,10 +2384,10 @@ class $VaultMetaTableTable extends VaultMetaTable
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('foyer_id')) {
+    if (data.containsKey('family_id')) {
       context.handle(
-        _foyerIdMeta,
-        foyerId.isAcceptableOrUnknown(data['foyer_id']!, _foyerIdMeta),
+        _familyIdMeta,
+        familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
       );
     }
     if (data.containsKey('last_pull_cursor')) {
@@ -2406,12 +2408,12 @@ class $VaultMetaTableTable extends VaultMetaTable
         ),
       );
     }
-    if (data.containsKey('masterpieces_pull_cursor')) {
+    if (data.containsKey('artworks_pull_cursor')) {
       context.handle(
-        _masterpiecesPullCursorMeta,
-        masterpiecesPullCursor.isAcceptableOrUnknown(
-          data['masterpieces_pull_cursor']!,
-          _masterpiecesPullCursorMeta,
+        _artworksPullCursorMeta,
+        artworksPullCursor.isAcceptableOrUnknown(
+          data['artworks_pull_cursor']!,
+          _artworksPullCursorMeta,
         ),
       );
     }
@@ -2437,9 +2439,9 @@ class $VaultMetaTableTable extends VaultMetaTable
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      foyerId: attachedDatabase.typeMapping.read(
+      familyId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}foyer_id'],
+        data['${effectivePrefix}family_id'],
       ),
       lastPullCursor: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -2449,9 +2451,9 @@ class $VaultMetaTableTable extends VaultMetaTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}children_pull_cursor'],
       ),
-      masterpiecesPullCursor: attachedDatabase.typeMapping.read(
+      artworksPullCursor: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}masterpieces_pull_cursor'],
+        data['${effectivePrefix}artworks_pull_cursor'],
       ),
       purgedPullCursor: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -2468,25 +2470,25 @@ class $VaultMetaTableTable extends VaultMetaTable
 
 class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   final String id;
-  final String? foyerId;
+  final String? familyId;
   final DateTime? lastPullCursor;
   final DateTime? childrenPullCursor;
-  final DateTime? masterpiecesPullCursor;
+  final DateTime? artworksPullCursor;
   final DateTime? purgedPullCursor;
   const VaultMetaEntity({
     required this.id,
-    this.foyerId,
+    this.familyId,
     this.lastPullCursor,
     this.childrenPullCursor,
-    this.masterpiecesPullCursor,
+    this.artworksPullCursor,
     this.purgedPullCursor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    if (!nullToAbsent || foyerId != null) {
-      map['foyer_id'] = Variable<String>(foyerId);
+    if (!nullToAbsent || familyId != null) {
+      map['family_id'] = Variable<String>(familyId);
     }
     if (!nullToAbsent || lastPullCursor != null) {
       map['last_pull_cursor'] = Variable<DateTime>(lastPullCursor);
@@ -2494,10 +2496,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     if (!nullToAbsent || childrenPullCursor != null) {
       map['children_pull_cursor'] = Variable<DateTime>(childrenPullCursor);
     }
-    if (!nullToAbsent || masterpiecesPullCursor != null) {
-      map['masterpieces_pull_cursor'] = Variable<DateTime>(
-        masterpiecesPullCursor,
-      );
+    if (!nullToAbsent || artworksPullCursor != null) {
+      map['artworks_pull_cursor'] = Variable<DateTime>(artworksPullCursor);
     }
     if (!nullToAbsent || purgedPullCursor != null) {
       map['purged_pull_cursor'] = Variable<DateTime>(purgedPullCursor);
@@ -2508,18 +2508,18 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   VaultMetaTableCompanion toCompanion(bool nullToAbsent) {
     return VaultMetaTableCompanion(
       id: Value(id),
-      foyerId: foyerId == null && nullToAbsent
+      familyId: familyId == null && nullToAbsent
           ? const Value.absent()
-          : Value(foyerId),
+          : Value(familyId),
       lastPullCursor: lastPullCursor == null && nullToAbsent
           ? const Value.absent()
           : Value(lastPullCursor),
       childrenPullCursor: childrenPullCursor == null && nullToAbsent
           ? const Value.absent()
           : Value(childrenPullCursor),
-      masterpiecesPullCursor: masterpiecesPullCursor == null && nullToAbsent
+      artworksPullCursor: artworksPullCursor == null && nullToAbsent
           ? const Value.absent()
-          : Value(masterpiecesPullCursor),
+          : Value(artworksPullCursor),
       purgedPullCursor: purgedPullCursor == null && nullToAbsent
           ? const Value.absent()
           : Value(purgedPullCursor),
@@ -2533,13 +2533,13 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return VaultMetaEntity(
       id: serializer.fromJson<String>(json['id']),
-      foyerId: serializer.fromJson<String?>(json['foyerId']),
+      familyId: serializer.fromJson<String?>(json['familyId']),
       lastPullCursor: serializer.fromJson<DateTime?>(json['lastPullCursor']),
       childrenPullCursor: serializer.fromJson<DateTime?>(
         json['childrenPullCursor'],
       ),
-      masterpiecesPullCursor: serializer.fromJson<DateTime?>(
-        json['masterpiecesPullCursor'],
+      artworksPullCursor: serializer.fromJson<DateTime?>(
+        json['artworksPullCursor'],
       ),
       purgedPullCursor: serializer.fromJson<DateTime?>(
         json['purgedPullCursor'],
@@ -2551,35 +2551,33 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'foyerId': serializer.toJson<String?>(foyerId),
+      'familyId': serializer.toJson<String?>(familyId),
       'lastPullCursor': serializer.toJson<DateTime?>(lastPullCursor),
       'childrenPullCursor': serializer.toJson<DateTime?>(childrenPullCursor),
-      'masterpiecesPullCursor': serializer.toJson<DateTime?>(
-        masterpiecesPullCursor,
-      ),
+      'artworksPullCursor': serializer.toJson<DateTime?>(artworksPullCursor),
       'purgedPullCursor': serializer.toJson<DateTime?>(purgedPullCursor),
     };
   }
 
   VaultMetaEntity copyWith({
     String? id,
-    Value<String?> foyerId = const Value.absent(),
+    Value<String?> familyId = const Value.absent(),
     Value<DateTime?> lastPullCursor = const Value.absent(),
     Value<DateTime?> childrenPullCursor = const Value.absent(),
-    Value<DateTime?> masterpiecesPullCursor = const Value.absent(),
+    Value<DateTime?> artworksPullCursor = const Value.absent(),
     Value<DateTime?> purgedPullCursor = const Value.absent(),
   }) => VaultMetaEntity(
     id: id ?? this.id,
-    foyerId: foyerId.present ? foyerId.value : this.foyerId,
+    familyId: familyId.present ? familyId.value : this.familyId,
     lastPullCursor: lastPullCursor.present
         ? lastPullCursor.value
         : this.lastPullCursor,
     childrenPullCursor: childrenPullCursor.present
         ? childrenPullCursor.value
         : this.childrenPullCursor,
-    masterpiecesPullCursor: masterpiecesPullCursor.present
-        ? masterpiecesPullCursor.value
-        : this.masterpiecesPullCursor,
+    artworksPullCursor: artworksPullCursor.present
+        ? artworksPullCursor.value
+        : this.artworksPullCursor,
     purgedPullCursor: purgedPullCursor.present
         ? purgedPullCursor.value
         : this.purgedPullCursor,
@@ -2587,16 +2585,16 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   VaultMetaEntity copyWithCompanion(VaultMetaTableCompanion data) {
     return VaultMetaEntity(
       id: data.id.present ? data.id.value : this.id,
-      foyerId: data.foyerId.present ? data.foyerId.value : this.foyerId,
+      familyId: data.familyId.present ? data.familyId.value : this.familyId,
       lastPullCursor: data.lastPullCursor.present
           ? data.lastPullCursor.value
           : this.lastPullCursor,
       childrenPullCursor: data.childrenPullCursor.present
           ? data.childrenPullCursor.value
           : this.childrenPullCursor,
-      masterpiecesPullCursor: data.masterpiecesPullCursor.present
-          ? data.masterpiecesPullCursor.value
-          : this.masterpiecesPullCursor,
+      artworksPullCursor: data.artworksPullCursor.present
+          ? data.artworksPullCursor.value
+          : this.artworksPullCursor,
       purgedPullCursor: data.purgedPullCursor.present
           ? data.purgedPullCursor.value
           : this.purgedPullCursor,
@@ -2607,10 +2605,10 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   String toString() {
     return (StringBuffer('VaultMetaEntity(')
           ..write('id: $id, ')
-          ..write('foyerId: $foyerId, ')
+          ..write('familyId: $familyId, ')
           ..write('lastPullCursor: $lastPullCursor, ')
           ..write('childrenPullCursor: $childrenPullCursor, ')
-          ..write('masterpiecesPullCursor: $masterpiecesPullCursor, ')
+          ..write('artworksPullCursor: $artworksPullCursor, ')
           ..write('purgedPullCursor: $purgedPullCursor')
           ..write(')'))
         .toString();
@@ -2619,10 +2617,10 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   @override
   int get hashCode => Object.hash(
     id,
-    foyerId,
+    familyId,
     lastPullCursor,
     childrenPullCursor,
-    masterpiecesPullCursor,
+    artworksPullCursor,
     purgedPullCursor,
   );
   @override
@@ -2630,56 +2628,56 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       identical(this, other) ||
       (other is VaultMetaEntity &&
           other.id == this.id &&
-          other.foyerId == this.foyerId &&
+          other.familyId == this.familyId &&
           other.lastPullCursor == this.lastPullCursor &&
           other.childrenPullCursor == this.childrenPullCursor &&
-          other.masterpiecesPullCursor == this.masterpiecesPullCursor &&
+          other.artworksPullCursor == this.artworksPullCursor &&
           other.purgedPullCursor == this.purgedPullCursor);
 }
 
 class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   final Value<String> id;
-  final Value<String?> foyerId;
+  final Value<String?> familyId;
   final Value<DateTime?> lastPullCursor;
   final Value<DateTime?> childrenPullCursor;
-  final Value<DateTime?> masterpiecesPullCursor;
+  final Value<DateTime?> artworksPullCursor;
   final Value<DateTime?> purgedPullCursor;
   final Value<int> rowid;
   const VaultMetaTableCompanion({
     this.id = const Value.absent(),
-    this.foyerId = const Value.absent(),
+    this.familyId = const Value.absent(),
     this.lastPullCursor = const Value.absent(),
     this.childrenPullCursor = const Value.absent(),
-    this.masterpiecesPullCursor = const Value.absent(),
+    this.artworksPullCursor = const Value.absent(),
     this.purgedPullCursor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VaultMetaTableCompanion.insert({
     required String id,
-    this.foyerId = const Value.absent(),
+    this.familyId = const Value.absent(),
     this.lastPullCursor = const Value.absent(),
     this.childrenPullCursor = const Value.absent(),
-    this.masterpiecesPullCursor = const Value.absent(),
+    this.artworksPullCursor = const Value.absent(),
     this.purgedPullCursor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id);
   static Insertable<VaultMetaEntity> custom({
     Expression<String>? id,
-    Expression<String>? foyerId,
+    Expression<String>? familyId,
     Expression<DateTime>? lastPullCursor,
     Expression<DateTime>? childrenPullCursor,
-    Expression<DateTime>? masterpiecesPullCursor,
+    Expression<DateTime>? artworksPullCursor,
     Expression<DateTime>? purgedPullCursor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (foyerId != null) 'foyer_id': foyerId,
+      if (familyId != null) 'family_id': familyId,
       if (lastPullCursor != null) 'last_pull_cursor': lastPullCursor,
       if (childrenPullCursor != null)
         'children_pull_cursor': childrenPullCursor,
-      if (masterpiecesPullCursor != null)
-        'masterpieces_pull_cursor': masterpiecesPullCursor,
+      if (artworksPullCursor != null)
+        'artworks_pull_cursor': artworksPullCursor,
       if (purgedPullCursor != null) 'purged_pull_cursor': purgedPullCursor,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2687,20 +2685,19 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
 
   VaultMetaTableCompanion copyWith({
     Value<String>? id,
-    Value<String?>? foyerId,
+    Value<String?>? familyId,
     Value<DateTime?>? lastPullCursor,
     Value<DateTime?>? childrenPullCursor,
-    Value<DateTime?>? masterpiecesPullCursor,
+    Value<DateTime?>? artworksPullCursor,
     Value<DateTime?>? purgedPullCursor,
     Value<int>? rowid,
   }) {
     return VaultMetaTableCompanion(
       id: id ?? this.id,
-      foyerId: foyerId ?? this.foyerId,
+      familyId: familyId ?? this.familyId,
       lastPullCursor: lastPullCursor ?? this.lastPullCursor,
       childrenPullCursor: childrenPullCursor ?? this.childrenPullCursor,
-      masterpiecesPullCursor:
-          masterpiecesPullCursor ?? this.masterpiecesPullCursor,
+      artworksPullCursor: artworksPullCursor ?? this.artworksPullCursor,
       purgedPullCursor: purgedPullCursor ?? this.purgedPullCursor,
       rowid: rowid ?? this.rowid,
     );
@@ -2712,8 +2709,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (foyerId.present) {
-      map['foyer_id'] = Variable<String>(foyerId.value);
+    if (familyId.present) {
+      map['family_id'] = Variable<String>(familyId.value);
     }
     if (lastPullCursor.present) {
       map['last_pull_cursor'] = Variable<DateTime>(lastPullCursor.value);
@@ -2723,9 +2720,9 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
         childrenPullCursor.value,
       );
     }
-    if (masterpiecesPullCursor.present) {
-      map['masterpieces_pull_cursor'] = Variable<DateTime>(
-        masterpiecesPullCursor.value,
+    if (artworksPullCursor.present) {
+      map['artworks_pull_cursor'] = Variable<DateTime>(
+        artworksPullCursor.value,
       );
     }
     if (purgedPullCursor.present) {
@@ -2741,10 +2738,10 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   String toString() {
     return (StringBuffer('VaultMetaTableCompanion(')
           ..write('id: $id, ')
-          ..write('foyerId: $foyerId, ')
+          ..write('familyId: $familyId, ')
           ..write('lastPullCursor: $lastPullCursor, ')
           ..write('childrenPullCursor: $childrenPullCursor, ')
-          ..write('masterpiecesPullCursor: $masterpiecesPullCursor, ')
+          ..write('artworksPullCursor: $artworksPullCursor, ')
           ..write('purgedPullCursor: $purgedPullCursor, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2782,7 +2779,7 @@ class $ShareLinkUrlCacheTableTable extends ShareLinkUrlCacheTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'share_link_url_cache_table';
+  static const String $name = 'share_link_url_cache';
   @override
   VerificationContext validateIntegrity(
     Insertable<ShareLinkUrlCacheEntity> instance, {
@@ -2968,8 +2965,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ChildrenTableTable childrenTable = $ChildrenTableTable(this);
-  late final $MasterpiecesTableTable masterpiecesTable =
-      $MasterpiecesTableTable(this);
+  late final $ArtworksTableTable artworksTable = $ArtworksTableTable(this);
   late final $PendingFileCleanupsTableTable pendingFileCleanupsTable =
       $PendingFileCleanupsTableTable(this);
   late final $SyncOutboxTableTable syncOutboxTable = $SyncOutboxTableTable(
@@ -2984,7 +2980,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     childrenTable,
-    masterpiecesTable,
+    artworksTable,
     pendingFileCleanupsTable,
     syncOutboxTable,
     vaultMetaTable,
@@ -2994,10 +2990,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
     WritePropagation(
       on: TableUpdateQuery.onTableName(
-        'children_table',
+        'children',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('masterpieces_table', kind: UpdateKind.delete)],
+      result: [TableUpdate('artworks', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3031,22 +3027,19 @@ final class $$ChildrenTableTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$MasterpiecesTableTable, List<MasterpieceEntity>>
-  _masterpiecesTableRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.masterpiecesTable,
-        aliasName: 'children_table__id__masterpieces_table__child_id',
-      );
+  static MultiTypedResultKey<$ArtworksTableTable, List<ArtworkEntity>>
+  _artworksTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.artworksTable,
+    aliasName: 'children__id__artworks__child_id',
+  );
 
-  $$MasterpiecesTableTableProcessedTableManager get masterpiecesTableRefs {
-    final manager = $$MasterpiecesTableTableTableManager(
+  $$ArtworksTableTableProcessedTableManager get artworksTableRefs {
+    final manager = $$ArtworksTableTableTableManager(
       $_db,
-      $_db.masterpiecesTable,
+      $_db.artworksTable,
     ).filter((f) => f.childId.id.sqlEquals($_itemColumn<String>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(
-      _masterpiecesTableRefsTable($_db),
-    );
+    final cache = $_typedResult.readTableOrNull(_artworksTableRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3092,22 +3085,22 @@ class $$ChildrenTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> masterpiecesTableRefs(
-    Expression<bool> Function($$MasterpiecesTableTableFilterComposer f) f,
+  Expression<bool> artworksTableRefs(
+    Expression<bool> Function($$ArtworksTableTableFilterComposer f) f,
   ) {
-    final $$MasterpiecesTableTableFilterComposer composer = $composerBuilder(
+    final $$ArtworksTableTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.masterpiecesTable,
+      referencedTable: $db.artworksTable,
       getReferencedColumn: (t) => t.childId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$MasterpiecesTableTableFilterComposer(
+          }) => $$ArtworksTableTableFilterComposer(
             $db: $db,
-            $table: $db.masterpiecesTable,
+            $table: $db.artworksTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3185,29 +3178,28 @@ class $$ChildrenTableTableAnnotationComposer
   GeneratedColumn<String> get syncState =>
       $composableBuilder(column: $table.syncState, builder: (column) => column);
 
-  Expression<T> masterpiecesTableRefs<T extends Object>(
-    Expression<T> Function($$MasterpiecesTableTableAnnotationComposer a) f,
+  Expression<T> artworksTableRefs<T extends Object>(
+    Expression<T> Function($$ArtworksTableTableAnnotationComposer a) f,
   ) {
-    final $$MasterpiecesTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.masterpiecesTable,
-          getReferencedColumn: (t) => t.childId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+    final $$ArtworksTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.artworksTable,
+      getReferencedColumn: (t) => t.childId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ArtworksTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.artworksTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$MasterpiecesTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.masterpiecesTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return f(composer);
   }
 }
@@ -3225,7 +3217,7 @@ class $$ChildrenTableTableTableManager
           $$ChildrenTableTableUpdateCompanionBuilder,
           (ChildEntity, $$ChildrenTableTableReferences),
           ChildEntity,
-          PrefetchHooks Function({bool masterpiecesTableRefs})
+          PrefetchHooks Function({bool artworksTableRefs})
         > {
   $$ChildrenTableTableTableManager(_$AppDatabase db, $ChildrenTableTable table)
     : super(
@@ -3282,30 +3274,30 @@ class $$ChildrenTableTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({masterpiecesTableRefs = false}) {
+          prefetchHooksCallback: ({artworksTableRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (masterpiecesTableRefs) db.masterpiecesTable,
+                if (artworksTableRefs) db.artworksTable,
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (masterpiecesTableRefs)
+                  if (artworksTableRefs)
                     await $_getPrefetchedData<
                       ChildEntity,
                       $ChildrenTableTable,
-                      MasterpieceEntity
+                      ArtworkEntity
                     >(
                       currentTable: table,
                       referencedTable: $$ChildrenTableTableReferences
-                          ._masterpiecesTableRefsTable(db),
+                          ._artworksTableRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$ChildrenTableTableReferences(
                             db,
                             table,
                             p0,
-                          ).masterpiecesTableRefs,
+                          ).artworksTableRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
                           referencedItems.where((e) => e.childId == item.id),
                       typedResults: items,
@@ -3330,10 +3322,10 @@ typedef $$ChildrenTableTableProcessedTableManager =
       $$ChildrenTableTableUpdateCompanionBuilder,
       (ChildEntity, $$ChildrenTableTableReferences),
       ChildEntity,
-      PrefetchHooks Function({bool masterpiecesTableRefs})
+      PrefetchHooks Function({bool artworksTableRefs})
     >;
-typedef $$MasterpiecesTableTableCreateCompanionBuilder =
-    MasterpiecesTableCompanion Function({
+typedef $$ArtworksTableTableCreateCompanionBuilder =
+    ArtworksTableCompanion Function({
       required String id,
       required String childId,
       Value<String?> relativeImagePath,
@@ -3355,8 +3347,8 @@ typedef $$MasterpiecesTableTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
-typedef $$MasterpiecesTableTableUpdateCompanionBuilder =
-    MasterpiecesTableCompanion Function({
+typedef $$ArtworksTableTableUpdateCompanionBuilder =
+    ArtworksTableCompanion Function({
       Value<String> id,
       Value<String> childId,
       Value<String?> relativeImagePath,
@@ -3379,21 +3371,16 @@ typedef $$MasterpiecesTableTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-final class $$MasterpiecesTableTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $MasterpiecesTableTable,
-          MasterpieceEntity
-        > {
-  $$MasterpiecesTableTableReferences(
+final class $$ArtworksTableTableReferences
+    extends BaseReferences<_$AppDatabase, $ArtworksTableTable, ArtworkEntity> {
+  $$ArtworksTableTableReferences(
     super.$_db,
     super.$_table,
     super.$_typedResult,
   );
 
-  static $ChildrenTableTable _childIdTable(_$AppDatabase db) => db.childrenTable
-      .createAlias('masterpieces_table__child_id__children_table__id');
+  static $ChildrenTableTable _childIdTable(_$AppDatabase db) =>
+      db.childrenTable.createAlias('artworks__child_id__children__id');
 
   $$ChildrenTableTableProcessedTableManager get childId {
     final $_column = $_itemColumn<String>('child_id')!;
@@ -3410,9 +3397,9 @@ final class $$MasterpiecesTableTableReferences
   }
 }
 
-class $$MasterpiecesTableTableFilterComposer
-    extends Composer<_$AppDatabase, $MasterpiecesTableTable> {
-  $$MasterpiecesTableTableFilterComposer({
+class $$ArtworksTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ArtworksTableTable> {
+  $$ArtworksTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3533,9 +3520,9 @@ class $$MasterpiecesTableTableFilterComposer
   }
 }
 
-class $$MasterpiecesTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $MasterpiecesTableTable> {
-  $$MasterpiecesTableTableOrderingComposer({
+class $$ArtworksTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ArtworksTableTable> {
+  $$ArtworksTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3656,9 +3643,9 @@ class $$MasterpiecesTableTableOrderingComposer
   }
 }
 
-class $$MasterpiecesTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $MasterpiecesTableTable> {
-  $$MasterpiecesTableTableAnnotationComposer({
+class $$ArtworksTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ArtworksTableTable> {
+  $$ArtworksTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3765,37 +3752,32 @@ class $$MasterpiecesTableTableAnnotationComposer
   }
 }
 
-class $$MasterpiecesTableTableTableManager
+class $$ArtworksTableTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $MasterpiecesTableTable,
-          MasterpieceEntity,
-          $$MasterpiecesTableTableFilterComposer,
-          $$MasterpiecesTableTableOrderingComposer,
-          $$MasterpiecesTableTableAnnotationComposer,
-          $$MasterpiecesTableTableCreateCompanionBuilder,
-          $$MasterpiecesTableTableUpdateCompanionBuilder,
-          (MasterpieceEntity, $$MasterpiecesTableTableReferences),
-          MasterpieceEntity,
+          $ArtworksTableTable,
+          ArtworkEntity,
+          $$ArtworksTableTableFilterComposer,
+          $$ArtworksTableTableOrderingComposer,
+          $$ArtworksTableTableAnnotationComposer,
+          $$ArtworksTableTableCreateCompanionBuilder,
+          $$ArtworksTableTableUpdateCompanionBuilder,
+          (ArtworkEntity, $$ArtworksTableTableReferences),
+          ArtworkEntity,
           PrefetchHooks Function({bool childId})
         > {
-  $$MasterpiecesTableTableTableManager(
-    _$AppDatabase db,
-    $MasterpiecesTableTable table,
-  ) : super(
+  $$ArtworksTableTableTableManager(_$AppDatabase db, $ArtworksTableTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$MasterpiecesTableTableFilterComposer($db: db, $table: table),
+              $$ArtworksTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$MasterpiecesTableTableOrderingComposer($db: db, $table: table),
+              $$ArtworksTableTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$MasterpiecesTableTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$ArtworksTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -3818,7 +3800,7 @@ class $$MasterpiecesTableTableTableManager
                 Value<int> audioByteSize = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => MasterpiecesTableCompanion(
+              }) => ArtworksTableCompanion(
                 id: id,
                 childId: childId,
                 relativeImagePath: relativeImagePath,
@@ -3862,7 +3844,7 @@ class $$MasterpiecesTableTableTableManager
                 Value<int> audioByteSize = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => MasterpiecesTableCompanion.insert(
+              }) => ArtworksTableCompanion.insert(
                 id: id,
                 childId: childId,
                 relativeImagePath: relativeImagePath,
@@ -3887,10 +3869,8 @@ class $$MasterpiecesTableTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$MasterpiecesTableTable, MasterpieceEntity>(
-                    table,
-                  ),
-                  $$MasterpiecesTableTableReferences(db, table, e),
+                  e.readTable<$ArtworksTableTable, ArtworkEntity>(table),
+                  $$ArtworksTableTableReferences(db, table, e),
                 ),
               )
               .toList(),
@@ -3919,13 +3899,11 @@ class $$MasterpiecesTableTableTableManager
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.childId,
-                                referencedTable:
-                                    $$MasterpiecesTableTableReferences
-                                        ._childIdTable(db),
-                                referencedColumn:
-                                    $$MasterpiecesTableTableReferences
-                                        ._childIdTable(db)
-                                        .id,
+                                referencedTable: $$ArtworksTableTableReferences
+                                    ._childIdTable(db),
+                                referencedColumn: $$ArtworksTableTableReferences
+                                    ._childIdTable(db)
+                                    .id,
                               )
                               as T;
                     }
@@ -3941,18 +3919,18 @@ class $$MasterpiecesTableTableTableManager
       );
 }
 
-typedef $$MasterpiecesTableTableProcessedTableManager =
+typedef $$ArtworksTableTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $MasterpiecesTableTable,
-      MasterpieceEntity,
-      $$MasterpiecesTableTableFilterComposer,
-      $$MasterpiecesTableTableOrderingComposer,
-      $$MasterpiecesTableTableAnnotationComposer,
-      $$MasterpiecesTableTableCreateCompanionBuilder,
-      $$MasterpiecesTableTableUpdateCompanionBuilder,
-      (MasterpieceEntity, $$MasterpiecesTableTableReferences),
-      MasterpieceEntity,
+      $ArtworksTableTable,
+      ArtworkEntity,
+      $$ArtworksTableTableFilterComposer,
+      $$ArtworksTableTableOrderingComposer,
+      $$ArtworksTableTableAnnotationComposer,
+      $$ArtworksTableTableCreateCompanionBuilder,
+      $$ArtworksTableTableUpdateCompanionBuilder,
+      (ArtworkEntity, $$ArtworksTableTableReferences),
+      ArtworkEntity,
       PrefetchHooks Function({bool childId})
     >;
 typedef $$PendingFileCleanupsTableTableCreateCompanionBuilder =
@@ -4408,20 +4386,20 @@ typedef $$SyncOutboxTableTableProcessedTableManager =
 typedef $$VaultMetaTableTableCreateCompanionBuilder =
     VaultMetaTableCompanion Function({
       required String id,
-      Value<String?> foyerId,
+      Value<String?> familyId,
       Value<DateTime?> lastPullCursor,
       Value<DateTime?> childrenPullCursor,
-      Value<DateTime?> masterpiecesPullCursor,
+      Value<DateTime?> artworksPullCursor,
       Value<DateTime?> purgedPullCursor,
       Value<int> rowid,
     });
 typedef $$VaultMetaTableTableUpdateCompanionBuilder =
     VaultMetaTableCompanion Function({
       Value<String> id,
-      Value<String?> foyerId,
+      Value<String?> familyId,
       Value<DateTime?> lastPullCursor,
       Value<DateTime?> childrenPullCursor,
-      Value<DateTime?> masterpiecesPullCursor,
+      Value<DateTime?> artworksPullCursor,
       Value<DateTime?> purgedPullCursor,
       Value<int> rowid,
     });
@@ -4440,8 +4418,8 @@ class $$VaultMetaTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get foyerId => $composableBuilder(
-    column: $table.foyerId,
+  ColumnFilters<String> get familyId => $composableBuilder(
+    column: $table.familyId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4455,8 +4433,8 @@ class $$VaultMetaTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get masterpiecesPullCursor => $composableBuilder(
-    column: $table.masterpiecesPullCursor,
+  ColumnFilters<DateTime> get artworksPullCursor => $composableBuilder(
+    column: $table.artworksPullCursor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4480,8 +4458,8 @@ class $$VaultMetaTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get foyerId => $composableBuilder(
-    column: $table.foyerId,
+  ColumnOrderings<String> get familyId => $composableBuilder(
+    column: $table.familyId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4495,8 +4473,8 @@ class $$VaultMetaTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get masterpiecesPullCursor => $composableBuilder(
-    column: $table.masterpiecesPullCursor,
+  ColumnOrderings<DateTime> get artworksPullCursor => $composableBuilder(
+    column: $table.artworksPullCursor,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4518,8 +4496,8 @@ class $$VaultMetaTableTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get foyerId =>
-      $composableBuilder(column: $table.foyerId, builder: (column) => column);
+  GeneratedColumn<String> get familyId =>
+      $composableBuilder(column: $table.familyId, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastPullCursor => $composableBuilder(
     column: $table.lastPullCursor,
@@ -4531,8 +4509,8 @@ class $$VaultMetaTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<DateTime> get masterpiecesPullCursor => $composableBuilder(
-    column: $table.masterpiecesPullCursor,
+  GeneratedColumn<DateTime> get artworksPullCursor => $composableBuilder(
+    column: $table.artworksPullCursor,
     builder: (column) => column,
   );
 
@@ -4580,36 +4558,36 @@ class $$VaultMetaTableTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String?> foyerId = const Value.absent(),
+                Value<String?> familyId = const Value.absent(),
                 Value<DateTime?> lastPullCursor = const Value.absent(),
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
-                Value<DateTime?> masterpiecesPullCursor = const Value.absent(),
+                Value<DateTime?> artworksPullCursor = const Value.absent(),
                 Value<DateTime?> purgedPullCursor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VaultMetaTableCompanion(
                 id: id,
-                foyerId: foyerId,
+                familyId: familyId,
                 lastPullCursor: lastPullCursor,
                 childrenPullCursor: childrenPullCursor,
-                masterpiecesPullCursor: masterpiecesPullCursor,
+                artworksPullCursor: artworksPullCursor,
                 purgedPullCursor: purgedPullCursor,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String id,
-                Value<String?> foyerId = const Value.absent(),
+                Value<String?> familyId = const Value.absent(),
                 Value<DateTime?> lastPullCursor = const Value.absent(),
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
-                Value<DateTime?> masterpiecesPullCursor = const Value.absent(),
+                Value<DateTime?> artworksPullCursor = const Value.absent(),
                 Value<DateTime?> purgedPullCursor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VaultMetaTableCompanion.insert(
                 id: id,
-                foyerId: foyerId,
+                familyId: familyId,
                 lastPullCursor: lastPullCursor,
                 childrenPullCursor: childrenPullCursor,
-                masterpiecesPullCursor: masterpiecesPullCursor,
+                artworksPullCursor: artworksPullCursor,
                 purgedPullCursor: purgedPullCursor,
                 rowid: rowid,
               ),
@@ -4827,8 +4805,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ChildrenTableTableTableManager get childrenTable =>
       $$ChildrenTableTableTableManager(_db, _db.childrenTable);
-  $$MasterpiecesTableTableTableManager get masterpiecesTable =>
-      $$MasterpiecesTableTableTableManager(_db, _db.masterpiecesTable);
+  $$ArtworksTableTableTableManager get artworksTable =>
+      $$ArtworksTableTableTableManager(_db, _db.artworksTable);
   $$PendingFileCleanupsTableTableTableManager get pendingFileCleanupsTable =>
       $$PendingFileCleanupsTableTableTableManager(
         _db,

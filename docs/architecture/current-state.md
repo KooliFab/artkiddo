@@ -22,7 +22,7 @@ packages/artkiddo_core/
     navigation/                   AppShell, CompositionActions seam
     gallery/                      feed, capture, artwork detail
     sharing/                      web gallery-link screens and controller
-    foyer/                        household screens and controller
+    family/                       household screens and controller
     children/, settings/, ui/, theme/, locale/, utils/
   test/                           local persistence, sync, and presentation tests
 docs/                             ADRs, operating rules, generated inventory
@@ -37,12 +37,12 @@ an account, environment values, network, database server, or object storage.
 flowchart TD
   App["app/lib/main.dart\nlocal composition"] --> Bootstrap["ArtKiddoBootstrap\ncapabilities + providers"]
   Bootstrap --> UI["Core presentation\ngallery · capture · trash · local sharing"]
-  UI --> Repos["Local repositories\nchildren + masterpieces"]
-  Repos --> DB["AppDatabase\nDrift schema v11"]
+  UI --> Repos["Local repositories\nchildren + artworks"]
+  Repos --> DB["AppDatabase\nDrift schema v1"]
   Repos --> Vault["LocalVault\noriginals · derivatives · audio"]
   DB --> Outbox["SyncOutbox + cursors\npresent but inactive locally"]
   Vault --> Rescue["VaultRescueExport\nfile-only ZIP, no database"]
-  Bootstrap -. "optional capabilities disabled" .-> NoRemote["NoFoyerApi / NoSharingService\nno fabricated external state"]
+  Bootstrap -. "optional capabilities disabled" .-> NoRemote["NoFamilyApi / NoSharingService\nno fabricated external state"]
 ```
 
 This separation keeps the application usable and testable without an account,
@@ -59,7 +59,7 @@ provider or protocol details.
    cannot be enabled without its required `CloudService`.
 2. `_validateComposition` checks what the `overrides` *actually produced* —
    reading `compositionActionsProvider`, `remoteMediaFetcherProvider`,
-   `foyerApiProvider`, and `sharingServiceProvider` after construction, and
+   `familyApiProvider`, and `sharingServiceProvider` after construction, and
    rejecting the container if an enabled capability has no real binding
    behind it.
 
@@ -70,10 +70,10 @@ no-op service, which is the silent local/remote fallback the architecture
 forbids (ADR 0003).
 
 Every optional provider the core declares (`remoteMediaFetcherProvider`,
-`foyerApiProvider`, `sharingServiceProvider`, `compositionActionsProvider`)
+`familyApiProvider`, `sharingServiceProvider`, `compositionActionsProvider`)
 defaults to an honest local implementation — `NoRemoteMediaFetcher`,
-`NoFoyerApi`, `NoSharingService`, `CompositionActions.none` — none of which
-fabricate remote state. `NoFoyerApi`/`NoSharingService` throw or return a
+`NoFamilyApi`, `NoSharingService`, `CompositionActions.none` — none of which
+fabricate remote state. `NoFamilyApi`/`NoSharingService` throw or return a
 typed `ActionFailed` failure rather than a fake success; `CompositionActions`
 simply renders nothing when an action is null. An application composition
 overrides exactly the providers its enabled capabilities need.
@@ -96,35 +96,37 @@ reconstructs the database.
 
 ## Local persistence
 
-`AppDatabase` is Drift schema v11. `ChildrenTable` and `MasterpiecesTable`
-persist the account-free experience. The artwork table stores neutral opaque
-object keys only (`displayObjectKey`, `thumbnailObjectKey`, `audioObjectKey`);
-their meaning and lifecycle belong to an external implementation. v11 renames historical
-provider-named columns without losing data.
+`AppDatabase` is Drift schema v1, a deliberate clean baseline. Its physical
+tables are `children`, `artworks`, `sync_outbox`, `vault_meta`,
+`pending_file_cleanups`, and `share_link_url_cache`. `ChildrenTable` and
+`ArtworksTable` persist the account-free experience. The artwork table stores
+neutral opaque object keys only (`display_object_key`, `thumbnail_object_key`,
+`audio_object_key`); their meaning and lifecycle belong to an external
+implementation. There is no upgrade path from an earlier local vault: those
+databases are unsupported and must be cleared before running this build.
 
 `LocalVault` owns local image and audio files. Local deletion is recoverable for
 30 days and cleanup is journaled. Local success is reported only after a durable
 write.
 
-`VaultRescueExport` parcourt `masterpieces/`,
-`masterpieces_derivatives/` and `audio/`, optionally adds in-flight capture
-files, splits ZIPs around 3.5 GB, and shares the archives through the native
-share sheet. It can recover originals even when `AppDatabase` is unreadable;
-in return, the archive contains no child, date, or story metadata because that
-information lives in SQLite. Drift migrations v5 through v11 have dedicated
-snapshots and test fixtures.
+`VaultRescueExport` walks `artworks/`, `artworks_derivatives/` and `audio/`,
+optionally adds in-flight capture files, splits ZIPs around 3.5 GB, and shares
+the archives through the native share sheet. It can recover originals even when
+`AppDatabase` is unreadable; in return, the archive contains no child, date, or
+story metadata because that information lives in SQLite. The single schema
+snapshot `drift_schemas/drift_schema_v1.json` pins the baseline shape.
 
-## Flux locaux importants
+## Key local flows
 
 ```mermaid
 sequenceDiagram
   participant U as User
   participant C as Capture / editing
   participant R as Repository
-  participant D as Drift v11
+  participant D as Drift v1
   participant V as LocalVault
 
-  U->>C: photo, recadrage, audio, anecdote
+  U->>C: photo, cropping, audio, story
   C->>V: write original + derivatives
   C->>R: persist relative paths
   R->>D: transaction metadata + outbox
@@ -139,7 +141,7 @@ sequenceDiagram
 - `ObjectUploader` / `ObjectDownloader` move bytes through opaque object keys.
 - `RemoteMediaFetcher` fetches media that exists remotely but not yet locally;
   the local default never fetches anything.
-- `FoyerApi` models household membership and invites.
+- `FamilyApi` models household membership and invites.
 - `SharingService` models web gallery-link creation, listing, and revocation.
 - `ShareBackup` is an optional presentation action supplied by an application
   composition when gallery links are enabled. The share controller invokes

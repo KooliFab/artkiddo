@@ -1,6 +1,6 @@
 library;
 
-/// Thrown by the neutral [NoFoyerApi] when household-scoped work is
+/// Thrown by the neutral [NoFamilyApi] when household-scoped work is
 /// attempted in a composition that never enabled the `household` capability.
 /// The public core still declares this provider (with this honest default)
 /// so widgets never read a capability-owned provider directly; the exception
@@ -14,21 +14,21 @@ class HouseholdUnavailableException implements Exception {
       'HouseholdUnavailableException: no household composition is bound';
 }
 
-enum FoyerMemberRole { parent, contributeur }
+enum FamilyMemberRole { parent, contributor }
 
-extension FoyerMemberRoleWire on FoyerMemberRole {
+extension FamilyMemberRoleWire on FamilyMemberRole {
   String get wireName =>
-      this == FoyerMemberRole.parent ? 'parent' : 'contributeur';
+      this == FamilyMemberRole.parent ? 'parent' : 'contributor';
 }
 
 class FamilyInfo {
-  final String foyerId;
+  final String familyId;
   final String? name;
   final String code;
-  final FoyerMemberRole role;
+  final FamilyMemberRole role;
 
   const FamilyInfo({
-    required this.foyerId,
+    required this.familyId,
     this.name,
     required this.code,
     required this.role,
@@ -39,35 +39,35 @@ enum RedeemState { ok, invalidCode }
 
 class RedeemOutcome {
   final RedeemState state;
-  final String? foyerId;
-  final FoyerMemberRole? role;
+  final String? familyId;
+  final FamilyMemberRole? role;
 
-  const RedeemOutcome({required this.state, this.foyerId, this.role});
+  const RedeemOutcome({required this.state, this.familyId, this.role});
 }
 
-class FoyerMembership {
-  final String foyerId;
-  final FoyerMemberRole role;
+class FamilyMembership {
+  final String familyId;
+  final FamilyMemberRole role;
 
-  const FoyerMembership({required this.foyerId, required this.role});
+  const FamilyMembership({required this.familyId, required this.role});
 }
 
-abstract class FoyerApi {
+abstract class FamilyApi {
   Future<FamilyInfo> getFamilyInfo();
   Future<void> renameFamily(String name);
-  Future<FoyerMembership?> currentMembership();
+  Future<FamilyMembership?> currentMembership();
   Future<RedeemOutcome> redeemInvite({required String code});
-  Future<int> activeMemberCount(String foyerId);
+  Future<int> activeMemberCount(String familyId);
 }
 
-/// Default implementation when no composition has bound a real [FoyerApi].
+/// Default implementation when no composition has bound a real [FamilyApi].
 ///
 /// It never fabricates a household: every member throws
 /// [HouseholdUnavailableException]. `currentMembership()` is the one
 /// exception — returning `null` ("no membership") is a truthful answer on
 /// its own, not a stand-in for a household that was never bound.
-final class NoFoyerApi implements FoyerApi {
-  const NoFoyerApi();
+final class NoFamilyApi implements FamilyApi {
+  const NoFamilyApi();
 
   @override
   Future<FamilyInfo> getFamilyInfo() async {
@@ -80,7 +80,7 @@ final class NoFoyerApi implements FoyerApi {
   }
 
   @override
-  Future<FoyerMembership?> currentMembership() async => null;
+  Future<FamilyMembership?> currentMembership() async => null;
 
   @override
   Future<RedeemOutcome> redeemInvite({required String code}) async {
@@ -88,7 +88,7 @@ final class NoFoyerApi implements FoyerApi {
   }
 
   @override
-  Future<int> activeMemberCount(String foyerId) async {
+  Future<int> activeMemberCount(String familyId) async {
     throw const HouseholdUnavailableException();
   }
 }

@@ -42,8 +42,8 @@ class RemoteChildRow {
   });
 }
 
-/// One typed masterpiece row returned by a sync pull.
-class RemoteMasterpieceRow {
+/// One typed artwork row returned by a sync pull.
+class RemoteArtworkRow {
   final String id;
   final String childId;
   final String? displayObjectKey;
@@ -62,7 +62,7 @@ class RemoteMasterpieceRow {
   final int? imageWidth;
   final int? imageHeight;
 
-  const RemoteMasterpieceRow({
+  const RemoteArtworkRow({
     required this.id,
     required this.childId,
     required this.displayObjectKey,
@@ -83,11 +83,11 @@ class RemoteMasterpieceRow {
 
 /// One tombstone for an artwork physically removed after the trash
 /// window.
-class PurgedMasterpieceRow {
+class PurgedArtworkRow {
   final String id;
   final DateTime purgedAt;
 
-  const PurgedMasterpieceRow({required this.id, required this.purgedAt});
+  const PurgedArtworkRow({required this.id, required this.purgedAt});
 }
 
 /// A bounded page returned by one remote stream.
@@ -118,24 +118,22 @@ class PullPage<T> {
 /// exposing a provider token.
 class PullCursorSet {
   final DateTime? children;
-  final DateTime? masterpieces;
+  final DateTime? artworks;
   final DateTime? purged;
 
-  const PullCursorSet({this.children, this.masterpieces, this.purged});
+  const PullCursorSet({this.children, this.artworks, this.purged});
 
   PullCursorSet copyWith({
     DateTime? children,
-    DateTime? masterpieces,
+    DateTime? artworks,
     DateTime? purged,
     bool clearChildren = false,
-    bool clearMasterpieces = false,
+    bool clearArtworks = false,
     bool clearPurged = false,
   }) {
     return PullCursorSet(
       children: clearChildren ? null : (children ?? this.children),
-      masterpieces: clearMasterpieces
-          ? null
-          : (masterpieces ?? this.masterpieces),
+      artworks: clearArtworks ? null : (artworks ?? this.artworks),
       purged: clearPurged ? null : (purged ?? this.purged),
     );
   }
@@ -144,13 +142,13 @@ class PullCursorSet {
   bool operator ==(Object other) =>
       other is PullCursorSet &&
       _sameInstant(other.children, children) &&
-      _sameInstant(other.masterpieces, masterpieces) &&
+      _sameInstant(other.artworks, artworks) &&
       _sameInstant(other.purged, purged);
 
   @override
   int get hashCode => Object.hash(
     children?.microsecondsSinceEpoch,
-    masterpieces?.microsecondsSinceEpoch,
+    artworks?.microsecondsSinceEpoch,
     purged?.microsecondsSinceEpoch,
   );
 }
@@ -162,11 +160,11 @@ bool _sameInstant(DateTime? left, DateTime? right) {
 
 /// Public sync contract implemented by a private/cloud adapter.
 abstract class SyncBackend {
-  Future<String> ensureMyFoyer();
+  Future<String> ensureMyFamily();
 
   Future<void> upsertChild({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String name,
     required DateTime birthDate,
     required DateTime createdAt,
@@ -174,9 +172,9 @@ abstract class SyncBackend {
 
   Future<void> softDeleteChild(String id);
 
-  Future<void> upsertMasterpiece({
+  Future<void> upsertArtwork({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String childId,
     required String displayObjectKey,
     String? thumbnailObjectKey,
@@ -192,32 +190,32 @@ abstract class SyncBackend {
     int? imageHeight,
   });
 
-  Future<void> softDeleteMasterpiece(String id);
-  Future<void> softDeleteMasterpiecesForChild(String childId);
+  Future<void> softDeleteArtwork(String id);
+  Future<void> softDeleteArtworksForChild(String childId);
 
   /// Legacy list methods remain the compatibility bridge until
   /// adapters all expose bounded pages. Their payload is already
   /// typed at this boundary.
   Future<List<RemoteChildRow>> pullChildren({
-    required String foyerId,
+    required String familyId,
     DateTime? since,
   });
 
-  Future<List<RemoteMasterpieceRow>> pullMasterpieces({
-    required String foyerId,
+  Future<List<RemoteArtworkRow>> pullArtworks({
+    required String familyId,
     DateTime? since,
   });
 
-  Future<List<PurgedMasterpieceRow>> pullPurgedMasterpieceIds({
-    required String foyerId,
+  Future<List<PurgedArtworkRow>> pullPurgedArtworkIds({
+    required String familyId,
     DateTime? since,
   });
 
   Future<PullPage<RemoteChildRow>> pullChildrenPage({
-    required String foyerId,
+    required String familyId,
     DateTime? since,
   }) async {
-    final rows = await pullChildren(foyerId: foyerId, since: since);
+    final rows = await pullChildren(familyId: familyId, since: since);
     return PullPage(
       items: rows,
       nextCursor: _latest(rows.map((row) => row.updatedAt)),
@@ -225,11 +223,11 @@ abstract class SyncBackend {
     );
   }
 
-  Future<PullPage<RemoteMasterpieceRow>> pullMasterpiecesPage({
-    required String foyerId,
+  Future<PullPage<RemoteArtworkRow>> pullArtworksPage({
+    required String familyId,
     DateTime? since,
   }) async {
-    final rows = await pullMasterpieces(foyerId: foyerId, since: since);
+    final rows = await pullArtworks(familyId: familyId, since: since);
     return PullPage(
       items: rows,
       nextCursor: _latest(rows.map((row) => row.updatedAt)),
@@ -237,11 +235,11 @@ abstract class SyncBackend {
     );
   }
 
-  Future<PullPage<PurgedMasterpieceRow>> pullPurgedMasterpieceIdsPage({
-    required String foyerId,
+  Future<PullPage<PurgedArtworkRow>> pullPurgedArtworkIdsPage({
+    required String familyId,
     DateTime? since,
   }) async {
-    final rows = await pullPurgedMasterpieceIds(foyerId: foyerId, since: since);
+    final rows = await pullPurgedArtworkIds(familyId: familyId, since: since);
     return PullPage(
       items: rows,
       nextCursor: _latest(rows.map((row) => row.purgedAt)),

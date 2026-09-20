@@ -7,13 +7,13 @@ import '../domain/app_failure.dart';
 import '../local/database/app_database.dart';
 import '../local/logging/log.dart';
 import '../local/repositories/children_repository.dart';
-import '../local/repositories/masterpieces_repository.dart';
+import '../local/repositories/artworks_repository.dart';
 import '../local/storage/local_vault.dart';
 import 'conflict_resolution.dart';
 import 'sync_outbox.dart';
 import 'vault_meta.dart';
 
-export 'vault_meta.dart' show FoyerMismatchException;
+export 'vault_meta.dart' show FamilyMismatchException;
 
 /// Summary of one [SyncEngine.syncAll] run, for `AccountController` to fold
 /// into `BackupStatus` (spec §7) without `SyncEngine` knowing about the
@@ -22,13 +22,13 @@ class SyncRunSummary {
   final int pushSucceeded;
   final int pushFailed;
   final int pulledChildren;
-  final int pulledMasterpieces;
+  final int pulledArtworks;
   final AppFailure? lastError;
   const SyncRunSummary({
     required this.pushSucceeded,
     required this.pushFailed,
     required this.pulledChildren,
-    required this.pulledMasterpieces,
+    required this.pulledArtworks,
     this.lastError,
   });
 }
@@ -50,9 +50,9 @@ class _PullApplyFailure implements Exception {
 
 /// C-06's convergence engine.
 ///
-/// Normative reference: `.scratch/foyer/issues/C-06-convergence-foyer.md`.
+/// Normative reference: `.scratch/family/issues/C-06-convergence-family.md`.
 /// A single entry point, [syncAll], **is** `joinOrRestore` (D13: joining a
-/// foyer and restoring a device are the same operation) — see the method's
+/// family and restoring a device are the same operation) — see the method's
 /// own doc comment for why unifying them, rather than giving "join" and
 /// "restore" separate code paths, is the actual design decision here, not
 /// a simplification of one.
@@ -71,7 +71,7 @@ class SyncEngine {
   final ObjectUploader uploader;
   final ObjectDownloader downloader;
   final ChildrenRepository childrenRepo;
-  final MasterpiecesRepository masterpiecesRepo;
+  final ArtworksRepository artworksRepo;
   final SyncBackend cloudApi;
   final SyncOutboxRepository outbox;
   final VaultMetaRepository vaultMeta;
@@ -83,23 +83,23 @@ class SyncEngine {
     required this.uploader,
     required this.downloader,
     required this.childrenRepo,
-    required this.masterpiecesRepo,
+    required this.artworksRepo,
     required this.cloudApi,
     required this.outbox,
     required this.vaultMeta,
     required this.currentUserId,
   });
 
-  /// The whole convergence cycle: attach/verify the foyer, push every
+  /// The whole convergence cycle: attach/verify the family, push every
   /// pending local change, then pull everything new since this vault's
   /// three independent stream cursors.
   ///
   /// **This is `joinOrRestore` (D13).** There is deliberately no separate
-  /// "join a foyer" or "restore this device" method: [ensureFoyer] already
-  /// returns the *same* foyer id whether this is the account's first ever
-  /// call (creates the foyer) or its thousandth (reads it back), and
+  /// "join a family" or "restore this device" method: [ensureFamily] already
+  /// returns the *same* family id whether this is the account's first ever
+  /// call (creates the family) or its thousandth (reads it back), and
   /// [_pull] starts each stream from `epoch` whenever its v10 cursor is
-  /// null — which is true for a foyer's founding member exactly as much as
+  /// null — which is true for a family's founding member exactly as much as
   /// for a brand-new device signing into an existing account. Giving
   /// "join" its own code path would have meant it only ever ran once per
   /// account, in practice untested outside that one moment — precisely
@@ -109,8 +109,8 @@ class SyncEngine {
   ///
   /// Never throws for "nothing to do" (not signed in, or fully caught up)
   /// — returns a summary with all-zero counts. Does throw
-  /// [FoyerMismatchException] when this vault is already attached to a
-  /// *different* foyer than the authenticated account (§1's isolation
+  /// [FamilyMismatchException] when this vault is already attached to a
+  /// *different* family than the authenticated account (§1's isolation
   /// rule) — the caller (`AccountController`) is responsible for turning
   /// that into a `blocked` status rather than a retryable `failed` one.
   Future<SyncRunSummary> syncAll() async {
@@ -121,18 +121,18 @@ class SyncEngine {
         pushSucceeded: 0,
         pushFailed: 0,
         pulledChildren: 0,
-        pulledMasterpieces: 0,
+        pulledArtworks: 0,
       );
     }
 
     Log.i('Synchronisation démarrée', 'Sync');
-    final foyerId = await ensureFoyer();
+    final familyId = await ensureFamily();
 
-    final pushResult = await _push(userId: userId, foyerId: foyerId);
+    final pushResult = await _push(userId: userId, familyId: familyId);
     (int, int) pullResult;
     AppFailure? pullError;
     try {
-      pullResult = await _pull(foyerId: foyerId);
+      pullResult = await _pull(familyId: familyId);
     } on _PullApplyFailure catch (error, stack) {
       pullResult = (0, 0);
       pullError = error.failure;
@@ -148,28 +148,28 @@ class SyncEngine {
       pushSucceeded: pushResult.$1,
       pushFailed: pushResult.$2,
       pulledChildren: pullResult.$1,
-      pulledMasterpieces: pullResult.$2,
+      pulledArtworks: pullResult.$2,
       lastError: pushResult.$3 ?? pullError,
     );
     Log.i(
-      'Synchronisation terminée : ${summary.pushSucceeded} envoyés, ${summary.pushFailed} échecs, ${summary.pulledChildren} enfants et ${summary.pulledMasterpieces} œuvres reçus',
+      'Synchronisation terminée : ${summary.pushSucceeded} envoyés, ${summary.pushFailed} échecs, ${summary.pulledChildren} enfants et ${summary.pulledArtworks} œuvres reçus',
       'Sync',
     );
     return summary;
   }
 
-  /// Resolves this account's foyer (creating it on first call — see
-  /// migration `0004`'s `ensure_my_foyer`, not yet deployed) and checks it
+  /// Resolves this account's family (creating it on first call — see
+  /// migration `0004`'s `ensure_my_family`, not yet deployed) and checks it
   /// against this vault's own attachment record, throwing
-  /// [FoyerMismatchException] if they conflict. Exposed separately from
-  /// [syncAll] so a caller can probe foyer identity/compatibility without
+  /// [FamilyMismatchException] if they conflict. Exposed separately from
+  /// [syncAll] so a caller can probe family identity/compatibility without
   /// running a full push+pull (e.g. before showing a "this vault belongs
-  /// to a different foyer" screen).
-  Future<String> ensureFoyer() async {
-    final foyerId = await cloudApi.ensureMyFoyer();
-    await vaultMeta.attachFoyer(foyerId);
-    Log.d('Foyer vérifié et attaché', 'Sync');
-    return foyerId;
+  /// to a different family" screen).
+  Future<String> ensureFamily() async {
+    final familyId = await cloudApi.ensureMyFamily();
+    await vaultMeta.attachFamily(familyId);
+    Log.d('Family vérifié et attaché', 'Sync');
+    return familyId;
   }
 
   // =====================================================================
@@ -179,7 +179,7 @@ class SyncEngine {
   /// Returns (succeeded, failed, lastError).
   Future<(int, int, AppFailure?)> _push({
     required String userId,
-    required String foyerId,
+    required String familyId,
   }) async {
     final ready = await outbox.listReady();
     Log.i('${ready.length} entrée(s) prêtes à envoyer', 'Sync');
@@ -190,9 +190,9 @@ class SyncEngine {
     for (final entry in ready) {
       try {
         if (entry.entity == SyncEntityKind.child.wireName) {
-          await _pushChild(entry, foyerId: foyerId);
+          await _pushChild(entry, familyId: familyId);
         } else {
-          await _pushMasterpiece(entry, foyerId: foyerId, userId: userId);
+          await _pushArtwork(entry, familyId: familyId, userId: userId);
         }
         await outbox.markSucceeded(entry.seq);
         succeeded++;
@@ -266,14 +266,14 @@ class SyncEngine {
 
   Future<void> _pushChild(
     SyncOutboxEntryEntity entry, {
-    required String foyerId,
+    required String familyId,
   }) async {
     if (entry.op == SyncOutboxOp.delete.wireName) {
       await cloudApi.softDeleteChild(entry.entityId);
-      // D18/ADR 0006: cascade the tombstone to every masterpiece of this
+      // D18/ADR 0006: cascade the tombstone to every artwork of this
       // child server-side — never `ON DELETE CASCADE` (spec §6), so each
-      // masterpiece keeps its own tombstone other devices can converge on.
-      await cloudApi.softDeleteMasterpiecesForChild(entry.entityId);
+      // artwork keeps its own tombstone other devices can converge on.
+      await cloudApi.softDeleteArtworksForChild(entry.entityId);
       return;
     }
 
@@ -284,7 +284,7 @@ class SyncEngine {
 
     await cloudApi.upsertChild(
       id: child.id,
-      foyerId: foyerId,
+      familyId: familyId,
       name: child.name,
       birthDate: child.birthDate,
       createdAt: child.createdAt,
@@ -292,23 +292,23 @@ class SyncEngine {
     await childrenRepo.markSynced(child.id);
   }
 
-  Future<void> _pushMasterpiece(
+  Future<void> _pushArtwork(
     SyncOutboxEntryEntity entry, {
-    required String foyerId,
+    required String familyId,
     required String userId,
   }) async {
     if (entry.op == SyncOutboxOp.delete.wireName) {
-      await cloudApi.softDeleteMasterpiece(entry.entityId);
+      await cloudApi.softDeleteArtwork(entry.entityId);
       return;
     }
 
-    final m = await masterpiecesRepo.getById(entry.entityId);
+    final m = await artworksRepo.getById(entry.entityId);
     if (m == null) {
       return; // already gone locally (e.g. cascaded away with its child)
     }
 
     final row = await (db.select(
-      db.masterpiecesTable,
+      db.artworksTable,
     )..where((t) => t.id.equals(m.id))).getSingleOrNull();
 
     String displayKey;
@@ -325,19 +325,19 @@ class SyncEngine {
     } else if (m.relativeImagePath == null) {
       // A row this device only knows through `pull` without recorded keys
       throw StateError(
-        'masterpiece ${m.id} has no local original and no recorded object keys to reuse',
+        'artwork ${m.id} has no local original and no recorded object keys to reuse',
       );
     } else {
       final originalFile = await vault.resolveFile(m.relativeImagePath!);
       if (!await originalFile.exists()) {
-        await masterpiecesRepo.markDownloadFailed(m.id);
+        await artworksRepo.markDownloadFailed(m.id);
         throw const _TerminalOutboxFailure(FileMissingFailure());
       }
 
       if (current.displayImagePath == null ||
           current.thumbnailImagePath == null) {
-        await masterpiecesRepo.ensureDerivatives(current.id);
-        current = await masterpiecesRepo.getById(current.id) ?? current;
+        await artworksRepo.ensureDerivatives(current.id);
+        current = await artworksRepo.getById(current.id) ?? current;
       }
       final displayPath = current.displayImagePath;
       final thumbnailPath = current.thumbnailImagePath;
@@ -354,7 +354,7 @@ class SyncEngine {
 
       displayKey = await uploader.uploadDerivative(
         bytes: displayBytes,
-        masterpieceId: current.id,
+        artworkId: current.id,
         variant: ObjectVariant.display,
         childId: current.childId,
         fileName: displayFile.path,
@@ -375,7 +375,7 @@ class SyncEngine {
           final audioBytes = await audioFile.readAsBytes();
           audioKey = await uploader.uploadDerivative(
             bytes: audioBytes,
-            masterpieceId: current.id,
+            artworkId: current.id,
             variant: ObjectVariant.audio,
             fileName: audioFile.path,
           );
@@ -390,9 +390,9 @@ class SyncEngine {
       }
     }
 
-    await cloudApi.upsertMasterpiece(
+    await cloudApi.upsertArtwork(
       id: current.id,
-      foyerId: foyerId,
+      familyId: familyId,
       childId: current.childId,
       displayObjectKey: displayKey,
       thumbnailObjectKey: thumbnailKey,
@@ -410,9 +410,9 @@ class SyncEngine {
 
     // Save confirmed storage keys locally
     await (db.update(
-      db.masterpiecesTable,
+      db.artworksTable,
     )..where((t) => t.id.equals(current.id))).write(
-      MasterpiecesTableCompanion(
+      ArtworksTableCompanion(
         displayObjectKey: Value(displayKey),
         thumbnailObjectKey: Value(thumbnailKey),
         audioObjectKey: Value(audioKey),
@@ -427,12 +427,12 @@ class SyncEngine {
   // Pull — independent paginated streams, tombstones included
   // =====================================================================
 
-  /// Returns (children applied, masterpieces applied).
-  Future<(int, int)> _pull({required String foyerId}) async {
+  /// Returns (children applied, artworks applied).
+  Future<(int, int)> _pull({required String familyId}) async {
     final cursors = await vaultMeta.getPullCursors();
     Log.d(
       'Récupération distante : enfants=${cursors.children?.toIso8601String() ?? 'epoch'}, '
-          'œuvres=${cursors.masterpieces?.toIso8601String() ?? 'epoch'}, '
+          'œuvres=${cursors.artworks?.toIso8601String() ?? 'epoch'}, '
           'purges=${cursors.purged?.toIso8601String() ?? 'epoch'}',
       'Sync',
     );
@@ -441,7 +441,7 @@ class SyncEngine {
     var childCursor = cursors.children;
     while (true) {
       final page = await cloudApi.pullChildrenPage(
-        foyerId: foyerId,
+        familyId: familyId,
         since: childCursor,
       );
       final pendingIds = await outbox.pendingEntityIds(
@@ -477,17 +477,17 @@ class SyncEngine {
       if (!page.hasMore) break;
     }
 
-    var masterpiecesApplied = 0;
-    var masterpieceCursor = cursors.masterpieces;
+    var artworksApplied = 0;
+    var artworkCursor = cursors.artworks;
     while (true) {
-      final page = await cloudApi.pullMasterpiecesPage(
-        foyerId: foyerId,
-        since: masterpieceCursor,
+      final page = await cloudApi.pullArtworksPage(
+        familyId: familyId,
+        since: artworkCursor,
       );
       final pendingIds = await outbox.pendingEntityIds(
-        entity: SyncEntityKind.masterpiece,
+        entity: SyncEntityKind.artwork,
       );
-      final plan = planPullApply<RemoteMasterpieceRow>(
+      final plan = planPullApply<RemoteArtworkRow>(
         pulled: page.items,
         idOf: (r) => r.id,
         updatedAtOf: (r) => r.updatedAt,
@@ -495,11 +495,11 @@ class SyncEngine {
       );
       for (final row in plan.toApply) {
         if (row.deletedAt != null) {
-          final result = await masterpiecesRepo.applyRemoteTombstone(row.id);
+          final result = await artworksRepo.applyRemoteTombstone(row.id);
           _throwOnPullFailure(result);
           continue;
         }
-        final result = await masterpiecesRepo.upsertFromRemote(
+        final result = await artworksRepo.upsertFromRemote(
           id: row.id,
           childId: row.childId,
           addedAt: row.addedAt,
@@ -519,15 +519,15 @@ class SyncEngine {
         // display derivative stays deferred to [ensureDisplayImageDownloaded].
         await _downloadThumbnailIfNeeded(row);
       }
-      masterpiecesApplied += plan.toApply.length;
-      masterpieceCursor = _nextPageCursor(
-        stream: 'masterpieces',
-        current: masterpieceCursor,
+      artworksApplied += plan.toApply.length;
+      artworkCursor = _nextPageCursor(
+        stream: 'artworks',
+        current: artworkCursor,
         page: page,
         fallback: plan.newCursor,
       );
-      if (masterpieceCursor != null) {
-        await vaultMeta.setMasterpiecesPullCursor(masterpieceCursor);
+      if (artworkCursor != null) {
+        await vaultMeta.setArtworksPullCursor(artworkCursor);
       }
       if (!page.hasMore) break;
     }
@@ -536,12 +536,12 @@ class SyncEngine {
     // learns about the physical removal through the purge-log stream.
     var purgedCursor = cursors.purged;
     while (true) {
-      final page = await cloudApi.pullPurgedMasterpieceIdsPage(
-        foyerId: foyerId,
+      final page = await cloudApi.pullPurgedArtworkIdsPage(
+        familyId: familyId,
         since: purgedCursor,
       );
       for (final row in page.items) {
-        final result = await masterpiecesRepo.applyRemoteTombstone(row.id);
+        final result = await artworksRepo.applyRemoteTombstone(row.id);
         _throwOnPullFailure(result);
       }
       purgedCursor = _nextPageCursor(
@@ -557,10 +557,10 @@ class SyncEngine {
     }
 
     Log.i(
-      'Récupération appliquée : $childrenApplied enfant(s), $masterpiecesApplied œuvre(s)',
+      'Récupération appliquée : $childrenApplied enfant(s), $artworksApplied œuvre(s)',
       'Sync',
     );
-    return (childrenApplied, masterpiecesApplied);
+    return (childrenApplied, artworksApplied);
   }
 
   void _throwOnPullFailure(ActionResult<void> result) {
@@ -585,7 +585,7 @@ class SyncEngine {
     return next;
   }
 
-  DateTime? _latestPurged(List<PurgedMasterpieceRow> rows) {
+  DateTime? _latestPurged(List<PurgedArtworkRow> rows) {
     DateTime? latest;
     for (final row in rows) {
       if (latest == null || row.purgedAt.isAfter(latest)) latest = row.purgedAt;
@@ -593,8 +593,8 @@ class SyncEngine {
     return latest;
   }
 
-  Future<void> _downloadThumbnailIfNeeded(RemoteMasterpieceRow row) async {
-    final local = await masterpiecesRepo.getById(row.id);
+  Future<void> _downloadThumbnailIfNeeded(RemoteArtworkRow row) async {
+    final local = await artworksRepo.getById(row.id);
     if (local == null) return;
     // Already has *something* to show locally — either this device
     // authored it (has an original) or a previous pull already fetched a
@@ -609,21 +609,21 @@ class SyncEngine {
         final bytes = await downloader.downloadByKey(displayKey);
         final displayPath = await vault.storeDownloadedDerivative(
           bytes: bytes,
-          masterpieceId: row.id,
+          artworkId: row.id,
           isDisplay: true,
         );
-        await masterpiecesRepo.markDisplayDownloaded(
+        await artworksRepo.markDisplayDownloaded(
           id: row.id,
           displayRelativePath: displayPath,
         );
 
         // Regenerate local thumbnail from display
         final thumbPath = await vault.generateThumbnailFromDisplay(
-          masterpieceId: row.id,
+          artworkId: row.id,
           displayRelativePath: displayPath,
         );
         if (thumbPath != null) {
-          await masterpiecesRepo.markThumbnailDownloaded(
+          await artworksRepo.markThumbnailDownloaded(
             id: row.id,
             thumbnailRelativePath: thumbPath,
           );
@@ -637,7 +637,7 @@ class SyncEngine {
           'Sync',
         );
         if (row.thumbnailObjectKey == null) {
-          await masterpiecesRepo.markDownloadFailed(row.id);
+          await artworksRepo.markDownloadFailed(row.id);
           return;
         }
       }
@@ -651,10 +651,10 @@ class SyncEngine {
       final bytes = await downloader.downloadByKey(key);
       final path = await vault.storeDownloadedDerivative(
         bytes: bytes,
-        masterpieceId: row.id,
+        artworkId: row.id,
         isDisplay: false,
       );
-      await masterpiecesRepo.markThumbnailDownloaded(
+      await artworksRepo.markThumbnailDownloaded(
         id: row.id,
         thumbnailRelativePath: path,
       );
@@ -665,7 +665,7 @@ class SyncEngine {
         st,
         'Sync',
       );
-      await masterpiecesRepo.markDownloadFailed(row.id);
+      await artworksRepo.markDownloadFailed(row.id);
     }
   }
 
@@ -673,9 +673,9 @@ class SyncEngine {
   /// artwork is actually opened (or a future background low-priority
   /// task).
   Future<ActionResultLike> ensureDisplayImageDownloaded(
-    String masterpieceId,
+    String artworkId,
   ) async {
-    final local = await masterpiecesRepo.getById(masterpieceId);
+    final local = await artworksRepo.getById(artworkId);
     if (local == null) return ActionResultLike.notFound;
     if (local.displayImagePath != null || local.relativeImagePath != null) {
       return ActionResultLike.alreadyHave;
@@ -684,8 +684,8 @@ class SyncEngine {
     // The object key isn't on the domain model (a cache concern, like the
     // paths themselves) — read it straight from the row.
     final row = await (db.select(
-      db.masterpiecesTable,
-    )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+      db.artworksTable,
+    )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
     final key = row?.displayObjectKey;
     if (key == null) return ActionResultLike.noKeyAvailable;
 
@@ -693,35 +693,30 @@ class SyncEngine {
       final bytes = await downloader.downloadByKey(key);
       final path = await vault.storeDownloadedDerivative(
         bytes: bytes,
-        masterpieceId: masterpieceId,
+        artworkId: artworkId,
         isDisplay: true,
       );
-      await masterpiecesRepo.markDisplayDownloaded(
-        id: masterpieceId,
+      await artworksRepo.markDisplayDownloaded(
+        id: artworkId,
         displayRelativePath: path,
       );
       return ActionResultLike.downloaded;
     } catch (e, st) {
-      Log.e(
-        'Téléchargement du visuel impossible ($masterpieceId)',
-        e,
-        st,
-        'Sync',
-      );
-      await masterpiecesRepo.markDownloadFailed(masterpieceId);
+      Log.e('Téléchargement du visuel impossible ($artworkId)', e, st, 'Sync');
+      await artworksRepo.markDownloadFailed(artworkId);
       return ActionResultLike.failed;
     }
   }
 
   /// Downloads the audio track on-demand if not already present locally.
-  Future<ActionResultLike> ensureAudioDownloaded(String masterpieceId) async {
-    final local = await masterpiecesRepo.getById(masterpieceId);
+  Future<ActionResultLike> ensureAudioDownloaded(String artworkId) async {
+    final local = await artworksRepo.getById(artworkId);
     if (local == null) return ActionResultLike.notFound;
     if (local.relativeAudioPath != null) return ActionResultLike.alreadyHave;
 
     final row = await (db.select(
-      db.masterpiecesTable,
-    )..where((t) => t.id.equals(masterpieceId))).getSingleOrNull();
+      db.artworksTable,
+    )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
     final key = row?.audioObjectKey;
     if (key == null) return ActionResultLike.noKeyAvailable;
 
@@ -729,15 +724,15 @@ class SyncEngine {
       final bytes = await downloader.downloadByKey(key);
       final path = await vault.storeDownloadedAudio(
         bytes: bytes,
-        masterpieceId: masterpieceId,
+        artworkId: artworkId,
       );
-      await masterpiecesRepo.markAudioDownloaded(
-        id: masterpieceId,
+      await artworksRepo.markAudioDownloaded(
+        id: artworkId,
         audioRelativePath: path,
       );
       return ActionResultLike.downloaded;
     } catch (e, st) {
-      Log.e('Téléchargement audio impossible ($masterpieceId)', e, st, 'Sync');
+      Log.e('Téléchargement audio impossible ($artworkId)', e, st, 'Sync');
       return ActionResultLike.failed;
     }
   }

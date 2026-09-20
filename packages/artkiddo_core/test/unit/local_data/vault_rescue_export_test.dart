@@ -41,9 +41,9 @@ void main() {
   test(
     'exports originals, fallback derivatives, audio, and an in-flight file',
     () async {
-      await write('masterpieces/one.jpg', 'original');
-      await write('masterpieces_derivatives/one_display.jpg', 'cached-copy');
-      await write('masterpieces_derivatives/two_display.jpg', 'fallback');
+      await write('artworks/one.jpg', 'original');
+      await write('artworks_derivatives/one_display.jpg', 'cached-copy');
+      await write('artworks_derivatives/two_display.jpg', 'fallback');
       await write('audio/two.m4a', 'voice');
       final draft = File(p.join(root.path, 'draft.jpg'))
         ..writeAsStringSync('in-flight');
@@ -57,8 +57,8 @@ void main() {
       expect(result.skippedFiles, 0);
       expect(await archiveNames(result), {
         'LISEZ-MOI.txt',
-        'masterpieces/one.jpg',
-        'masterpieces_derivatives/two_display.jpg',
+        'artworks/one.jpg',
+        'artworks_derivatives/two_display.jpg',
         'audio/two.m4a',
         'en-cours/draft.jpg',
       });
@@ -68,8 +68,8 @@ void main() {
   test(
     'counts an unreadable file and continues with a valid archive',
     () async {
-      final good = await write('masterpieces/good.jpg', 'good');
-      final bad = await write('masterpieces/bad.jpg', 'bad');
+      final good = await write('artworks/good.jpg', 'good');
+      final bad = await write('artworks/bad.jpg', 'bad');
 
       final result = await VaultRescueExport(
         documentsDirectoryProvider: () async => documents,
@@ -81,14 +81,14 @@ void main() {
       expect(result.skippedFiles, 1);
       expect(await archiveNames(result), {
         'LISEZ-MOI.txt',
-        p.posix.join('masterpieces', p.basename(good.path)),
+        p.posix.join('artworks', p.basename(good.path)),
       });
     },
   );
 
   test('splits parts by byte budget rather than child metadata', () async {
-    await write('masterpieces/one.jpg', '12345');
-    await write('masterpieces/two.jpg', '67890');
+    await write('artworks/one.jpg', '12345');
+    await write('artworks/two.jpg', '67890');
 
     final result = await VaultRescueExport(
       documentsDirectoryProvider: () async => documents,
@@ -99,15 +99,15 @@ void main() {
     expect(result.archives, hasLength(2));
     expect(await archiveNames(result), {
       'LISEZ-MOI.txt',
-      'masterpieces/one.jpg',
-      'masterpieces/two.jpg',
+      'artworks/one.jpg',
+      'artworks/two.jpg',
     });
   });
 
   test(
     'refuses before writing when the temporary volume is too full',
     () async {
-      await write('masterpieces/large.jpg', '12345');
+      await write('artworks/large.jpg', '12345');
 
       final result = VaultRescueExport(
         documentsDirectoryProvider: () async => documents,

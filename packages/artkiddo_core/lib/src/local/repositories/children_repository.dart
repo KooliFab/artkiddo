@@ -10,11 +10,11 @@ import '../../domain/child.dart';
 
 /// Local-first persistence for children.
 ///
-/// `delete` removes the child row and every masterpiece row for that
+/// `delete` removes the child row and every artwork row for that
 /// child in a single transaction (explicit deletion, not relying
 /// solely on the SQLite foreign-key cascade, even though
 /// `PRAGMA foreign_keys = ON` is set on every connection), then
-/// attempts to delete each masterpiece's file — and its
+/// attempts to delete each artwork's file — and its
 /// `display`/`thumbnail` derivatives, if any were generated —
 /// recording deferred cleanup entries for any that fail without
 /// failing the overall operation.
@@ -31,7 +31,7 @@ abstract class ChildrenRepository {
     required String name,
     required DateTime birthDate,
   });
-  Future<ActionResult<void>> delete(String id); // cascades masterpieces + files
+  Future<ActionResult<void>> delete(String id); // cascades artworks + files
 
   /// Marks the local row as synchronized after a successful remote
   /// send.
@@ -51,7 +51,7 @@ abstract class ChildrenRepository {
   });
 
   /// Applies a tombstone seen on `pull` by hard-deleting the local row
-  /// (and cascading to its masterpieces exactly like [delete] does).
+  /// (and cascading to its artworks exactly like [delete] does).
   /// Idempotent: a no-op success if the row is already absent.
   Future<ActionResult<void>> applyRemoteTombstone(String id);
 }
@@ -103,18 +103,15 @@ class DriftChildrenRepository implements ChildrenRepository {
 
   @override
   Future<Map<String, int>> countArtworksByChild() async {
-    final query = _db.selectOnly(_db.masterpiecesTable)
-      ..addColumns([
-        _db.masterpiecesTable.childId,
-        _db.masterpiecesTable.id.count(),
-      ])
-      ..where(_db.masterpiecesTable.deletedAt.isNull())
-      ..groupBy([_db.masterpiecesTable.childId]);
+    final query = _db.selectOnly(_db.artworksTable)
+      ..addColumns([_db.artworksTable.childId, _db.artworksTable.id.count()])
+      ..where(_db.artworksTable.deletedAt.isNull())
+      ..groupBy([_db.artworksTable.childId]);
     final rows = await query.get();
     final result = <String, int>{};
     for (final row in rows) {
-      final childId = row.read(_db.masterpiecesTable.childId);
-      final count = row.read(_db.masterpiecesTable.id.count());
+      final childId = row.read(_db.artworksTable.childId);
+      final count = row.read(_db.artworksTable.id.count());
       if (childId != null) {
         result[childId] = count ?? 0;
       }
@@ -146,11 +143,11 @@ class DriftChildrenRepository implements ChildrenRepository {
               ),
             );
         // A single outbox entry for the child. The sync engine
-        // cascades the server-side tombstone to every masterpiece of
+        // cascades the server-side tombstone to every artwork of
         // this child itself — the logical deletion of a child
         // logically marks its artworks too, never a database
-        // cascade — so enqueueing one entry per orphaned masterpiece
-        // here would be redundant, and wrong for any masterpiece
+        // cascade — so enqueueing one entry per orphaned artwork
+        // here would be redundant, and wrong for any artwork
         // never pushed at all.
         await _outbox.enqueue(
           entity: SyncEntityKind.child,
@@ -236,14 +233,14 @@ class DriftChildrenRepository implements ChildrenRepository {
       return const ActionFailed(NotFoundFailure());
     }
 
-    List<MasterpieceEntity> orphaned = [];
+    List<ArtworkEntity> orphaned = [];
     try {
       await _db.transaction(() async {
         orphaned = await (_db.select(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.childId.equals(id))).get();
         await (_db.delete(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.childId.equals(id))).go();
         final rows = await (_db.delete(
           _db.childrenTable,
@@ -267,21 +264,21 @@ class DriftChildrenRepository implements ChildrenRepository {
       return ActionFailed(LocalWriteFailure(cause: e, stack: st));
     }
 
-    for (final masterpiece in orphaned) {
-      if (masterpiece.relativeImagePath != null) {
+    for (final artwork in orphaned) {
+      if (artwork.relativeImagePath != null) {
         await _vault.deleteFileOrEnqueueCleanup(
-          relativePath: masterpiece.relativeImagePath!,
+          relativePath: artwork.relativeImagePath!,
           db: _db,
         );
       }
-      // The cascade must also take each masterpiece's derivatives
+      // The cascade must also take each artwork's derivatives
       // with it — otherwise they survive as orphans with no row
       // left to reference them, exactly the leak
-      // `DriftMasterpiecesRepository.delete` already avoids for a
-      // single masterpiece.
+      // `DriftArtworksRepository.delete` already avoids for a
+      // single artwork.
       await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-        displayRelativePath: masterpiece.displayImagePath,
-        thumbnailRelativePath: masterpiece.thumbnailImagePath,
+        displayRelativePath: artwork.displayImagePath,
+        thumbnailRelativePath: artwork.thumbnailImagePath,
         db: _db,
       );
     }
@@ -330,14 +327,14 @@ class DriftChildrenRepository implements ChildrenRepository {
       return const ActionSuccess(null);
     }
 
-    List<MasterpieceEntity> orphaned = [];
+    List<ArtworkEntity> orphaned = [];
     try {
       await _db.transaction(() async {
         orphaned = await (_db.select(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.childId.equals(id))).get();
         await (_db.delete(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.childId.equals(id))).go();
         await (_db.delete(
           _db.childrenTable,
@@ -353,16 +350,16 @@ class DriftChildrenRepository implements ChildrenRepository {
       return ActionFailed(LocalWriteFailure(cause: e, stack: st));
     }
 
-    for (final masterpiece in orphaned) {
-      if (masterpiece.relativeImagePath != null) {
+    for (final artwork in orphaned) {
+      if (artwork.relativeImagePath != null) {
         await _vault.deleteFileOrEnqueueCleanup(
-          relativePath: masterpiece.relativeImagePath!,
+          relativePath: artwork.relativeImagePath!,
           db: _db,
         );
       }
       await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-        displayRelativePath: masterpiece.displayImagePath,
-        thumbnailRelativePath: masterpiece.thumbnailImagePath,
+        displayRelativePath: artwork.displayImagePath,
+        thumbnailRelativePath: artwork.thumbnailImagePath,
         db: _db,
       );
     }

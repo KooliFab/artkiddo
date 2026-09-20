@@ -12,7 +12,7 @@ import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
 import '../ui/state_block.dart';
-import 'foyer_controller.dart';
+import 'family_controller.dart';
 
 /// Single « Famille » screen: family name, fixed invite code (to share, in text or QR),
 /// and section to join another family (manual input or QR scan).
@@ -36,7 +36,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     _codeController = TextEditingController();
     if (!ref.read(appCapabilitiesProvider).household) return;
     Future.microtask(
-      () => ref.read(foyerControllerProvider.notifier).loadFamilyInfo(),
+      () => ref.read(familyControllerProvider.notifier).loadFamilyInfo(),
     );
   }
 
@@ -68,7 +68,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     if (result == null || !mounted) return;
     _codeController.text = result;
     setState(() {});
-    await ref.read(foyerControllerProvider.notifier).redeem(result);
+    await ref.read(familyControllerProvider.notifier).redeem(result);
   }
 
   @override
@@ -89,8 +89,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
         ),
       );
     }
-    final state = ref.watch(foyerControllerProvider);
-    final controller = ref.read(foyerControllerProvider.notifier);
+    final state = ref.watch(familyControllerProvider);
+    final controller = ref.read(familyControllerProvider.notifier);
     final info = state.familyInfo;
     if (info != null) _syncNameField(info);
     final loading = state.family.isBusy && info == null;
@@ -266,7 +266,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     );
   }
 
-  Widget _buildOutcomeBlock(AppLocalizations l10n, FoyerState state) {
+  Widget _buildOutcomeBlock(AppLocalizations l10n, FamilyState state) {
     if (state.redeem case ActionError()) {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.s3),

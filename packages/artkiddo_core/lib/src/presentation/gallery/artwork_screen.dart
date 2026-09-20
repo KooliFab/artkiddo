@@ -8,7 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../domain/action_result.dart';
 import '../../domain/child.dart';
-import '../../domain/masterpiece.dart';
+import '../../domain/artwork.dart';
 import '../../local/audio/audio_player_service.dart';
 import '../../local/audio/audio_recorder_service.dart';
 import '../../local/logging/log.dart';
@@ -28,17 +28,17 @@ import 'gallery_providers.dart';
 
 /// `artwork` — `screens.md` §5.
 class ArtworkScreen extends ConsumerStatefulWidget {
-  final String masterpieceId;
+  final String artworkId;
 
   /// Data and image already present in the gallery tile. Passing these keeps
   /// the destination Hero mounted from the very first push frame.
-  final Masterpiece? initialMasterpiece;
+  final Artwork? initialArtwork;
   final File? initialHeroFile;
 
   const ArtworkScreen({
     super.key,
-    required this.masterpieceId,
-    this.initialMasterpiece,
+    required this.artworkId,
+    this.initialArtwork,
     this.initialHeroFile,
   });
 
@@ -47,30 +47,30 @@ class ArtworkScreen extends ConsumerStatefulWidget {
 }
 
 class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
-  Masterpiece? _masterpiece;
+  Artwork? _artwork;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _masterpiece = widget.initialMasterpiece;
-    _loading = widget.initialMasterpiece == null;
-    Log.d('📱 [ArtworkScreen] Opening (${widget.masterpieceId})', 'Navigation');
+    _artwork = widget.initialArtwork;
+    _loading = widget.initialArtwork == null;
+    Log.d('📱 [ArtworkScreen] Opening (${widget.artworkId})', 'Navigation');
     _load();
   }
 
   Future<void> _load() async {
-    final repo = ref.read(masterpiecesRepositoryProvider);
-    final m = await repo.getById(widget.masterpieceId);
+    final repo = ref.read(artworksRepositoryProvider);
+    final m = await repo.getById(widget.artworkId);
     if (!mounted) return;
     setState(() {
-      _masterpiece = m;
+      _artwork = m;
       _loading = false;
     });
   }
 
   Future<void> _sendImage(Child? child, AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     // C-06: share the highest fidelity actually on this device — the
     // untouched original when there is one, otherwise whatever derivative
@@ -90,13 +90,13 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   }
 
   Future<void> _editStory(AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) =>
-          _StoryEditorSheet(masterpieceId: m.id, initialStory: m.story ?? ''),
+          _StoryEditorSheet(artworkId: m.id, initialStory: m.story ?? ''),
     );
     if (result != null && mounted) {
       await _load();
@@ -108,7 +108,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   }
 
   Future<void> _clearAudio(AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null || !m.hasAudio) return;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -132,7 +132,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       ),
     );
     if (confirmed != true) return;
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final result = await repo.clearAudio(m.id);
     if (!mounted) return;
     if (result is ActionSuccess) {
@@ -145,12 +145,12 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   }
 
   Future<void> _recordAudio(AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     final recorded = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => _AudioRecorderSheet(masterpieceId: m.id),
+      builder: (ctx) => _AudioRecorderSheet(artworkId: m.id),
     );
     if (recorded == true && mounted) {
       await _load();
@@ -164,7 +164,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   /// (no child, or birth date changed since the dialog opened) rather than
   /// silently accepting a nonsensical date.
   Future<void> _editDrawnAt(AppLocalizations l10n, Child? child) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     final now = DateTime.now();
     final firstDate = child?.birthDate ?? DateTime(1900);
@@ -194,7 +194,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       return;
     }
 
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final result = await repo.updateDrawnAt(id: m.id, drawnAt: picked);
     if (!mounted) return;
     if (result is ActionSuccess) {
@@ -213,7 +213,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   /// A-02: a cleared `drawnAt` must genuinely fall back to `addedAt` for
   /// the age calculation — same rigour as `_clearStory`.
   Future<void> _clearDrawnAt(AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -236,7 +236,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       ),
     );
     if (confirmed != true) return;
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final result = await repo.updateDrawnAt(id: m.id, drawnAt: null);
     if (!mounted) return;
     if (result is ActionSuccess) {
@@ -253,7 +253,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   }
 
   Future<void> _handleCalendarTap(AppLocalizations l10n, Child? child) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     if (m.drawnAt != null) {
       final choice = await showModalBottomSheet<String>(
@@ -309,7 +309,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   }
 
   Future<void> _handleAudioTap(AppLocalizations l10n) async {
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) return;
     if (m.hasAudio) {
       final confirmed = await showDialog<bool>(
@@ -340,7 +340,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
 
   Future<void> _showShareOptions(
     BuildContext context,
-    Masterpiece m,
+    Artwork m,
     Child? child,
     String childName,
     AppLocalizations l10n,
@@ -422,7 +422,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final deleted = await showDialog<bool>(
       context: context,
       builder: (ctx) => _DeleteArtworkDialog(
-        masterpieceId: widget.masterpieceId,
+        artworkId: widget.artworkId,
         hasSyncedCopy: hasSyncedCopy,
       ),
     );
@@ -441,7 +441,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final m = _masterpiece;
+    final m = _artwork;
     if (m == null) {
       return Scaffold(
         appBar: AppBar(),
@@ -659,7 +659,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   Widget _buildImage(
     BuildContext context,
     AppLocalizations l10n,
-    Masterpiece m,
+    Artwork m,
     String childName, {
     required bool wide,
   }) {
@@ -669,7 +669,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) =>
-                ArtworkZoomScreen(masterpieceId: m.id, childName: childName),
+                ArtworkZoomScreen(artworkId: m.id, childName: childName),
           ),
         ),
         child: ConstrainedBox(
@@ -728,7 +728,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   List<Widget> _buildPanel(
     BuildContext context,
     AppLocalizations l10n,
-    Masterpiece m,
+    Artwork m,
     Child? child,
     String childName,
   ) {
@@ -786,7 +786,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       const SizedBox(height: AppSpacing.s5),
       if (m.hasAudio) ...[
         _ArtworkAudioPlayerCard(
-          masterpiece: m,
+          artwork: m,
           onReRecord: () => _recordAudio(l10n),
           onDelete: () => _clearAudio(l10n),
         ),
@@ -809,10 +809,10 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
 }
 
 class _StoryEditorSheet extends ConsumerStatefulWidget {
-  final String masterpieceId;
+  final String artworkId;
   final String initialStory;
   const _StoryEditorSheet({
-    required this.masterpieceId,
+    required this.artworkId,
     required this.initialStory,
   });
 
@@ -842,10 +842,10 @@ class _StoryEditorSheetState extends ConsumerState<_StoryEditorSheet> {
     // D45: isBusy guard to prevent duplicate saves while in-flight.
     if (_save.isBusy) return;
     setState(() => _save = const ActionBusy());
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final text = _controller.text.trim();
     final result = await repo.updateStory(
-      id: widget.masterpieceId,
+      id: widget.artworkId,
       story: text.isEmpty ? null : text,
     );
     if (!mounted) return;
@@ -929,10 +929,10 @@ class _StoryEditorSheetState extends ConsumerState<_StoryEditorSheet> {
 /// A failure keeps the dialog open with a retryable error block, exactly
 /// like `_DeleteChildDialog` / `_RevokeDialog`.
 class _DeleteArtworkDialog extends ConsumerStatefulWidget {
-  final String masterpieceId;
+  final String artworkId;
   final bool hasSyncedCopy;
   const _DeleteArtworkDialog({
-    required this.masterpieceId,
+    required this.artworkId,
     required this.hasSyncedCopy,
   });
 
@@ -947,8 +947,8 @@ class _DeleteArtworkDialogState extends ConsumerState<_DeleteArtworkDialog> {
   Future<void> _delete() async {
     if (_state.isBusy) return;
     setState(() => _state = const ActionBusy());
-    final repo = ref.read(masterpiecesRepositoryProvider);
-    final result = await repo.delete(widget.masterpieceId);
+    final repo = ref.read(artworksRepositoryProvider);
+    final result = await repo.delete(widget.artworkId);
     if (!mounted) return;
     switch (result) {
       case ActionSuccess():
@@ -1021,12 +1021,12 @@ String _formatDuration(int ms) {
 }
 
 class _ArtworkAudioPlayerCard extends ConsumerStatefulWidget {
-  final Masterpiece masterpiece;
+  final Artwork artwork;
   final VoidCallback onReRecord;
   final VoidCallback onDelete;
 
   const _ArtworkAudioPlayerCard({
-    required this.masterpiece,
+    required this.artwork,
     required this.onReRecord,
     required this.onDelete,
   });
@@ -1055,14 +1055,14 @@ class _ArtworkAudioPlayerCardState
   @override
   void didUpdateWidget(covariant _ArtworkAudioPlayerCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.masterpiece.relativeAudioPath !=
-        widget.masterpiece.relativeAudioPath) {
+    if (oldWidget.artwork.relativeAudioPath !=
+        widget.artwork.relativeAudioPath) {
       _initAudio();
     }
   }
 
   Future<void> _initAudio() async {
-    final m = widget.masterpiece;
+    final m = widget.artwork;
     if (!m.isAudioLocal) {
       _downloadAudio();
       return;
@@ -1099,16 +1099,14 @@ class _ArtworkAudioPlayerCardState
     });
 
     final fetcher = ref.read(remoteMediaFetcherProvider);
-    final downloaded = await fetcher.ensureAudioDownloaded(
-      widget.masterpiece.id,
-    );
+    final downloaded = await fetcher.ensureAudioDownloaded(widget.artwork.id);
 
     if (!mounted) return;
 
     if (downloaded) {
       setState(() => _downloading = false);
-      final repo = ref.read(masterpiecesRepositoryProvider);
-      final updated = await repo.getById(widget.masterpiece.id);
+      final repo = ref.read(artworksRepositoryProvider);
+      final updated = await repo.getById(widget.artwork.id);
       if (updated != null && mounted) {
         final vault = ref.read(localVaultProvider);
         if (updated.relativeAudioPath != null) {
@@ -1152,7 +1150,7 @@ class _ArtworkAudioPlayerCardState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final durationMs = widget.masterpiece.audioDurationMs ?? 0;
+    final durationMs = widget.artwork.audioDurationMs ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s4),
@@ -1315,8 +1313,8 @@ class _ArtworkAudioPlayerCardState
 }
 
 class _AudioRecorderSheet extends ConsumerStatefulWidget {
-  final String masterpieceId;
-  const _AudioRecorderSheet({required this.masterpieceId});
+  final String artworkId;
+  const _AudioRecorderSheet({required this.artworkId});
 
   @override
   ConsumerState<_AudioRecorderSheet> createState() =>
@@ -1394,7 +1392,7 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
 
     _cleanTempFile();
     final tempPath =
-        '${Directory.systemTemp.path}/artkiddo_art_${widget.masterpieceId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        '${Directory.systemTemp.path}/artkiddo_art_${widget.artworkId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
     _recordedPath = tempPath;
 
     setState(() {
@@ -1500,9 +1498,9 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
     setState(() => _saving = true);
     await _stopPlayback();
 
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final result = await repo.updateAudio(
-      id: widget.masterpieceId,
+      id: widget.artworkId,
       sourceAudioFile: File(_recordedPath!),
       durationMs: _recordedDurationMs!,
     );

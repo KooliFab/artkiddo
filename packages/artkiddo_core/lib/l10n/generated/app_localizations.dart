@@ -1760,48 +1760,6 @@ abstract class AppLocalizations {
   String get accountSubmitting;
 
   /// Localized user-facing copy.
-  String get accountForgotPassword;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryTitle;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryBody;
-
-  /// Localized user-facing copy.
-  String get accountRecoverySend;
-
-  /// Localized user-facing copy.
-  String get accountRecoverySending;
-
-  /// Localized user-facing copy.
-  String get accountRecoverySentTitle;
-
-  /// Localized user-facing copy.
-  String get accountRecoverySentBody;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryNewPassword;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryConfirmPassword;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryUpdate;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryUpdating;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryMismatch;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryUpdated;
-
-  /// Localized user-facing copy.
-  String get accountRecoveryError;
-
-  /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
   /// **'Adresse ou mot de passe incorrect.'**
@@ -2315,13 +2273,13 @@ abstract class AppLocalizations {
   ///
   /// In fr, this message translates to:
   /// **'Cet appareil est lié ailleurs'**
-  String get errorFoyerMismatchTitle;
+  String get errorFamilyMismatchTitle;
 
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
   /// **'Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.'**
-  String get errorFoyerMismatchBody;
+  String get errorFamilyMismatchBody;
 
   /// Localized user-facing copy.
   ///

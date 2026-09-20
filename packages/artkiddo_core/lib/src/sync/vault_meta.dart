@@ -11,27 +11,27 @@ import '../contracts/sync_backend.dart';
 /// something [SyncEngine] can make on its own. [SyncEngine]'s job
 /// stops at detecting the mismatch and refusing to sync in either
 /// direction; the caller decides what happens next.
-class FoyerMismatchException implements Exception {
-  final String vaultFoyerId;
-  final String authenticatedFoyerId;
-  const FoyerMismatchException({
-    required this.vaultFoyerId,
-    required this.authenticatedFoyerId,
+class FamilyMismatchException implements Exception {
+  final String vaultFamilyId;
+  final String authenticatedFamilyId;
+  const FamilyMismatchException({
+    required this.vaultFamilyId,
+    required this.authenticatedFamilyId,
   });
 
   @override
   String toString() =>
-      'FoyerMismatchException: this vault is already attached to foyer $vaultFoyerId, '
-      'but the authenticated account belongs to foyer $authenticatedFoyerId';
+      'FamilyMismatchException: this vault is already attached to family $vaultFamilyId, '
+      'but the authenticated account belongs to family $authenticatedFamilyId';
 }
 
 /// The one row of `VaultMetaTable` this device keeps: which household
 /// (if any) this local vault is attached to, and how far each
 /// independent `pull` stream got.
 ///
-/// `foyerId` is written exactly once, at the vault's first remote
+/// `familyId` is written exactly once, at the vault's first remote
 /// attachment; every later sync must find the same value or refuse
-/// ([FoyerMismatchException]). The independent cursors are always the
+/// ([FamilyMismatchException]). The independent cursors are always the
 /// maximal **server** timestamp their own stream has applied, never a
 /// client clock. A null cursor means "never pulled" for that stream,
 /// which is exactly the join/restore starting point.
@@ -55,18 +55,18 @@ class VaultMetaRepository {
         )..where((t) => t.id.equals(_singletonId))).getSingleOrNull()) ??
         const VaultMetaEntity(
           id: _singletonId,
-          foyerId: null,
+          familyId: null,
           lastPullCursor: null,
         );
   }
 
-  Future<String?> getFoyerId() async => (await _readOrCreate()).foyerId;
+  Future<String?> getFamilyId() async => (await _readOrCreate()).familyId;
 
   Future<PullCursorSet> getPullCursors() async {
     final row = await _readOrCreate();
     return PullCursorSet(
       children: row.childrenPullCursor,
-      masterpieces: row.masterpiecesPullCursor,
+      artworks: row.artworksPullCursor,
       purged: row.purgedPullCursor,
     );
   }
@@ -74,8 +74,8 @@ class VaultMetaRepository {
   Future<DateTime?> getChildrenPullCursor() async =>
       (await getPullCursors()).children;
 
-  Future<DateTime?> getMasterpiecesPullCursor() async =>
-      (await getPullCursors()).masterpieces;
+  Future<DateTime?> getArtworksPullCursor() async =>
+      (await getPullCursors()).artworks;
 
   Future<DateTime?> getPurgedPullCursor() async =>
       (await getPullCursors()).purged;
@@ -88,25 +88,25 @@ class VaultMetaRepository {
     final cursors = await getPullCursors();
     final values = [
       if (cursors.children != null) cursors.children!,
-      if (cursors.masterpieces != null) cursors.masterpieces!,
+      if (cursors.artworks != null) cursors.artworks!,
       if (cursors.purged != null) cursors.purged!,
     ];
     if (values.isEmpty) return null;
     return values.reduce((a, b) => a.isAfter(b) ? a : b);
   }
 
-  /// Writes `foyerId` for the first time. A no-op (not an error) if
+  /// Writes `familyId` for the first time. A no-op (not an error) if
   /// this vault is already attached to the *same* household (restoring
-  /// a reinstalled app). Throws [FoyerMismatchException] if the vault
+  /// a reinstalled app). Throws [FamilyMismatchException] if the vault
   /// already belongs to a *different* household — see the isolation
   /// rule this class exists to enforce.
-  Future<void> attachFoyer(String foyerId) async {
-    final current = await getFoyerId();
-    if (current == foyerId) return;
-    if (current != null && current != foyerId) {
-      throw FoyerMismatchException(
-        vaultFoyerId: current,
-        authenticatedFoyerId: foyerId,
+  Future<void> attachFamily(String familyId) async {
+    final current = await getFamilyId();
+    if (current == familyId) return;
+    if (current != null && current != familyId) {
+      throw FamilyMismatchException(
+        vaultFamilyId: current,
+        authenticatedFamilyId: familyId,
       );
     }
     await _db
@@ -114,22 +114,22 @@ class VaultMetaRepository {
         .insertOnConflictUpdate(
           VaultMetaTableCompanion.insert(
             id: _singletonId,
-            foyerId: Value(foyerId),
+            familyId: Value(familyId),
           ),
         );
   }
 
-  /// Verifies (without writing) that `foyerId` is compatible with this
+  /// Verifies (without writing) that `familyId` is compatible with this
   /// vault: either unattached yet, or already attached to exactly this
-  /// household. Throws [FoyerMismatchException] otherwise. Callers
+  /// household. Throws [FamilyMismatchException] otherwise. Callers
   /// that only want to check before deciding whether to proceed use
-  /// this instead of [attachFoyer].
-  Future<void> assertCompatible(String foyerId) async {
-    final current = await getFoyerId();
-    if (current != null && current != foyerId) {
-      throw FoyerMismatchException(
-        vaultFoyerId: current,
-        authenticatedFoyerId: foyerId,
+  /// this instead of [attachFamily].
+  Future<void> assertCompatible(String familyId) async {
+    final current = await getFamilyId();
+    if (current != null && current != familyId) {
+      throw FamilyMismatchException(
+        vaultFamilyId: current,
+        authenticatedFamilyId: familyId,
       );
     }
   }
@@ -141,7 +141,7 @@ class VaultMetaRepository {
           VaultMetaTableCompanion.insert(
             id: _singletonId,
             childrenPullCursor: Value(cursors.children),
-            masterpiecesPullCursor: Value(cursors.masterpieces),
+            artworksPullCursor: Value(cursors.artworks),
             purgedPullCursor: Value(cursors.purged),
           ),
         );
@@ -158,13 +158,13 @@ class VaultMetaRepository {
         );
   }
 
-  Future<void> setMasterpiecesPullCursor(DateTime cursor) async {
+  Future<void> setArtworksPullCursor(DateTime cursor) async {
     await _db
         .into(_db.vaultMetaTable)
         .insertOnConflictUpdate(
           VaultMetaTableCompanion.insert(
             id: _singletonId,
-            masterpiecesPullCursor: Value(cursor),
+            artworksPullCursor: Value(cursor),
           ),
         );
   }
@@ -188,7 +188,7 @@ class VaultMetaRepository {
     await setPullCursor(
       cursors: PullCursorSet(
         children: cursor,
-        masterpieces: cursor,
+        artworks: cursor,
         purged: cursor,
       ),
     );
@@ -199,18 +199,18 @@ class VaultMetaRepository {
   /// household server-side (the deletion flow already removed that
   /// membership on their behalf), so this vault becomes a strictly
   /// local one — consistent with the rule this class otherwise
-  /// enforces: [attachFoyer] would refuse a future sign-in to a
-  /// *different* household if `foyerId` stayed set to one the account
+  /// enforces: [attachFamily] would refuse a future sign-in to a
+  /// *different* household if `familyId` stayed set to one the account
   /// no longer belongs to. `lastPullCursor` is left untouched: it
   /// describes this vault's own history, not its household
   /// attachment.
-  Future<void> detachFoyer() async {
+  Future<void> detachFamily() async {
     await _db
         .into(_db.vaultMetaTable)
         .insertOnConflictUpdate(
           VaultMetaTableCompanion.insert(
             id: _singletonId,
-            foyerId: const Value(null),
+            familyId: const Value(null),
           ),
         );
   }

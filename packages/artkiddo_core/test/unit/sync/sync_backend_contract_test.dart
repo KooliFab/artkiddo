@@ -4,16 +4,16 @@ import 'package:artkiddo_core/src/contracts/sync_backend.dart';
 
 class _ContractBackend extends SyncBackend {
   final childRows = <RemoteChildRow>[];
-  final masterpieceRows = <RemoteMasterpieceRow>[];
-  final purgedRows = <PurgedMasterpieceRow>[];
+  final artworkRows = <RemoteArtworkRow>[];
+  final purgedRows = <PurgedArtworkRow>[];
 
   @override
-  Future<String> ensureMyFoyer() async => 'foyer';
+  Future<String> ensureMyFamily() async => 'family';
 
   @override
   Future<void> upsertChild({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String name,
     required DateTime birthDate,
     required DateTime createdAt,
@@ -23,9 +23,9 @@ class _ContractBackend extends SyncBackend {
   Future<void> softDeleteChild(String id) async {}
 
   @override
-  Future<void> upsertMasterpiece({
+  Future<void> upsertArtwork({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String childId,
     required String displayObjectKey,
     String? thumbnailObjectKey,
@@ -42,26 +42,26 @@ class _ContractBackend extends SyncBackend {
   }) async {}
 
   @override
-  Future<void> softDeleteMasterpiece(String id) async {}
+  Future<void> softDeleteArtwork(String id) async {}
 
   @override
-  Future<void> softDeleteMasterpiecesForChild(String childId) async {}
+  Future<void> softDeleteArtworksForChild(String childId) async {}
 
   @override
   Future<List<RemoteChildRow>> pullChildren({
-    required String foyerId,
+    required String familyId,
     DateTime? since,
   }) async => childRows;
 
   @override
-  Future<List<RemoteMasterpieceRow>> pullMasterpieces({
-    required String foyerId,
+  Future<List<RemoteArtworkRow>> pullArtworks({
+    required String familyId,
     DateTime? since,
-  }) async => masterpieceRows;
+  }) async => artworkRows;
 
   @override
-  Future<List<PurgedMasterpieceRow>> pullPurgedMasterpieceIds({
-    required String foyerId,
+  Future<List<PurgedArtworkRow>> pullPurgedArtworkIds({
+    required String familyId,
     DateTime? since,
   }) async => purgedRows;
 }
@@ -90,7 +90,7 @@ void main() {
         ),
       ]);
 
-      final page = await backend.pullChildrenPage(foyerId: 'foyer');
+      final page = await backend.pullChildrenPage(familyId: 'family');
 
       expect(page.items, hasLength(2));
       expect(page.nextCursor, latest);
@@ -101,17 +101,11 @@ void main() {
 
   test('PullCursorSet is an independent value object', () {
     final children = DateTime.utc(2024, 1, 1);
-    final masterpieces = DateTime.utc(2024, 1, 2);
+    final artworks = DateTime.utc(2024, 1, 2);
     const empty = PullCursorSet();
-    final cursors = empty.copyWith(
-      children: children,
-      masterpieces: masterpieces,
-    );
+    final cursors = empty.copyWith(children: children, artworks: artworks);
 
-    expect(
-      cursors,
-      PullCursorSet(children: children, masterpieces: masterpieces),
-    );
+    expect(cursors, PullCursorSet(children: children, artworks: artworks));
     expect(cursors.copyWith(clearChildren: true).children, isNull);
     expect(cursors.purged, isNull);
   });

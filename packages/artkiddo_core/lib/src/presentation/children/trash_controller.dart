@@ -12,7 +12,7 @@ class TrashState {
   final bool loading;
   final List<TrashedArtwork> items;
   final bool isParent;
-  final String? foyerId;
+  final String? familyId;
   final AppFailure? loadError;
   final AsyncAction restore;
   final AsyncAction purge;
@@ -27,7 +27,7 @@ class TrashState {
     this.loading = true,
     this.items = const [],
     this.isParent = false,
-    this.foyerId,
+    this.familyId,
     this.loadError,
     this.restore = const ActionIdle(),
     this.purge = const ActionIdle(),
@@ -39,7 +39,7 @@ class TrashState {
     bool? loading,
     List<TrashedArtwork>? items,
     bool? isParent,
-    String? foyerId,
+    String? familyId,
     AppFailure? loadError,
     bool clearLoadError = false,
     AsyncAction? restore,
@@ -52,7 +52,7 @@ class TrashState {
       loading: loading ?? this.loading,
       items: items ?? this.items,
       isParent: isParent ?? this.isParent,
-      foyerId: foyerId ?? this.foyerId,
+      familyId: familyId ?? this.familyId,
       loadError: clearLoadError ? null : (loadError ?? this.loadError),
       restore: restore ?? this.restore,
       purge: purge ?? this.purge,
@@ -62,7 +62,7 @@ class TrashState {
   }
 }
 
-/// Loads and acts on the local trash. `isParent`/`foyerId` stay part
+/// Loads and acts on the local trash. `isParent`/`familyId` stay part
 /// of [TrashState]'s shape for a shared-household trash composition;
 /// this controller itself only ever operates on
 /// [TrashCapability.local] and rejects any other capability.
@@ -79,7 +79,7 @@ class TrashController extends Notifier<TrashState> {
     if (capabilities.trash != TrashCapability.local) {
       throw StateError('The public core only supports local trash');
     }
-    state = state.copyWith(loading: true, isParent: true, foyerId: null);
+    state = state.copyWith(loading: true, isParent: true, familyId: null);
     // Opening the screen is the second deterministic purge trigger
     // after startup. The repository keeps the database write
     // authoritative and journals any file cleanup that needs another
@@ -107,20 +107,13 @@ class TrashController extends Notifier<TrashState> {
 
   Future<void> refresh() => _load();
 
-  Future<void> restore(String masterpieceId) async {
+  Future<void> restore(String artworkId) async {
     if (state.restore.isBusy) return;
-    state = state.copyWith(
-      restore: const ActionBusy(),
-      busyItemId: masterpieceId,
-    );
-    final result = await ref
-        .read(trashRepositoryProvider)
-        .restore(masterpieceId);
+    state = state.copyWith(restore: const ActionBusy(), busyItemId: artworkId);
+    final result = await ref.read(trashRepositoryProvider).restore(artworkId);
     switch (result) {
       case ActionSuccess():
-        final remaining = state.items
-            .where((i) => i.id != masterpieceId)
-            .toList();
+        final remaining = state.items.where((i) => i.id != artworkId).toList();
         state = state.copyWith(
           restore: const ActionDone(),
           items: remaining,
@@ -136,18 +129,13 @@ class TrashController extends Notifier<TrashState> {
     }
   }
 
-  Future<void> purge(String masterpieceId) async {
+  Future<void> purge(String artworkId) async {
     if (state.purge.isBusy) return;
-    state = state.copyWith(
-      purge: const ActionBusy(),
-      busyItemId: masterpieceId,
-    );
-    final result = await ref.read(trashRepositoryProvider).purge(masterpieceId);
+    state = state.copyWith(purge: const ActionBusy(), busyItemId: artworkId);
+    final result = await ref.read(trashRepositoryProvider).purge(artworkId);
     switch (result) {
       case ActionSuccess():
-        final remaining = state.items
-            .where((i) => i.id != masterpieceId)
-            .toList();
+        final remaining = state.items.where((i) => i.id != artworkId).toList();
         state = state.copyWith(
           purge: const ActionDone(),
           items: remaining,

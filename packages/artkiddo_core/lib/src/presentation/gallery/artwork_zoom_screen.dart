@@ -12,12 +12,12 @@ import 'gallery_providers.dart';
 
 /// The only dark screen in the app.
 class ArtworkZoomScreen extends ConsumerStatefulWidget {
-  final String masterpieceId;
+  final String artworkId;
   final String childName;
 
   const ArtworkZoomScreen({
     super.key,
-    required this.masterpieceId,
+    required this.artworkId,
     required this.childName,
   });
 
@@ -33,10 +33,7 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
   @override
   void initState() {
     super.initState();
-    Log.d(
-      '📱 [ArtworkZoomScreen] Opening (${widget.masterpieceId})',
-      'Navigation',
-    );
+    Log.d('📱 [ArtworkZoomScreen] Opening (${widget.artworkId})', 'Navigation');
   }
 
   @override
@@ -89,7 +86,7 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final repository = ref.watch(masterpiecesRepositoryProvider);
+    final repository = ref.watch(artworksRepositoryProvider);
     final vault = ref.watch(localVaultProvider);
     final zoomReady = _initialScale != null;
 
@@ -114,15 +111,15 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
         ),
       ),
       body: FutureBuilder(
-        future: repository.getById(widget.masterpieceId),
+        future: repository.getById(widget.artworkId),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.white),
             );
           }
-          final masterpiece = snapshot.data;
-          if (masterpiece == null) {
+          final artwork = snapshot.data;
+          if (artwork == null) {
             // `imageMissing` — catalog text, not a hardcoded literal.
             return _ZoomMessage(text: l10n.artworkZoomImageMissing);
           }
@@ -133,7 +130,7 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
           // derivative once the remote side stops holding true
           // originals).
           final zoomPath =
-              masterpiece.relativeImagePath ?? masterpiece.bestDisplayImagePath;
+              artwork.relativeImagePath ?? artwork.bestDisplayImagePath;
           return FutureBuilder<File>(
             future: zoomPath != null
                 ? vault.resolveFile(zoomPath)

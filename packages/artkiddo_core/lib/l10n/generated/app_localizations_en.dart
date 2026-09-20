@@ -1039,51 +1039,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountSubmitting => 'Signing in…';
 
   @override
-  String get accountForgotPassword => 'Forgot your password?';
-
-  @override
-  String get accountRecoveryTitle => 'Reset your password';
-
-  @override
-  String get accountRecoveryBody =>
-      'We will send a reset link if an account uses this email address.';
-
-  @override
-  String get accountRecoverySend => 'Send reset link';
-
-  @override
-  String get accountRecoverySending => 'Sending…';
-
-  @override
-  String get accountRecoverySentTitle => 'Check your email';
-
-  @override
-  String get accountRecoverySentBody =>
-      'If an account uses this address, you will receive a reset link. Check your spam and Promotions folders too.';
-
-  @override
-  String get accountRecoveryNewPassword => 'New password';
-
-  @override
-  String get accountRecoveryConfirmPassword => 'Confirm your password';
-
-  @override
-  String get accountRecoveryUpdate => 'Choose this password';
-
-  @override
-  String get accountRecoveryUpdating => 'Updating…';
-
-  @override
-  String get accountRecoveryMismatch => 'The passwords do not match.';
-
-  @override
-  String get accountRecoveryUpdated => 'Your password has been updated.';
-
-  @override
-  String get accountRecoveryError =>
-      'We could not complete this request. Please try again later.';
-
-  @override
   String get accountErrorInvalidCredentials => 'Wrong email or password.';
 
   @override
@@ -1384,10 +1339,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorUnavailableBody => 'This action isn\'t available yet.';
 
   @override
-  String get errorFoyerMismatchTitle => 'This device is linked elsewhere';
+  String get errorFamilyMismatchTitle => 'This device is linked elsewhere';
 
   @override
-  String get errorFoyerMismatchBody =>
+  String get errorFamilyMismatchBody =>
       'This vault is already linked to a different household. Sign out to keep working locally, or contact us to start a new vault for this account.';
 
   @override

@@ -573,7 +573,7 @@ class CaptureController extends Notifier<CaptureState> {
     }
 
     state = state.copyWith(save: const ActionBusy());
-    final repository = ref.read(masterpiecesRepositoryProvider);
+    final repository = ref.read(artworksRepositoryProvider);
     final story = draft.story.trim().isEmpty ? null : draft.story.trim();
 
     final result = await repository.create(

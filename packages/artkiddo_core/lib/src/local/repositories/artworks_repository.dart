@@ -8,15 +8,15 @@ import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
 import '../../sync/sync_outbox.dart';
-import '../../domain/masterpiece.dart';
+import '../../domain/artwork.dart';
 import '../../domain/child.dart';
 
-/// How a local masterpiece deletion is represented. The account-free
+/// How a local artwork deletion is represented. The account-free
 /// composition keeps a recoverable row for 30 days; a private cloud
 /// composition may instead keep a hard-delete plus remote tombstone path.
 enum ArtworkDeletionStrategy { localRecoverable, remoteTombstone }
 
-/// Local-first persistence for masterpieces.
+/// Local-first persistence for artworks.
 ///
 /// `create` copies the file into the vault before writing the row; a
 /// failed row write rolls back the copied file. `updateStory(null)`
@@ -25,9 +25,9 @@ enum ArtworkDeletionStrategy { localRecoverable, remoteTombstone }
 /// same rigour — the age calculation then falls back to `addedAt`.
 /// `delete` removes the row before the file; a failed file deletion does
 /// not fail the operation but is recorded for deferred cleanup.
-abstract class MasterpiecesRepository {
-  Stream<List<Masterpiece>> watch({String? childId}); // addedAt descending
-  Future<Masterpiece?> getById(String id);
+abstract class ArtworksRepository {
+  Stream<List<Artwork>> watch({String? childId}); // addedAt descending
+  Future<Artwork?> getById(String id);
   Future<int> count({String? childId});
 
   Future<ActionResult<String>> create({
@@ -54,7 +54,7 @@ abstract class MasterpiecesRepository {
     required DateTime? drawnAt, // null = explicit clear
   });
 
-  /// Updates or replaces the audio voice recording of a masterpiece.
+  /// Updates or replaces the audio voice recording of an artwork.
   /// Preserves the existing audio file until the new write is durably
   /// confirmed.
   Future<ActionResult<void>> updateAudio({
@@ -63,7 +63,7 @@ abstract class MasterpiecesRepository {
     required int durationMs,
   });
 
-  /// Genuinely clears the audio recording attached to this masterpiece.
+  /// Genuinely clears the audio recording attached to this artwork.
   Future<ActionResult<void>> clearAudio(String id);
 
   /// Records the local path of a downloaded audio file after lazy fetch.
@@ -82,10 +82,10 @@ abstract class MasterpiecesRepository {
   /// re-uploaded to the object store on every sync.
   Future<ActionResult<void>> markSynced(String id);
 
-  /// (Re)builds the `display`/`thumbnail` derivatives for one masterpiece
+  /// (Re)builds the `display`/`thumbnail` derivatives for one artwork
   /// from its untouched original, and records the resulting paths. A
   /// cache operation, not a user-facing edit: called best-effort from
-  /// [create], and by [backfillMissingDerivatives] for masterpieces
+  /// [create], and by [backfillMissingDerivatives] for artworks
   /// recorded before derivatives existed. Idempotent — if both
   /// derivatives already exist on disk, this is a no-op success. A
   /// partial failure (one derivative generated, the other didn't) is
@@ -94,7 +94,7 @@ abstract class MasterpiecesRepository {
   /// file and the row survive untouched.
   Future<ActionResult<void>> ensureDerivatives(String id);
 
-  /// Finds every masterpiece missing at least one derivative and calls
+  /// Finds every artwork missing at least one derivative and calls
   /// [ensureDerivatives] on it. Meant to be invoked fire-and-forget at
   /// startup, the same way as `LocalVault.retryPendingCleanups` — this
   /// method itself does not block, but awaiting it (as tests do) runs the
@@ -106,7 +106,7 @@ abstract class MasterpiecesRepository {
 
   /// Writes a `pull`-derived row **by its own id** — insert-or-update,
   /// never a fresh UUID (regenerating one is the one sure way to
-  /// duplicate a restored masterpiece). Never touches a local original
+  /// duplicate a restored artwork). Never touches a local original
   /// this device already has; only ever records what the remote side
   /// knows (metadata + object keys) and marks the row [SyncState.synced]
   /// if it already had an original, or [SyncState.remoteThumbnail] if it
@@ -162,7 +162,7 @@ abstract class MasterpiecesRepository {
   Future<ActionResult<int>> deleteAllPhotos();
 }
 
-/// Outcome of [MasterpiecesRepository.backfillMissingDerivatives].
+/// Outcome of [ArtworksRepository.backfillMissingDerivatives].
 class DerivativeBackfillSummary {
   final int attempted;
   final int succeeded;
@@ -174,7 +174,7 @@ class DerivativeBackfillSummary {
   });
 }
 
-class DriftMasterpiecesRepository implements MasterpiecesRepository {
+class DriftArtworksRepository implements ArtworksRepository {
   final AppDatabase _db;
   final LocalVault _vault;
   final Uuid _uuid;
@@ -182,7 +182,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
   final ArtworkDeletionStrategy deletionStrategy;
   final DateTime Function() _now;
 
-  DriftMasterpiecesRepository(
+  DriftArtworksRepository(
     this._db,
     this._vault, {
     Uuid? uuid,
@@ -193,8 +193,8 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
        _outbox = outbox ?? SyncOutboxRepository(_db),
        _now = now ?? DateTime.now;
 
-  Masterpiece _toDomain(MasterpieceEntity entity) {
-    return Masterpiece(
+  Artwork _toDomain(ArtworkEntity entity) {
+    return Artwork(
       id: entity.id,
       childId: entity.childId,
       relativeImagePath: entity.relativeImagePath,
@@ -243,8 +243,8 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
   }
 
   @override
-  Stream<List<Masterpiece>> watch({String? childId}) {
-    final query = _db.select(_db.masterpiecesTable);
+  Stream<List<Artwork>> watch({String? childId}) {
+    final query = _db.select(_db.artworksTable);
     if (childId != null) {
       query.where((t) => t.childId.equals(childId) & t.deletedAt.isNull());
     } else {
@@ -257,27 +257,27 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
   }
 
   @override
-  Future<Masterpiece?> getById(String id) async {
+  Future<Artwork?> getById(String id) async {
     final row = await (_db.select(
-      _db.masterpiecesTable,
+      _db.artworksTable,
     )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).getSingleOrNull();
     return row != null ? _toDomain(row) : null;
   }
 
   @override
   Future<int> count({String? childId}) async {
-    final query = _db.selectOnly(_db.masterpiecesTable)
-      ..addColumns([_db.masterpiecesTable.id.count()]);
+    final query = _db.selectOnly(_db.artworksTable)
+      ..addColumns([_db.artworksTable.id.count()]);
     if (childId != null) {
       query.where(
-        _db.masterpiecesTable.childId.equals(childId) &
-            _db.masterpiecesTable.deletedAt.isNull(),
+        _db.artworksTable.childId.equals(childId) &
+            _db.artworksTable.deletedAt.isNull(),
       );
     } else {
-      query.where(_db.masterpiecesTable.deletedAt.isNull());
+      query.where(_db.artworksTable.deletedAt.isNull());
     }
     final row = await query.getSingle();
-    return row.read(_db.masterpiecesTable.id.count()) ?? 0;
+    return row.read(_db.artworksTable.id.count()) ?? 0;
   }
 
   @override
@@ -303,16 +303,16 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
 
     String relativePath;
     try {
-      relativePath = await _vault.storeMasterpieceImage(
+      relativePath = await _vault.storeArtworkImage(
         sourceFile: sourceImageFile,
-        masterpieceId: id,
+        artworkId: id,
       );
     } catch (e, st) {
       Log.e(
         'Copie de l’original dans le coffre impossible',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -322,9 +322,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     if (sourceAudioFile != null && sourceAudioFile.path.isNotEmpty) {
       if (await sourceAudioFile.exists()) {
         try {
-          relativeAudioPath = await _vault.storeMasterpieceAudio(
+          relativeAudioPath = await _vault.storeArtworkAudio(
             sourceFile: sourceAudioFile,
-            masterpieceId: id,
+            artworkId: id,
             version: 1,
           );
           audioByteSize = await sourceAudioFile.length();
@@ -333,7 +333,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
             'Copie de l’enregistrement vocal dans le coffre impossible ($id)',
             e,
             st,
-            'MasterpiecesRepo',
+            'ArtworksRepo',
           );
           // Roll back the copied files so no orphan remains in the vault.
           // If the rollback deletion itself fails, it is recorded rather
@@ -351,9 +351,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       await _db.transaction(() async {
         await _db
-            .into(_db.masterpiecesTable)
+            .into(_db.artworksTable)
             .insert(
-              MasterpiecesTableCompanion.insert(
+              ArtworksTableCompanion.insert(
                 id: id,
                 childId: childId,
                 relativeImagePath: Value(relativePath),
@@ -372,7 +372,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         // it accompanies — an app kill between the two can never leave one
         // without the other.
         await _outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: id,
           op: SyncOutboxOp.upsert,
         );
@@ -382,7 +382,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Création locale de l’œuvre impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       await _vault.deleteFileOrEnqueueCleanup(
         relativePath: relativePath,
@@ -404,7 +404,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     // null and every reader already falls back to the original.
     await ensureDerivatives(id);
 
-    Log.i('Œuvre créée localement ($id)', 'MasterpiecesRepo');
+    Log.i('Œuvre créée localement ($id)', 'ArtworksRepo');
 
     return ActionSuccess(id);
   }
@@ -419,12 +419,12 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       rows = await _db.transaction(() async {
         final written =
-            await (_db.update(_db.masterpiecesTable)
+            await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
-                .write(MasterpiecesTableCompanion(story: Value(normalized)));
+                .write(ArtworksTableCompanion(story: Value(normalized)));
         if (written > 0) {
           await _outbox.enqueue(
-            entity: SyncEntityKind.masterpiece,
+            entity: SyncEntityKind.artwork,
             entityId: id,
             op: SyncOutboxOp.upsert,
           );
@@ -432,7 +432,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         return written;
       });
     } catch (e, st) {
-      Log.e('Mise à jour du récit impossible ($id)', e, st, 'MasterpiecesRepo');
+      Log.e('Mise à jour du récit impossible ($id)', e, st, 'ArtworksRepo');
       return ActionFailed(_mapWriteException(e, st));
     }
     if (rows == 0) {
@@ -458,12 +458,12 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       rows = await _db.transaction(() async {
         final written =
-            await (_db.update(_db.masterpiecesTable)
+            await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
-                .write(MasterpiecesTableCompanion(drawnAt: Value(drawnAt)));
+                .write(ArtworksTableCompanion(drawnAt: Value(drawnAt)));
         if (written > 0) {
           await _outbox.enqueue(
-            entity: SyncEntityKind.masterpiece,
+            entity: SyncEntityKind.artwork,
             entityId: id,
             op: SyncOutboxOp.upsert,
           );
@@ -471,12 +471,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         return written;
       });
     } catch (e, st) {
-      Log.e(
-        'Mise à jour de la date impossible ($id)',
-        e,
-        st,
-        'MasterpiecesRepo',
-      );
+      Log.e('Mise à jour de la date impossible ($id)', e, st, 'ArtworksRepo');
       return ActionFailed(_mapWriteException(e, st));
     }
     if (rows == 0) {
@@ -500,17 +495,15 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     int rows;
     try {
       rows =
-          await (_db.update(
-            _db.masterpiecesTable,
-          )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-            const MasterpiecesTableCompanion(syncState: Value('synced')),
-          );
+          await (_db.update(_db.artworksTable)
+                ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+              .write(const ArtworksTableCompanion(syncState: Value('synced')));
     } catch (e, st) {
       Log.e(
         'Mise à jour de synchronisation impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -545,9 +538,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     String audioPath;
     final version = DateTime.now().millisecondsSinceEpoch;
     try {
-      audioPath = await _vault.storeMasterpieceAudio(
+      audioPath = await _vault.storeArtworkAudio(
         sourceFile: sourceAudioFile,
-        masterpieceId: id,
+        artworkId: id,
         version: version,
       );
     } catch (e, st) {
@@ -555,7 +548,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Copie du nouvel enregistrement audio impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -566,9 +559,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       await _db.transaction(() async {
         final rows =
             await (_db.update(
-              _db.masterpiecesTable,
+              _db.artworksTable,
             )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-              MasterpiecesTableCompanion(
+              ArtworksTableCompanion(
                 relativeAudioPath: Value(audioPath),
                 audioDurationMs: Value(durationMs),
                 audioByteSize: Value(fileSize),
@@ -576,9 +569,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
                 syncState: const Value('localOnly'),
               ),
             );
-        if (rows == 0) throw StateError('Masterpiece row disappeared');
+        if (rows == 0) throw StateError('Artwork row disappeared');
         await _outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: id,
           op: SyncOutboxOp.upsert,
         );
@@ -588,7 +581,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Échec de la transaction mise à jour audio ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       await _vault.deleteAudioFileOrEnqueueCleanup(
         relativeAudioPath: audioPath,
@@ -628,9 +621,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       await _db.transaction(() async {
         final rows =
             await (_db.update(
-              _db.masterpiecesTable,
+              _db.artworksTable,
             )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-              const MasterpiecesTableCompanion(
+              const ArtworksTableCompanion(
                 relativeAudioPath: Value(null),
                 audioDurationMs: Value(null),
                 audioByteSize: Value(0),
@@ -638,20 +631,15 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
                 syncState: Value('localOnly'),
               ),
             );
-        if (rows == 0) throw StateError('Masterpiece row disappeared');
+        if (rows == 0) throw StateError('Artwork row disappeared');
         await _outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: id,
           op: SyncOutboxOp.upsert,
         );
       });
     } catch (e, st) {
-      Log.e(
-        'Échec de l’effacement de l’audio ($id)',
-        e,
-        st,
-        'MasterpiecesRepo',
-      );
+      Log.e('Échec de l’effacement de l’audio ($id)', e, st, 'ArtworksRepo');
       return ActionFailed(_mapWriteException(e, st));
     }
 
@@ -680,11 +668,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       final rows =
           await (_db.update(
-            _db.masterpiecesTable,
+            _db.artworksTable,
           )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-            MasterpiecesTableCompanion(
-              relativeAudioPath: Value(audioRelativePath),
-            ),
+            ArtworksTableCompanion(relativeAudioPath: Value(audioRelativePath)),
           );
       if (rows == 0) return const ActionFailed(NotFoundFailure());
     } catch (e, st) {
@@ -692,7 +678,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Enregistrement de l’audio téléchargé impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -710,12 +696,12 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       final deletedAt = _now();
       try {
         final rows =
-            await (_db.update(_db.masterpiecesTable)
+            await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
-                .write(MasterpiecesTableCompanion(deletedAt: Value(deletedAt)));
+                .write(ArtworksTableCompanion(deletedAt: Value(deletedAt)));
         if (rows == 0) return const ActionFailed(NotFoundFailure());
         final persisted = await (_db.select(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.id.equals(id))).getSingleOrNull();
         if (persisted?.deletedAt == null ||
             !persisted!.deletedAt!.isAtSameMomentAs(deletedAt)) {
@@ -730,7 +716,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
           'Mise à la Corbeille locale impossible ($id)',
           e,
           st,
-          'MasterpiecesRepo',
+          'ArtworksRepo',
         );
         return ActionFailed(_mapWriteException(e, st));
       }
@@ -739,12 +725,10 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       await _db.transaction(() async {
         final rows = await (_db.delete(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.id.equals(id))).go();
         if (rows == 0) {
-          throw StateError(
-            'masterpiece row disappeared during delete transaction',
-          );
+          throw StateError('artwork row disappeared during delete transaction');
         }
         // Pushed as `deleted_at = now()`, never a real `DELETE` — a hard
         // delete on the server would be resurrected by another device's
@@ -752,7 +736,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         // unconditionally in the remote-tombstone composition: the
         // local vault is never a cache of the remote side.
         await _outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: id,
           op: SyncOutboxOp.delete,
         );
@@ -762,7 +746,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Suppression locale de l’œuvre impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -825,7 +809,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     }
 
     final outcome = await _vault.generateDerivatives(
-      masterpieceId: id,
+      artworkId: id,
       originalRelativePath: originalPath,
     );
 
@@ -848,9 +832,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       // erases a derivative a previous, successful run already
       // recorded.
       await (_db.update(
-        _db.masterpiecesTable,
+        _db.artworksTable,
       )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-        MasterpiecesTableCompanion(
+        ArtworksTableCompanion(
           displayImagePath: outcome.displayRelativePath != null
               ? Value(outcome.displayRelativePath)
               : const Value.absent(),
@@ -864,7 +848,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Enregistrement des dérivés impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -878,7 +862,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     // `ensureDerivatives` has nothing to derive from and would only add
     // a hollow "attempted" count for it.
     final rows =
-        await (_db.select(_db.masterpiecesTable)..where(
+        await (_db.select(_db.artworksTable)..where(
               (t) =>
                   (t.displayImagePath.isNull() |
                       t.thumbnailImagePath.isNull()) &
@@ -937,7 +921,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       String? preservedAudioPath;
       if (existing != null && existing.relativeAudioPath != null) {
         final row = await (_db.select(
-          _db.masterpiecesTable,
+          _db.artworksTable,
         )..where((t) => t.id.equals(id))).getSingleOrNull();
         if (row?.audioObjectKey == audioObjectKey && audioObjectKey != null) {
           preservedAudioPath = existing.relativeAudioPath;
@@ -950,9 +934,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       }
 
       await _db
-          .into(_db.masterpiecesTable)
+          .into(_db.artworksTable)
           .insertOnConflictUpdate(
-            MasterpiecesTableCompanion.insert(
+            ArtworksTableCompanion.insert(
               id: id,
               childId: childId,
               addedAt: addedAt,
@@ -976,7 +960,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Application d’œuvre distante impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -993,15 +977,13 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
       return const ActionSuccess(null);
     }
     try {
-      await (_db.delete(
-        _db.masterpiecesTable,
-      )..where((t) => t.id.equals(id))).go();
+      await (_db.delete(_db.artworksTable)..where((t) => t.id.equals(id))).go();
     } catch (e, st) {
       Log.e(
         'Application du tombstone œuvre impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -1038,9 +1020,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         current.relativeImagePath != null || current.displayImagePath != null;
     try {
       await (_db.update(
-        _db.masterpiecesTable,
+        _db.artworksTable,
       )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-        MasterpiecesTableCompanion(
+        ArtworksTableCompanion(
           thumbnailImagePath: Value(thumbnailRelativePath),
           syncState: Value(hasOriginalOrDisplay ? 'synced' : 'remoteThumbnail'),
         ),
@@ -1050,7 +1032,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Enregistrement de miniature téléchargée impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -1062,11 +1044,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       final rows =
           await (_db.update(
-            _db.masterpiecesTable,
+            _db.artworksTable,
           )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-            const MasterpiecesTableCompanion(
-              syncState: Value('downloadFailed'),
-            ),
+            const ArtworksTableCompanion(syncState: Value('downloadFailed')),
           );
       if (rows == 0) {
         return const ActionFailed(NotFoundFailure());
@@ -1076,7 +1056,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Marquage d’échec de téléchargement impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -1091,9 +1071,9 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     try {
       final rows =
           await (_db.update(
-            _db.masterpiecesTable,
+            _db.artworksTable,
           )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-            MasterpiecesTableCompanion(
+            ArtworksTableCompanion(
               displayImagePath: Value(displayRelativePath),
               syncState: const Value('synced'),
             ),
@@ -1106,7 +1086,7 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Enregistrement de visuel téléchargé impossible ($id)',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -1118,18 +1098,18 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
     int count = 0;
     try {
       await _db.transaction(() async {
-        count = await _db.delete(_db.masterpiecesTable).go();
-        // Also clear any outbox items referencing masterpieces
+        count = await _db.delete(_db.artworksTable).go();
+        // Also clear any outbox items referencing artworks
         await (_db.delete(
           _db.syncOutboxTable,
-        )..where((t) => t.entity.equals(SyncEntityKind.masterpiece.name))).go();
+        )..where((t) => t.entity.equals(SyncEntityKind.artwork.name))).go();
       });
     } catch (e, st) {
       Log.e(
         'Échec de la suppression de toutes les œuvres',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
       return ActionFailed(_mapWriteException(e, st));
     }
@@ -1141,13 +1121,13 @@ class DriftMasterpiecesRepository implements MasterpiecesRepository {
         'Échec du nettoyage des fichiers photos du vault',
         e,
         st,
-        'MasterpiecesRepo',
+        'ArtworksRepo',
       );
     }
 
     Log.i(
       'Toutes les photos ($count) ont été supprimées en mode debug',
-      'MasterpiecesRepo',
+      'ArtworksRepo',
     );
     return ActionSuccess(count);
   }

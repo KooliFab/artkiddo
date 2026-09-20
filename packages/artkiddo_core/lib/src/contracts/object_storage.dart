@@ -25,7 +25,7 @@ enum ObjectVariant { display, thumbnail, audio }
 abstract class ObjectUploader {
   Future<String> uploadDerivative({
     required List<int> bytes,
-    required String masterpieceId,
+    required String artworkId,
     required ObjectVariant variant,
     String? childId,
     String? fileName,

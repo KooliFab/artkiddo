@@ -34,14 +34,14 @@ void main() {
       () async {
         final outbox = SyncOutboxRepository(db);
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
         expect(await outbox.countPending(), 1);
 
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.delete,
         );
@@ -57,17 +57,17 @@ void main() {
       () async {
         final outbox = SyncOutboxRepository(db);
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
@@ -84,21 +84,21 @@ void main() {
         op: SyncOutboxOp.upsert,
       );
       await outbox.enqueue(
-        entity: SyncEntityKind.masterpiece,
+        entity: SyncEntityKind.artwork,
         entityId: 'm1',
         op: SyncOutboxOp.upsert,
       );
       await outbox.enqueue(
-        entity: SyncEntityKind.masterpiece,
+        entity: SyncEntityKind.artwork,
         entityId: 'm2',
         op: SyncOutboxOp.upsert,
       );
 
       expect(await outbox.countPending(), 3);
-      expect(
-        await outbox.pendingEntityIds(entity: SyncEntityKind.masterpiece),
-        {'m1', 'm2'},
-      );
+      expect(await outbox.pendingEntityIds(entity: SyncEntityKind.artwork), {
+        'm1',
+        'm2',
+      });
       expect(await outbox.pendingEntityIds(entity: SyncEntityKind.child), {
         'c1',
       });
@@ -109,7 +109,7 @@ void main() {
     test('markSucceeded removes the entry entirely', () async {
       final outbox = SyncOutboxRepository(db);
       await outbox.enqueue(
-        entity: SyncEntityKind.masterpiece,
+        entity: SyncEntityKind.artwork,
         entityId: 'm1',
         op: SyncOutboxOp.upsert,
       );
@@ -125,7 +125,7 @@ void main() {
       () async {
         final outbox = SyncOutboxRepository(db);
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
@@ -151,7 +151,7 @@ void main() {
       () async {
         final outbox = SyncOutboxRepository(db);
         await outbox.enqueue(
-          entity: SyncEntityKind.masterpiece,
+          entity: SyncEntityKind.artwork,
           entityId: 'm1',
           op: SyncOutboxOp.upsert,
         );
@@ -188,55 +188,58 @@ void main() {
   });
 
   group('VaultMetaRepository', () {
-    test('a fresh vault has no foyer and no pull cursor', () async {
+    test('a fresh vault has no family and no pull cursor', () async {
       final vaultMeta = VaultMetaRepository(db);
-      expect(await vaultMeta.getFoyerId(), isNull);
+      expect(await vaultMeta.getFamilyId(), isNull);
       expect(await vaultMeta.getLastPullCursor(), isNull);
     });
 
-    test('attachFoyer is idempotent for the same foyer', () async {
+    test('attachFamily is idempotent for the same family', () async {
       final vaultMeta = VaultMetaRepository(db);
-      await vaultMeta.attachFoyer('foyer-1');
-      await vaultMeta.attachFoyer('foyer-1');
-      expect(await vaultMeta.getFoyerId(), 'foyer-1');
+      await vaultMeta.attachFamily('family-1');
+      await vaultMeta.attachFamily('family-1');
+      expect(await vaultMeta.getFamilyId(), 'family-1');
     });
 
     test(
-      'attachFoyer throws FoyerMismatchException for a different foyer, and does not overwrite the existing one',
+      'attachFamily throws FamilyMismatchException for a different family, and does not overwrite the existing one',
       () async {
         final vaultMeta = VaultMetaRepository(db);
-        await vaultMeta.attachFoyer('foyer-1');
+        await vaultMeta.attachFamily('family-1');
 
         expect(
-          () => vaultMeta.attachFoyer('foyer-2'),
-          throwsA(isA<FoyerMismatchException>()),
+          () => vaultMeta.attachFamily('family-2'),
+          throwsA(isA<FamilyMismatchException>()),
         );
         expect(
-          await vaultMeta.getFoyerId(),
-          'foyer-1',
+          await vaultMeta.getFamilyId(),
+          'family-1',
           reason: 'the mismatch must never silently overwrite',
         );
       },
     );
 
-    test('assertCompatible mirrors attachFoyer without ever writing', () async {
-      final vaultMeta = VaultMetaRepository(db);
-      await vaultMeta.assertCompatible(
-        'foyer-1',
-      ); // unattached vault: nothing to conflict with
-      expect(
-        await vaultMeta.getFoyerId(),
-        isNull,
-        reason: 'assertCompatible must never write',
-      );
+    test(
+      'assertCompatible mirrors attachFamily without ever writing',
+      () async {
+        final vaultMeta = VaultMetaRepository(db);
+        await vaultMeta.assertCompatible(
+          'family-1',
+        ); // unattached vault: nothing to conflict with
+        expect(
+          await vaultMeta.getFamilyId(),
+          isNull,
+          reason: 'assertCompatible must never write',
+        );
 
-      await vaultMeta.attachFoyer('foyer-1');
-      await vaultMeta.assertCompatible('foyer-1'); // same foyer: fine
-      expect(
-        () => vaultMeta.assertCompatible('foyer-2'),
-        throwsA(isA<FoyerMismatchException>()),
-      );
-    });
+        await vaultMeta.attachFamily('family-1');
+        await vaultMeta.assertCompatible('family-1'); // same family: fine
+        expect(
+          () => vaultMeta.assertCompatible('family-2'),
+          throwsA(isA<FamilyMismatchException>()),
+        );
+      },
+    );
 
     test(
       'setLastPullCursor is readable back and reflects the maximal server timestamp applied',
@@ -255,23 +258,23 @@ void main() {
     );
 
     test(
-      'v10 persists children, masterpieces, and purge cursors independently',
+      'v10 persists children, artworks, and purge cursors independently',
       () async {
         final vaultMeta = VaultMetaRepository(db);
         final children = DateTime.utc(2026, 1, 1);
-        final masterpieces = DateTime.utc(2026, 1, 3);
+        final artworks = DateTime.utc(2026, 1, 3);
         final purged = DateTime.utc(2026, 1, 2);
 
         await vaultMeta.setChildrenPullCursor(children);
-        await vaultMeta.setMasterpiecesPullCursor(masterpieces);
+        await vaultMeta.setArtworksPullCursor(artworks);
         await vaultMeta.setPurgedPullCursor(purged);
 
         final stored = await vaultMeta.getPullCursors();
         expect(stored.children!.isAtSameMomentAs(children), isTrue);
-        expect(stored.masterpieces!.isAtSameMomentAs(masterpieces), isTrue);
+        expect(stored.artworks!.isAtSameMomentAs(artworks), isTrue);
         expect(stored.purged!.isAtSameMomentAs(purged), isTrue);
         expect(
-          (await vaultMeta.getLastPullCursor())!.isAtSameMomentAs(masterpieces),
+          (await vaultMeta.getLastPullCursor())!.isAtSameMomentAs(artworks),
           isTrue,
         );
       },

@@ -241,7 +241,7 @@ class VaultRescueExport {
   ) async {
     final candidates = <_RescueCandidate>[];
     final originals = Directory(
-      p.join(documents.path, LocalVaultPaths.masterpiecesFolder),
+      p.join(documents.path, LocalVaultPaths.artworksFolder),
     );
     final derivatives = Directory(
       p.join(documents.path, LocalVaultPaths.derivativesFolder),
@@ -257,10 +257,7 @@ class VaultRescueExport {
       candidates.add(
         _RescueCandidate(
           file: entity,
-          archivePath: p.posix.join(
-            LocalVaultPaths.masterpiecesFolder,
-            relative,
-          ),
+          archivePath: p.posix.join(LocalVaultPaths.artworksFolder, relative),
         ),
       );
     }

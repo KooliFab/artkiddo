@@ -19,7 +19,7 @@ void main() {
   late Directory tempRoot;
   late AppDatabase db;
   late LocalVault vault;
-  late MasterpiecesRepository repo;
+  late ArtworksRepository repo;
   late String childId;
 
   setUp(() async {
@@ -32,9 +32,9 @@ void main() {
       NativeDatabase(File(p.join(tempRoot.path, 'test.sqlite'))),
     );
     vault = LocalVault(documentsDirProvider: () async => docsDir);
-    repo = DriftMasterpiecesRepository(db, vault);
+    repo = DriftArtworksRepository(db, vault);
 
-    // The masterpieces table has a foreign key on childId (PRAGMA
+    // The artworks table has a foreign key on childId (PRAGMA
     // foreign_keys = ON), so a real child row is required first.
     final childrenRepo = DriftChildrenRepository(db, vault);
     final childResult = await childrenRepo.create(

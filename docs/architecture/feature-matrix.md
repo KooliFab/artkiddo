@@ -7,9 +7,9 @@ Every feature includes this local ownership check in its plan or pull request.
 | Offline profiles and artwork | `local-first` | complete local behavior | none required |
 | Recoverable local deletion | `local-only` | repository, trash, cleanup journal | none required |
 | Local vault rescue export | `local-only` | file-only ZIP export, split by byte budget, no database open | native share sheet |
-| Drift migrations v5 → v11 | `local-only` | schema snapshots, legacy fixtures, migration guards | none required |
+| Local schema baseline v1 | `local-only` | single schema snapshot, fresh-vault creation tests | none required |
 | Optional synchronization | `capability-gated` | typed contracts, outbox, cursors, honest no-op defaults | application-provided adapter |
-| Household UI | `capability-gated` | screens, controller, neutral `FoyerApi` contract | application-provided service |
+| Household UI | `capability-gated` | screens, controller, neutral `FamilyApi` contract | application-provided service |
 | Gallery-link UI | `capability-gated` | screens, controller, neutral `SharingService` contract | application-provided service |
 | Account-free settings | `local-only` | about, language, debug and local settings | none required |
 | Local capture and voice notes | `local-only` | camera, crop, audio recording and playback | platform permissions |

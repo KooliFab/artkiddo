@@ -34,7 +34,7 @@ class Device {
   final AppDatabase db;
   final LocalVault vault;
   final DriftChildrenRepository children;
-  final DriftMasterpiecesRepository masterpieces;
+  final DriftArtworksRepository artworks;
   final SyncEngine engine;
   final String userId;
   final FakeHomeCloudApi cloudApi;
@@ -44,7 +44,7 @@ class Device {
     this.db,
     this.vault,
     this.children,
-    this.masterpieces,
+    this.artworks,
     this.engine,
     this.userId,
     this.cloudApi,
@@ -65,14 +65,14 @@ class Device {
     final db = AppDatabase.forTesting(NativeDatabase(dbFile));
     final vault = LocalVault(documentsDirProvider: () async => docsDir);
     final childrenRepo = DriftChildrenRepository(db, vault);
-    final masterpiecesRepo = DriftMasterpiecesRepository(db, vault);
+    final artworksRepo = DriftArtworksRepository(db, vault);
     final engine = SyncEngine(
       db: db,
       vault: vault,
       uploader: uploader,
       downloader: downloader,
       childrenRepo: childrenRepo,
-      masterpiecesRepo: masterpiecesRepo,
+      artworksRepo: artworksRepo,
       cloudApi: cloudApi,
       outbox: SyncOutboxRepository(db),
       vaultMeta: VaultMetaRepository(db),
@@ -83,7 +83,7 @@ class Device {
       db,
       vault,
       childrenRepo,
-      masterpiecesRepo,
+      artworksRepo,
       engine,
       userId,
       cloudApi,
@@ -127,7 +127,7 @@ Future<File> makeTestImage(
   return file;
 }
 
-Future<String> createSyncedMasterpiece(
+Future<String> createSyncedArtwork(
   Device device, {
   required String childId,
   String story = 'une histoire',
@@ -140,7 +140,7 @@ Future<String> createSyncedMasterpiece(
     'src_$seed.jpg',
     seed: seed,
   );
-  final result = await device.masterpieces.create(
+  final result = await device.artworks.create(
     childId: childId,
     sourceImageFile: source,
     sourceAudioFile: sourceAudioFile,
@@ -189,45 +189,45 @@ void main() {
     return d;
   }
 
-  group('foyer creation at first cloud send', () {
-    test('creates a foyer and attaches this vault to it, as Parent', () async {
+  group('family creation at first cloud send', () {
+    test('creates a family and attaches this vault to it, as Parent', () async {
       final a = await newDevice('user-a');
       expect(
-        await a.vault.masterPiecesDirectory,
+        await a.vault.artworksDirectory,
         isNotNull,
       ); // sanity: vault usable
 
-      expect(await VaultMetaRepository(a.db).getFoyerId(), isNull);
+      expect(await VaultMetaRepository(a.db).getFamilyId(), isNull);
 
       await a.sync();
 
-      final foyerId = await VaultMetaRepository(a.db).getFoyerId();
-      expect(foyerId, isNotNull);
-      expect(cloudApi.membership['user-a'], foyerId);
+      final familyId = await VaultMetaRepository(a.db).getFamilyId();
+      expect(familyId, isNotNull);
+      expect(cloudApi.membership['user-a'], familyId);
     });
 
     test(
-      'a second sync for the same account is idempotent — same foyer, no duplicate creation',
+      'a second sync for the same account is idempotent — same family, no duplicate creation',
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerAfterFirst = await VaultMetaRepository(a.db).getFoyerId();
+        final familyAfterFirst = await VaultMetaRepository(a.db).getFamilyId();
 
         await a.sync();
-        final foyerAfterSecond = await VaultMetaRepository(a.db).getFoyerId();
+        final familyAfterSecond = await VaultMetaRepository(a.db).getFamilyId();
 
-        expect(foyerAfterSecond, foyerAfterFirst);
+        expect(familyAfterSecond, familyAfterFirst);
       },
     );
   });
 
   group('D13 — join and restore are the same operation', () {
     test(
-      'a fresh device joining an already-populated foyer pulls everything (restore)',
+      'a fresh device joining an already-populated family pulls everything (restore)',
       () async {
         final a = await newDevice('user-a');
-        await a.sync(); // creates the foyer
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        await a.sync(); // creates the family
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
 
         final childId =
             (await a.children.create(
@@ -237,122 +237,122 @@ void main() {
                     as ActionSuccess<String>)
                 .value;
         for (var i = 0; i < 5; i++) {
-          await createSyncedMasterpiece(
+          await createSyncedArtwork(
             a,
             childId: childId,
             story: 'oeuvre $i',
             seed: i,
           );
         }
-        await a.sync(); // pushes the child + 5 masterpieces
+        await a.sync(); // pushes the child + 5 artworks
 
         // A second member, already invited (C-11 territory — simulated by
         // seeding membership directly) opens the app on a brand-new device.
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         expect(await b.children.watchAll().first, isEmpty);
-        expect(await b.masterpieces.watch().first, isEmpty);
+        expect(await b.artworks.watch().first, isEmpty);
 
         await b.sync();
 
         final bChildren = await b.children.watchAll().first;
-        final bMasterpieces = await b.masterpieces.watch().first;
+        final bArtworks = await b.artworks.watch().first;
         expect(bChildren, hasLength(1));
         expect(bChildren.single.id, childId);
-        expect(bMasterpieces, hasLength(5));
+        expect(bArtworks, hasLength(5));
         // T-R3: the original ids survive the restore, never regenerated.
-        expect(bMasterpieces.map((m) => m.id).toSet(), hasLength(5));
+        expect(bArtworks.map((m) => m.id).toSet(), hasLength(5));
       },
     );
 
     test('restoring twice in a row creates no duplicates', () async {
       final a = await newDevice('user-a');
       await a.sync();
-      final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+      final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
       final childId =
           (await a.children.create(name: 'Léo', birthDate: DateTime(2020, 1, 1))
                   as ActionSuccess<String>)
               .value;
-      await createSyncedMasterpiece(a, childId: childId);
+      await createSyncedArtwork(a, childId: childId);
       await a.sync();
 
-      cloudApi.seedMembership('user-b', foyerId);
+      cloudApi.seedMembership('user-b', familyId);
       final b = await newDevice('user-b');
       await b.sync();
       await b.sync(); // restore again — e.g. app relaunch, or a retry
 
       expect(await b.children.watchAll().first, hasLength(1));
-      expect(await b.masterpieces.watch().first, hasLength(1));
+      expect(await b.artworks.watch().first, hasLength(1));
     });
 
     test(
-      'a foyer with children but no masterpieces yet restores without error or a stuck screen',
+      'a family with children but no artworks yet restores without error or a stuck screen',
       () async {
-        // Annex §2.1: children pushed before any masterpiece existed, on the
+        // Annex §2.1: children pushed before any artwork existed, on the
         // old engine — must not crash or hang the new one.
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         await a.children.create(
           name: 'Bébé sans dessin',
           birthDate: DateTime(2025, 6, 1),
         );
         await a.sync();
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
 
         expect(await b.children.watchAll().first, hasLength(1));
-        expect(await b.masterpieces.watch().first, isEmpty);
+        expect(await b.artworks.watch().first, isEmpty);
       },
     );
 
     test(
-      '40 local masterpieces + 5 already in the foyer converge to 45 on both sides',
+      '40 local artworks + 5 already in the family converge to 45 on both sides',
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(
-                      name: 'Foyer',
+                      name: 'Family',
                       birthDate: DateTime(2018, 1, 1),
                     )
                     as ActionSuccess<String>)
                 .value;
         for (var i = 0; i < 5; i++) {
-          await createSyncedMasterpiece(a, childId: childId, seed: i);
+          await createSyncedArtwork(a, childId: childId, seed: i);
         }
         await a.sync();
 
-        // A new member's local vault already has 40 masterpieces of its own
+        // A new member's local vault already has 40 artworks of its own
         // (pre-account usage) attached to its own local child before ever
         // touching the cloud.
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         final bChildId =
             (await b.children.create(
-                      name: 'Foyer',
+                      name: 'Family',
                       birthDate: DateTime(2018, 1, 1),
                     )
                     as ActionSuccess<String>)
                 .value;
         for (var i = 0; i < 40; i++) {
-          await createSyncedMasterpiece(b, childId: bChildId, seed: 100 + i);
+          await createSyncedArtwork(b, childId: bChildId, seed: 100 + i);
         }
 
         await b.sync();
 
         // D8's "oui" path: today `syncAll` always pushes every local-only
         // row it finds queued (see the C-06 report — the interactive prompt
-        // itself is out of scope for this ticket). 45 masterpieces total in
-        // the foyer; B sees all of them locally.
-        expect(cloudApi.masterpiecesInFoyer(foyerId), 45);
-        expect(await b.masterpieces.watch().first, hasLength(45));
+        // itself is out of scope for this ticket). 45 artworks total in
+        // the family; B sees all of them locally.
+        expect(cloudApi.artworksInFamily(familyId), 45);
+        expect(await b.artworks.watch().first, hasLength(45));
 
         await a.sync();
-        expect(await a.masterpieces.watch().first, hasLength(45));
+        expect(await a.artworks.watch().first, hasLength(45));
       },
     );
   });
@@ -363,31 +363,31 @@ void main() {
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(name: 'C', birthDate: DateTime(2020, 1, 1))
                     as ActionSuccess<String>)
                 .value;
-        final mpId = await createSyncedMasterpiece(
+        final mpId = await createSyncedArtwork(
           a,
           childId: childId,
           story: 'original',
         );
         await a.sync();
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
-        await b.sync(); // B now has the masterpiece locally too
+        await b.sync(); // B now has the artwork locally too
 
         // A deletes it and pushes first.
-        final delResult = await a.masterpieces.delete(mpId);
+        final delResult = await a.artworks.delete(mpId);
         expect(delResult, isA<ActionSuccess<void>>());
         await a.sync();
-        expect(cloudApi.masterpieceIsDeleted(mpId), isTrue);
+        expect(cloudApi.artworkIsDeleted(mpId), isTrue);
 
         // B, unaware, edits the anecdote on its own (still-local) copy and
         // pushes afterwards.
-        final editResult = await b.masterpieces.updateStory(
+        final editResult = await b.artworks.updateStory(
           id: mpId,
           story: 'édité par B, trop tard',
         );
@@ -396,9 +396,9 @@ void main() {
 
         // The delete still wins: content on the server is unchanged by B's
         // edit, and B's own local row converges to "gone" on its next pull.
-        expect(cloudApi.masterpieceStory(mpId), 'original');
-        expect(cloudApi.masterpieceIsDeleted(mpId), isTrue);
-        expect(await b.masterpieces.getById(mpId), isNull);
+        expect(cloudApi.artworkStory(mpId), 'original');
+        expect(cloudApi.artworkIsDeleted(mpId), isTrue);
+        expect(await b.artworks.getById(mpId), isNull);
       },
     );
 
@@ -407,44 +407,41 @@ void main() {
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(name: 'C', birthDate: DateTime(2020, 1, 1))
                     as ActionSuccess<String>)
                 .value;
-        final mpId = await createSyncedMasterpiece(
+        final mpId = await createSyncedArtwork(
           a,
           childId: childId,
           story: 'original',
         );
         await a.sync();
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
 
-        await b.masterpieces.updateStory(
-          id: mpId,
-          story: 'édité par B, à temps',
-        );
+        await b.artworks.updateStory(id: mpId, story: 'édité par B, à temps');
         await b.sync();
-        expect(cloudApi.masterpieceStory(mpId), 'édité par B, à temps');
+        expect(cloudApi.artworkStory(mpId), 'édité par B, à temps');
 
-        await a.masterpieces.delete(mpId);
+        await a.artworks.delete(mpId);
         await a.sync();
 
-        expect(cloudApi.masterpieceIsDeleted(mpId), isTrue);
+        expect(cloudApi.artworkIsDeleted(mpId), isTrue);
         await b.sync();
-        expect(await b.masterpieces.getById(mpId), isNull);
+        expect(await b.artworks.getById(mpId), isNull);
       },
     );
 
     test(
-      'a deleted child cascades its tombstone to its masterpieces (D18), converging to both devices',
+      'a deleted child cascades its tombstone to its artworks (D18), converging to both devices',
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(
                       name: 'À supprimer',
@@ -452,23 +449,23 @@ void main() {
                     )
                     as ActionSuccess<String>)
                 .value;
-        final mpId = await createSyncedMasterpiece(a, childId: childId);
+        final mpId = await createSyncedArtwork(a, childId: childId);
         await a.sync();
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
-        expect(await b.masterpieces.getById(mpId), isNotNull);
+        expect(await b.artworks.getById(mpId), isNotNull);
 
         await a.children.delete(childId);
         await a.sync();
 
         expect(cloudApi.childIsDeleted(childId), isTrue);
-        expect(cloudApi.masterpieceIsDeleted(mpId), isTrue);
+        expect(cloudApi.artworkIsDeleted(mpId), isTrue);
 
         await b.sync();
         expect(await b.children.getById(childId), isNull);
-        expect(await b.masterpieces.getById(mpId), isNull);
+        expect(await b.artworks.getById(mpId), isNull);
       },
     );
   });
@@ -481,7 +478,7 @@ void main() {
         () async {
           final a = await newDevice('user-a');
           await a.sync();
-          final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+          final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
           final childId =
               (await a.children.create(
                         name: 'C',
@@ -489,14 +486,14 @@ void main() {
                       )
                       as ActionSuccess<String>)
                   .value;
-          final mpId = await createSyncedMasterpiece(
+          final mpId = await createSyncedArtwork(
             a,
             childId: childId,
             story: 'v1',
           );
           await a.sync();
 
-          cloudApi.seedMembership('user-b', foyerId);
+          cloudApi.seedMembership('user-b', familyId);
           final b = await newDevice('user-b');
           await b.sync();
 
@@ -505,20 +502,20 @@ void main() {
           // as content, and the server (`FakeHomeCloudApi._tick`, modeling
           // migration 0004) assigns `updated_at` itself, never trusting a
           // client-supplied timestamp.
-          await a.masterpieces.updateStory(
+          await a.artworks.updateStory(
             id: mpId,
             story: 'v2 depuis A (horloge trafiquée)',
           );
           // B pushes its own edit *after* A's, in call order — B's write must
           // win, purely because it reached the fake "server" last.
-          await b.masterpieces.updateStory(id: mpId, story: 'v3 depuis B');
+          await b.artworks.updateStory(id: mpId, story: 'v3 depuis B');
 
           await a.sync(); // arrives at the "server" first
           await b.sync(); // arrives second — must win
 
-          expect(cloudApi.masterpieceStory(mpId), 'v3 depuis B');
+          expect(cloudApi.artworkStory(mpId), 'v3 depuis B');
           await a.sync(); // A converges to B's version on its next pull
-          expect((await a.masterpieces.getById(mpId))!.story, 'v3 depuis B');
+          expect((await a.artworks.getById(mpId))!.story, 'v3 depuis B');
         },
       );
     },
@@ -526,7 +523,7 @@ void main() {
 
   group('spec §5 — push isolation, backoff-free happy path for the rest', () {
     test(
-      'one masterpiece with a vanished local file does not block the other nine',
+      'one artwork with a vanished local file does not block the other nine',
       () async {
         final a = await newDevice('user-a');
         await a.sync();
@@ -537,29 +534,29 @@ void main() {
 
         final ids = <String>[];
         for (var i = 0; i < 10; i++) {
-          ids.add(await createSyncedMasterpiece(a, childId: childId, seed: i));
+          ids.add(await createSyncedArtwork(a, childId: childId, seed: i));
         }
 
         // Simulate the original file vanishing out-of-band (e.g. OS-level
         // storage cleanup) for exactly one of the ten, before syncing.
-        final victim = (await a.masterpieces.getById(ids[3]))!;
+        final victim = (await a.artworks.getById(ids[3]))!;
         final victimFile = await a.vault.resolveFile(victim.relativeImagePath!);
         await victimFile.delete();
 
         final summary = await a.sync();
 
-        // 9 masterpieces + 1 child = 10 successes; the tenth masterpiece
+        // 9 artworks + 1 child = 10 successes; the tenth artwork
         // (its file gone) is the one terminal failure.
         expect(summary.pushSucceeded, 10);
         expect(summary.pushFailed, 1);
         expect(summary.lastError, isA<FileMissingFailure>());
 
         for (final id in ids.where((id) => id != ids[3])) {
-          expect(cloudApi.masterpieceExists(id), isTrue);
+          expect(cloudApi.artworkExists(id), isTrue);
         }
-        expect(cloudApi.masterpieceExists(ids[3]), isFalse);
+        expect(cloudApi.artworkExists(ids[3]), isFalse);
 
-        final victimAfter = await a.masterpieces.getById(ids[3]);
+        final victimAfter = await a.artworks.getById(ids[3]);
         expect(victimAfter!.syncState, SyncState.downloadFailed);
 
         // Terminal: the outbox does not keep retrying it.
@@ -584,28 +581,28 @@ void main() {
                       as ActionSuccess<String>)
                   .value;
           for (var i = 0; i < 6; i++) {
-            await createSyncedMasterpiece(a, childId: childId, seed: i);
+            await createSyncedArtwork(a, childId: childId, seed: i);
           }
 
           final pending = await a.engine.outbox.listReady();
-          // 1 child (created before the loop) + 6 masterpieces.
+          // 1 child (created before the loop) + 6 artworks.
           expect(pending, hasLength(7));
-          cloudApi.throwOnNextMasterpieceUpsert = Exception(
+          cloudApi.throwOnNextArtworkUpsert = Exception(
             'simulated transient failure',
           );
 
           final firstAttempt = await a.sync();
           // Exactly one entry hit the injected failure; the rest (the child +
-          // 5 masterpieces) still went through in the same run (isolation,
+          // 5 artworks) still went through in the same run (isolation,
           // spec §5) — the failed one is still queued, waiting out its
           // backoff, not lost.
           expect(firstAttempt.pushFailed, 1);
           expect(firstAttempt.pushSucceeded, 6);
           expect(await a.engine.outbox.countPending(), 1);
 
-          final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+          final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
           expect(
-            cloudApi.masterpiecesInFoyer(foyerId),
+            cloudApi.artworksInFamily(familyId),
             5,
             reason: 'the failed entry never reached the server',
           );
@@ -628,7 +625,7 @@ void main() {
             uploader: uploader,
             downloader: downloader,
             childrenRepo: a.children,
-            masterpiecesRepo: a.masterpieces,
+            artworksRepo: a.artworks,
             cloudApi: cloudApi,
             outbox: SyncOutboxRepository(a.db),
             vaultMeta: VaultMetaRepository(a.db),
@@ -640,7 +637,7 @@ void main() {
           expect(secondAttempt.pushSucceeded, 1);
           expect(await a.engine.outbox.countPending(), 0);
           expect(
-            cloudApi.masterpiecesInFoyer(foyerId),
+            cloudApi.artworksInFamily(familyId),
             6,
             reason: 'no duplicate rows created by the retried push',
           );
@@ -660,19 +657,19 @@ void main() {
                       as ActionSuccess<String>)
                   .value;
 
-          // Session 1: three masterpieces created and fully synced.
+          // Session 1: three artworks created and fully synced.
           for (var i = 0; i < 3; i++) {
-            await createSyncedMasterpiece(a, childId: childId, seed: i);
+            await createSyncedArtwork(a, childId: childId, seed: i);
           }
           await a.sync();
-          final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
-          expect(cloudApi.masterpiecesInFoyer(foyerId), 3);
+          final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
+          expect(cloudApi.artworksInFamily(familyId), 3);
 
           // Session 2: three more created, but the app is killed before this
           // session's own `syncAll()` ever runs — nothing has been attempted
           // for these three yet.
           for (var i = 3; i < 6; i++) {
-            await createSyncedMasterpiece(a, childId: childId, seed: i);
+            await createSyncedArtwork(a, childId: childId, seed: i);
           }
 
           // "Restart" — a brand-new `SyncEngine` instance, no in-memory state
@@ -683,7 +680,7 @@ void main() {
             uploader: uploader,
             downloader: downloader,
             childrenRepo: a.children,
-            masterpiecesRepo: a.masterpieces,
+            artworksRepo: a.artworks,
             cloudApi: cloudApi,
             outbox: SyncOutboxRepository(a.db),
             vaultMeta: VaultMetaRepository(a.db),
@@ -698,7 +695,7 @@ void main() {
             reason: 'only the three never-attempted entries were pending',
           );
           expect(
-            cloudApi.masterpiecesInFoyer(foyerId),
+            cloudApi.artworksInFamily(familyId),
             6,
             reason: 'the first three were not re-sent',
           );
@@ -708,13 +705,13 @@ void main() {
     },
   );
 
-  group('C-06 §1 — vault isolation refuses to merge two foyers', () {
+  group('C-06 §1 — vault isolation refuses to merge two families', () {
     test(
-      'signing into a different foyer than the one this vault is attached to throws, and touches nothing',
+      'signing into a different family than the one this vault is attached to throws, and touches nothing',
       () async {
         final a = await newDevice('user-a');
-        await a.sync(); // attaches to foyer-a
-        final foyerA = (await VaultMetaRepository(a.db).getFoyerId())!;
+        await a.sync(); // attaches to family-a
+        final familyA = (await VaultMetaRepository(a.db).getFamilyId())!;
 
         final childId =
             (await a.children.create(
@@ -725,15 +722,15 @@ void main() {
                 .value;
         await a.sync();
 
-        // A *different* account, belonging to a *different* foyer, signs
+        // A *different* account, belonging to a *different* family, signs
         // into the very same local vault (e.g. someone else uses this
         // device without realizing it's already linked).
         final bDevice = await newDevice(
           'user-b',
-        ); // separate vault, only to mint a genuinely distinct foyer
+        ); // separate vault, only to mint a genuinely distinct family
         await bDevice.sync();
-        final foyerB = (await VaultMetaRepository(bDevice.db).getFoyerId())!;
-        expect(foyerB, isNot(foyerA));
+        final familyB = (await VaultMetaRepository(bDevice.db).getFamilyId())!;
+        expect(familyB, isNot(familyA));
 
         // Re-point `a`'s own engine at user-b's session (simulating a sign-
         // out/sign-in on the SAME device/vault as `a`).
@@ -743,7 +740,7 @@ void main() {
           uploader: uploader,
           downloader: downloader,
           childrenRepo: a.children,
-          masterpiecesRepo: a.masterpieces,
+          artworksRepo: a.artworks,
           cloudApi: cloudApi,
           outbox: SyncOutboxRepository(a.db),
           vaultMeta: VaultMetaRepository(a.db),
@@ -753,38 +750,38 @@ void main() {
 
         expect(
           () => mismatchedEngine.syncAll(),
-          throwsA(isA<FoyerMismatchException>()),
+          throwsA(isA<FamilyMismatchException>()),
         );
 
         // Nothing merged, nothing lost: `a`'s local child is still exactly
-        // as it was, and foyer A's cloud content is untouched by user-b's
+        // as it was, and family A's cloud content is untouched by user-b's
         // session.
         expect(await a.children.watchAll().first, hasLength(1));
         expect((await a.children.watchAll().first).single.id, childId);
-        expect(cloudApi.masterpiecesInFoyer(foyerA), 0);
+        expect(cloudApi.artworksInFamily(familyA), 0);
       },
     );
   });
 
   group('D10 — thumbnails converge before the original', () {
     test(
-      'a device joining a populated foyer gets a thumbnail immediately; the display derivative stays deferred',
+      'a device joining a populated family gets a thumbnail immediately; the display derivative stays deferred',
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(name: 'C', birthDate: DateTime(2020, 1, 1))
                     as ActionSuccess<String>)
                 .value;
-        final mpId = await createSyncedMasterpiece(a, childId: childId);
+        final mpId = await createSyncedArtwork(a, childId: childId);
         await a.sync();
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
 
-        final pulled = await b.masterpieces.getById(mpId);
+        final pulled = await b.artworks.getById(mpId);
         expect(pulled, isNotNull);
         expect(
           pulled!.relativeImagePath,
@@ -812,7 +809,7 @@ void main() {
           mpId,
         );
         expect(downloadResult, ActionResultLike.alreadyHave);
-        final afterDisplay = await b.masterpieces.getById(mpId);
+        final afterDisplay = await b.artworks.getById(mpId);
         expect(afterDisplay!.displayImagePath, isNotNull);
         expect(afterDisplay.syncState, SyncState.synced);
       },
@@ -823,32 +820,24 @@ void main() {
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(name: 'C', birthDate: DateTime(2020, 1, 1))
                     as ActionSuccess<String>)
                 .value;
-        final okId = await createSyncedMasterpiece(
-          a,
-          childId: childId,
-          seed: 1,
-        );
-        final failId = await createSyncedMasterpiece(
-          a,
-          childId: childId,
-          seed: 2,
-        );
+        final okId = await createSyncedArtwork(a, childId: childId, seed: 1);
+        final failId = await createSyncedArtwork(a, childId: childId, seed: 2);
         await a.sync();
 
         final failKey = 'fake/$failId/display.jpg';
         downloader.failOnce.add(failKey);
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
 
-        final ok = await b.masterpieces.getById(okId);
-        final fail = await b.masterpieces.getById(failId);
+        final ok = await b.artworks.getById(okId);
+        final fail = await b.artworks.getById(failId);
         expect(ok!.thumbnailImagePath, isNotNull);
         expect(ok.syncState, SyncState.synced);
         expect(fail!.thumbnailImagePath, isNull);
@@ -865,7 +854,7 @@ void main() {
         () async {
           final a = await newDevice('user-a');
           await a.sync();
-          final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+          final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
           final childId =
               (await a.children.create(
                         name: 'Zoé',
@@ -873,29 +862,29 @@ void main() {
                       )
                       as ActionSuccess<String>)
                   .value;
-          final mpId = await createSyncedMasterpiece(a, childId: childId);
+          final mpId = await createSyncedArtwork(a, childId: childId);
           await a.sync();
 
-          // B pulls the masterpiece once, then goes offline for the rest of
+          // B pulls the artwork once, then goes offline for the rest of
           // this test — it never sees the soft-delete `a` performs next, only
           // the eventual physical purge, via the purge log rather than a
-          // cursor-filtered `pullMasterpieces` (which can never surface a row
+          // cursor-filtered `pullArtworks` (which can never surface a row
           // that no longer exists at all).
-          cloudApi.seedMembership('user-b', foyerId);
+          cloudApi.seedMembership('user-b', familyId);
           final b = await newDevice('user-b');
           await b.sync();
-          expect(await b.masterpieces.getById(mpId), isNotNull);
+          expect(await b.artworks.getById(mpId), isNotNull);
 
           // `a` deletes it (soft-delete, C-06's existing path) and it is
           // later purged (C-12) — B is offline for both, never pulling in
           // between, exactly the gap this ticket's own report flagged.
-          await a.masterpieces.delete(mpId);
+          await a.artworks.delete(mpId);
           await a.sync();
-          cloudApi.purgeMasterpiece(mpId);
+          cloudApi.purgeArtwork(mpId);
 
           await b.sync();
 
-          expect(await b.masterpieces.getById(mpId), isNull);
+          expect(await b.artworks.getById(mpId), isNull);
         },
       );
 
@@ -904,7 +893,7 @@ void main() {
         () async {
           final a = await newDevice('user-a');
           await a.sync();
-          final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+          final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
           final childId =
               (await a.children.create(
                         name: 'Léo',
@@ -912,24 +901,24 @@ void main() {
                       )
                       as ActionSuccess<String>)
                   .value;
-          final mpId = await createSyncedMasterpiece(a, childId: childId);
+          final mpId = await createSyncedArtwork(a, childId: childId);
           await a.sync();
 
-          cloudApi.seedMembership('user-b', foyerId);
+          cloudApi.seedMembership('user-b', familyId);
           final b = await newDevice('user-b');
           await b.sync();
 
-          await a.masterpieces.delete(mpId);
+          await a.artworks.delete(mpId);
           await a.sync();
           await b
               .sync(); // sees the tombstone the ordinary way, row gone locally already
-          expect(await b.masterpieces.getById(mpId), isNull);
+          expect(await b.artworks.getById(mpId), isNull);
 
-          cloudApi.purgeMasterpiece(mpId);
+          cloudApi.purgeArtwork(mpId);
           await b
               .sync(); // purge-log entry for an id already absent locally: a no-op, not an error
 
-          expect(await b.masterpieces.getById(mpId), isNull);
+          expect(await b.artworks.getById(mpId), isNull);
         },
       );
     },
@@ -941,7 +930,7 @@ void main() {
       () async {
         final a = await newDevice('user-a');
         await a.sync();
-        final foyerId = (await VaultMetaRepository(a.db).getFoyerId())!;
+        final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
         final childId =
             (await a.children.create(name: 'C', birthDate: DateTime(2020, 1, 1))
                     as ActionSuccess<String>)
@@ -950,7 +939,7 @@ void main() {
         final dummyAudioFile = File('${a.tempRoot.path}/test_voice.m4a');
         await dummyAudioFile.writeAsBytes(List.filled(1024, 42));
 
-        final mpId = await createSyncedMasterpiece(
+        final mpId = await createSyncedArtwork(
           a,
           childId: childId,
           sourceAudioFile: dummyAudioFile,
@@ -962,11 +951,11 @@ void main() {
         // Should have uploaded display and audio (2 uploads, no thumbnail in remote storage)
         expect(uploader.uploadCount, initialUploads + 2);
 
-        cloudApi.seedMembership('user-b', foyerId);
+        cloudApi.seedMembership('user-b', familyId);
         final b = await newDevice('user-b');
         await b.sync();
 
-        final pulled = await b.masterpieces.getById(mpId);
+        final pulled = await b.artworks.getById(mpId);
         expect(pulled, isNotNull);
         expect(pulled!.hasAudio, isTrue);
         expect(pulled.audioDurationMs, 45000);
@@ -981,7 +970,7 @@ void main() {
         final downloadResult = await b.engine.ensureAudioDownloaded(mpId);
         expect(downloadResult, ActionResultLike.downloaded);
 
-        final afterDownload = await b.masterpieces.getById(mpId);
+        final afterDownload = await b.artworks.getById(mpId);
         expect(afterDownload!.isAudioLocal, isTrue);
         expect(afterDownload.relativeAudioPath, isNotNull);
 
@@ -997,7 +986,7 @@ void main() {
 
         // Modifying text on device A does not re-upload images or audio
         final currentUploads = uploader.uploadCount;
-        await a.masterpieces.updateStory(id: mpId, story: 'Nouvelle histoire');
+        await a.artworks.updateStory(id: mpId, story: 'Nouvelle histoire');
         await a.sync();
         expect(
           uploader.uploadCount,

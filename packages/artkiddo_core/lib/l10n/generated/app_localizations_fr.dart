@@ -1056,51 +1056,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accountSubmitting => 'Connexion…';
 
   @override
-  String get accountForgotPassword => 'Mot de passe oublié ?';
-
-  @override
-  String get accountRecoveryTitle => 'Réinitialiser votre mot de passe';
-
-  @override
-  String get accountRecoveryBody =>
-      'Nous vous enverrons un lien si un compte utilise cette adresse courriel.';
-
-  @override
-  String get accountRecoverySend => 'Envoyer le lien';
-
-  @override
-  String get accountRecoverySending => 'Envoi…';
-
-  @override
-  String get accountRecoverySentTitle => 'Vérifiez votre courriel';
-
-  @override
-  String get accountRecoverySentBody =>
-      'Si un compte utilise cette adresse, vous recevrez un lien. Vérifiez aussi les indésirables.';
-
-  @override
-  String get accountRecoveryNewPassword => 'Nouveau mot de passe';
-
-  @override
-  String get accountRecoveryConfirmPassword => 'Confirmer le mot de passe';
-
-  @override
-  String get accountRecoveryUpdate => 'Choisir ce mot de passe';
-
-  @override
-  String get accountRecoveryUpdating => 'Mise à jour…';
-
-  @override
-  String get accountRecoveryMismatch => 'Les mots de passe ne correspondent pas.';
-
-  @override
-  String get accountRecoveryUpdated => 'Votre mot de passe a été mis à jour.';
-
-  @override
-  String get accountRecoveryError =>
-      'La demande n’a pas abouti. Réessayez plus tard.';
-
-  @override
   String get accountErrorInvalidCredentials =>
       'Adresse ou mot de passe incorrect.';
 
@@ -1410,10 +1365,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette opération n\'est pas encore disponible.';
 
   @override
-  String get errorFoyerMismatchTitle => 'Cet appareil est lié ailleurs';
+  String get errorFamilyMismatchTitle => 'Cet appareil est lié ailleurs';
 
   @override
-  String get errorFoyerMismatchBody =>
+  String get errorFamilyMismatchBody =>
       'Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.';
 
   @override

@@ -5,7 +5,7 @@
 ```mermaid
 flowchart LR
   Capture["Capture / editing"] --> Local["Local repository"]
-  Local --> SQLite["Drift v11"]
+  Local --> SQLite["Drift v1"]
   Local --> Files["LocalVault"]
   SQLite --> Outbox["SyncOutbox"]
   Outbox -. "optional capability" .-> Sync["SyncEngine"]
@@ -17,7 +17,7 @@ flowchart LR
 ## Local creation
 
 ```text
-capture or edit → local repository → Drift v11 + LocalVault
+capture or edit → local repository → Drift v1 + LocalVault
                                      └─ success after durable write
 ```
 
@@ -29,8 +29,8 @@ artwork with `deletedAt`.
 ```mermaid
 flowchart TD
   A["AppDatabase readable or not"] --> B["VaultRescueExport"]
-  B --> C["masterpieces/\noriginals"]
-  B --> D["masterpieces_derivatives/\ndisplay + thumbnail"]
+  B --> C["artworks/\noriginals"]
+  B --> D["artworks_derivatives/\ndisplay + thumbnail"]
   B --> E["audio/"]
   B --> F["optional in-flight files"]
   C --> G["ZIP 001..n\nbudget ~3.5 GB/part"]
