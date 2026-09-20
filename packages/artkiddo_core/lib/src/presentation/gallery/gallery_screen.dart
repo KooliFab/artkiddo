@@ -14,6 +14,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../domain/action_result.dart';
 import '../../domain/child.dart';
 import '../../local/logging/log.dart';
+import '../../local/storage/vault_rescue_export.dart';
 import '../children/child_editor_controller.dart';
 import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
@@ -145,6 +146,29 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     }
   }
 
+  void _retryVault() {
+    ref.invalidate(allChildrenStreamProvider);
+    ref.invalidate(galleryTilesProvider);
+  }
+
+  Future<void> _exportVaultRescue(BuildContext context) async {
+    try {
+      await ref.read(vaultRescueExportProvider).shareRescueArchive();
+    } on RescueExportInsufficientSpaceException catch (error) {
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.vaultRescueInsufficientSpace(
+              formatRescueBytes(error.requiredBytes, l10n.localeName),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   int _columns(double width) {
     if (width >= 1280) return 5;
     if (width >= 840) return 4;
@@ -166,9 +190,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final compositionActions = ref.watch(compositionActionsProvider);
     final width = MediaQuery.sizeOf(context).width;
     final filter = ref.watch(galleryFilterProvider);
-    final children =
-        ref.watch(allChildrenStreamProvider).value ?? const <Child>[];
+    final childrenAsync = ref.watch(allChildrenStreamProvider);
+    final children = childrenAsync.value ?? const <Child>[];
     final tilesAsync = ref.watch(galleryTilesProvider);
+    // An unreadable vault is not an empty first-launch state.
+    final vaultUnreadable = childrenAsync.hasError;
     final hasArtists = children.isNotEmpty;
 
     return Scaffold(
@@ -189,7 +215,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                 if (capabilities.webGalleryLinks &&
                     compositionActions.openGalleryShare != null)
                   _ShareButton(
-                    enabled: hasArtists,
+                    enabled: hasArtists && !vaultUnreadable,
                     onPressed: () => _share(context, children, filter),
                   ),
                 if (compositionActions.openFamilyHub != null) ...[
@@ -237,6 +263,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               tilesAsync,
               filter,
               children,
+              vaultUnreadable: vaultUnreadable,
               columns: _columns(width),
               gutter: _gutter(width),
               margin: _margin(width),
@@ -244,7 +271,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           ],
         ),
       ),
-      floatingActionButton: hasArtists
+      floatingActionButton: hasArtists && !vaultUnreadable
           ? FloatingActionButton(
               heroTag: 'gallery-capture',
               onPressed: () => _openCapture(
@@ -271,10 +298,35 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     AsyncValue<GalleryTilesState> tilesAsync,
     GalleryFilter filter,
     List<Child> children, {
+    required bool vaultUnreadable,
     required int columns,
     required double gutter,
     required double margin,
   }) {
+    if (vaultUnreadable) {
+      // Keep this branch before the empty state: showing the first-launch copy
+      // makes a parent believe the local originals were erased and can cause
+      // an irreversible uninstall.
+      return [
+        SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(margin),
+              child: StateBlock(
+                intent: StateBlockIntent.error,
+                title: l10n.galleryErrorTitle,
+                body: l10n.galleryVaultErrorBody,
+                actionLabel: l10n.commonRetry,
+                onAction: _retryVault,
+                secondaryLabel: l10n.vaultRescueExportAction,
+                onSecondary: () => _exportVaultRescue(context),
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
     if (children.isEmpty) {
       return [
         SliverFillRemaining(
@@ -321,9 +373,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               child: StateBlock(
                 intent: StateBlockIntent.error,
                 title: l10n.galleryErrorTitle,
-                body: l10n.galleryErrorBody,
+                body: l10n.galleryVaultErrorBody,
                 actionLabel: l10n.commonRetry,
-                onAction: () => ref.invalidate(galleryTilesProvider),
+                onAction: _retryVault,
               ),
             ),
           ),

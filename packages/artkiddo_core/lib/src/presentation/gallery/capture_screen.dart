@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../async_action.dart';
 import '../../local/logging/log.dart';
+import '../../local/storage/vault_rescue_export.dart';
 import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
@@ -17,6 +18,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../children/child_editor_controller.dart';
 import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
+import '../providers/core_providers.dart';
 import '../../domain/child.dart' as domain;
 import 'camera_capture_screen.dart';
 import 'capture_controller.dart';
@@ -212,6 +214,33 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  void _retryArtists() {
+    ref.invalidate(allChildrenStreamProvider);
+  }
+
+  Future<void> _exportRescueWithDraft(
+    BuildContext context,
+    String temporaryImagePath,
+  ) async {
+    try {
+      await ref
+          .read(vaultRescueExportProvider)
+          .shareRescueArchive(extraFiles: [temporaryImagePath]);
+    } on RescueExportInsufficientSpaceException catch (error) {
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.vaultRescueInsufficientSpace(
+              formatRescueBytes(error.requiredBytes, l10n.localeName),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -339,9 +368,13 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (draft == null) return const Center(child: CircularProgressIndicator());
     final childrenAsync = ref.watch(allChildrenStreamProvider);
     final children = childrenAsync.value ?? const <domain.Child>[];
-    final noChild = children.isEmpty;
+    final artistsUnreadable = childrenAsync.hasError;
+    // An unreadable stream is not evidence that this family has no artists.
+    final noChild = !artistsUnreadable && children.isEmpty;
     final artistRequired =
-        children.length >= 2 && state.selectedChildId == null;
+        children.length >= 2 &&
+        state.selectedChildId == null &&
+        !artistsUnreadable;
     final canSave = state.selectedChildId != null && !state.isRecording;
 
     if (_storyController.text != draft.story && _storyController.text.isEmpty) {
@@ -356,7 +389,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       enabled: canSave,
       disabledReason: state.isRecording
           ? l10n.captureAudioRecording
-          : (canSave ? null : l10n.captureArtistRequired),
+          : (canSave
+                ? null
+                : (artistsUnreadable
+                      ? l10n.captureArtistsUnavailableSaveHint
+                      : l10n.captureArtistRequired)),
       onPressed: _handleSave,
     );
 
@@ -389,7 +426,21 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         style: AppTypography.label.copyWith(color: AppColors.inkMuted),
       ),
       const SizedBox(height: AppSpacing.s1),
-      if (noChild)
+      if (artistsUnreadable) ...[
+        StateBlock(
+          intent: StateBlockIntent.error,
+          title: l10n.captureArtistsUnavailableTitle,
+          body:
+              '${l10n.captureArtistsUnavailableBody}\n\n${l10n.vaultRescueExportIncludesDraft}',
+          actionLabel: l10n.commonRetry,
+          onAction: _retryArtists,
+          secondaryLabel: l10n.vaultRescueExportAction,
+          onSecondary: () =>
+              _exportRescueWithDraft(context, draft.temporaryImagePath),
+        ),
+        const SizedBox(height: AppSpacing.s3),
+        _buildArtistPicker(l10n, state, children),
+      ] else if (noChild)
         StateBlock(
           intent: StateBlockIntent.help,
           title: l10n.captureNoChildTitle,

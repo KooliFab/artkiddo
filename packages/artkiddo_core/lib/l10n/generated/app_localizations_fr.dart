@@ -216,6 +216,38 @@ class AppLocalizationsFr extends AppLocalizations {
   String get galleryErrorBody => 'Vos dessins sont toujours sur l\'appareil.';
 
   @override
+  String get galleryVaultErrorBody =>
+      'Vos dessins n’ont pas été supprimés. Ne désinstallez pas l’application : cela effacerait définitivement les originaux. Redémarrez, puis exportez-les si le problème persiste.';
+
+  @override
+  String get captureArtistsUnavailableTitle =>
+      'Impossible de lire vos artistes';
+
+  @override
+  String get captureArtistsUnavailableBody =>
+      'Votre photo est toujours là. Ne désinstallez pas l’application : cela effacerait définitivement l’original. Réessayez, puis exportez la photo si le problème persiste.';
+
+  @override
+  String get captureArtistsUnavailableSaveHint =>
+      'Impossible de vérifier l’artiste pour le moment.';
+
+  @override
+  String get vaultRescueExportAction => 'Exporter mes photos';
+
+  @override
+  String get vaultRescueExportBody =>
+      'Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.';
+
+  @override
+  String get vaultRescueExportIncludesDraft =>
+      'La photo en cours sera incluse dans l’export.';
+
+  @override
+  String vaultRescueInsufficientSpace(String required) {
+    return 'Impossible de créer l’export : environ $required d’espace libre sont nécessaires.';
+  }
+
+  @override
   String galleryFilterReset(String childName) {
     return '$childName a été supprimé. La galerie affiche de nouveau tous les dessins.';
   }

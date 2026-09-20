@@ -13,6 +13,8 @@ class StateBlock extends StatelessWidget {
   final String? body;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
 
   const StateBlock({
     super.key,
@@ -21,6 +23,8 @@ class StateBlock extends StatelessWidget {
     this.body,
     this.actionLabel,
     this.onAction,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   ({Color surface, Color ink, IconData icon}) get _style => switch (intent) {
@@ -96,21 +100,38 @@ class StateBlock extends StatelessWidget {
                 ),
               ],
             ),
-            if (actionLabel != null && onAction != null) ...[
+            if ((actionLabel != null && onAction != null) ||
+                (secondaryLabel != null && onSecondary != null)) ...[
               const SizedBox(height: AppSpacing.s3),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: onAction,
-                  style: TextButton.styleFrom(
-                    foregroundColor: style.ink,
-                    minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-                  ),
-                  child: Text(
-                    actionLabel!,
-                    style: AppTypography.button.copyWith(color: style.ink),
-                  ),
-                ),
+              Wrap(
+                spacing: AppSpacing.s2,
+                runSpacing: AppSpacing.s1,
+                children: [
+                  if (actionLabel != null && onAction != null)
+                    TextButton(
+                      onPressed: onAction,
+                      style: TextButton.styleFrom(
+                        foregroundColor: style.ink,
+                        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+                      ),
+                      child: Text(
+                        actionLabel!,
+                        style: AppTypography.button.copyWith(color: style.ink),
+                      ),
+                    ),
+                  if (secondaryLabel != null && onSecondary != null)
+                    TextButton(
+                      onPressed: onSecondary,
+                      style: TextButton.styleFrom(
+                        foregroundColor: style.ink,
+                        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+                      ),
+                      child: Text(
+                        secondaryLabel!,
+                        style: AppTypography.button.copyWith(color: style.ink),
+                      ),
+                    ),
+                ],
               ),
             ],
           ],

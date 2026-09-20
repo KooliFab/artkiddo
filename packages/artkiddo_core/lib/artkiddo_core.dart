@@ -20,6 +20,7 @@ export 'src/local/database/app_database.dart';
 export 'src/domain/app_failure.dart';
 export 'src/domain/action_result.dart';
 export 'src/local/storage/local_vault.dart';
+export 'src/local/storage/vault_rescue_export.dart';
 export 'src/presentation/locale/locale_provider.dart';
 export 'src/presentation/navigation/app_shell.dart';
 export 'src/presentation/navigation/composition_actions.dart';

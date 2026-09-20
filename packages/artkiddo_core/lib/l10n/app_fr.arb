@@ -265,6 +265,43 @@
   "@galleryErrorBody": {
     "description": "Localized user-facing copy."
   },
+  "galleryVaultErrorBody": "Vos dessins n’ont pas été supprimés. Ne désinstallez pas l’application : cela effacerait définitivement les originaux. Redémarrez, puis exportez-les si le problème persiste.",
+  "@galleryVaultErrorBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableTitle": "Impossible de lire vos artistes",
+  "@captureArtistsUnavailableTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableBody": "Votre photo est toujours là. Ne désinstallez pas l’application : cela effacerait définitivement l’original. Réessayez, puis exportez la photo si le problème persiste.",
+  "@captureArtistsUnavailableBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableSaveHint": "Impossible de vérifier l’artiste pour le moment.",
+  "@captureArtistsUnavailableSaveHint": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportAction": "Exporter mes photos",
+  "@vaultRescueExportAction": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportBody": "Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.",
+  "@vaultRescueExportBody": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportIncludesDraft": "La photo en cours sera incluse dans l’export.",
+  "@vaultRescueExportIncludesDraft": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueInsufficientSpace": "Impossible de créer l’export : environ {required} d’espace libre sont nécessaires.",
+  "@vaultRescueInsufficientSpace": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "required": {
+        "type": "String"
+      }
+    }
+  },
   "galleryFilterReset": "{childName} a été supprimé. La galerie affiche de nouveau tous les dessins.",
   "@galleryFilterReset": {
     "description": "Localized user-facing copy.",

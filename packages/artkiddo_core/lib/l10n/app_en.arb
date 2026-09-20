@@ -265,6 +265,43 @@
   "@galleryErrorBody": {
     "description": "Localized user-facing copy."
   },
+  "galleryVaultErrorBody": "Your drawings were not deleted. Do not uninstall the app: that would permanently erase the original photos. Restart, then export them if the problem continues.",
+  "@galleryVaultErrorBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableTitle": "Your artists could not be read",
+  "@captureArtistsUnavailableTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableBody": "Your photo is still here. Do not uninstall the app: that would permanently erase the original. Try again, then export the photo if the problem continues.",
+  "@captureArtistsUnavailableBody": {
+    "description": "Localized user-facing copy."
+  },
+  "captureArtistsUnavailableSaveHint": "The artist cannot be checked right now.",
+  "@captureArtistsUnavailableSaveHint": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportAction": "Export my photos",
+  "@vaultRescueExportAction": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportBody": "Creates a file you can share with your originals and the photo in progress, even if the vault cannot be read.",
+  "@vaultRescueExportBody": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueExportIncludesDraft": "The photo in progress will be included in the export.",
+  "@vaultRescueExportIncludesDraft": {
+    "description": "Localized user-facing copy."
+  },
+  "vaultRescueInsufficientSpace": "The export needs about {required} of free space before it can start.",
+  "@vaultRescueInsufficientSpace": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "required": {
+        "type": "String"
+      }
+    }
+  },
   "galleryFilterReset": "{childName} was deleted. The gallery now shows all drawings again.",
   "@galleryFilterReset": {
     "description": "Localized user-facing copy.",

@@ -216,6 +216,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get galleryErrorBody => 'Your drawings are still on the device.';
 
   @override
+  String get galleryVaultErrorBody =>
+      'Your drawings were not deleted. Do not uninstall the app: that would permanently erase the original photos. Restart, then export them if the problem continues.';
+
+  @override
+  String get captureArtistsUnavailableTitle => 'Your artists could not be read';
+
+  @override
+  String get captureArtistsUnavailableBody =>
+      'Your photo is still here. Do not uninstall the app: that would permanently erase the original. Try again, then export the photo if the problem continues.';
+
+  @override
+  String get captureArtistsUnavailableSaveHint =>
+      'The artist cannot be checked right now.';
+
+  @override
+  String get vaultRescueExportAction => 'Export my photos';
+
+  @override
+  String get vaultRescueExportBody =>
+      'Creates a file you can share with your originals and the photo in progress, even if the vault cannot be read.';
+
+  @override
+  String get vaultRescueExportIncludesDraft =>
+      'The photo in progress will be included in the export.';
+
+  @override
+  String vaultRescueInsufficientSpace(String required) {
+    return 'The export needs about $required of free space before it can start.';
+  }
+
+  @override
   String galleryFilterReset(String childName) {
     return '$childName was deleted. The gallery now shows all drawings again.';
   }

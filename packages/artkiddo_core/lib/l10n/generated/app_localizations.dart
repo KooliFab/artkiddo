@@ -449,6 +449,54 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Vos dessins n’ont pas été supprimés. Ne désinstallez pas l’application : cela effacerait définitivement les originaux. Redémarrez, puis exportez-les si le problème persiste.'**
+  String get galleryVaultErrorBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire vos artistes'**
+  String get captureArtistsUnavailableTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre photo est toujours là. Ne désinstallez pas l’application : cela effacerait définitivement l’original. Réessayez, puis exportez la photo si le problème persiste.'**
+  String get captureArtistsUnavailableBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de vérifier l’artiste pour le moment.'**
+  String get captureArtistsUnavailableSaveHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter mes photos'**
+  String get vaultRescueExportAction;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.'**
+  String get vaultRescueExportBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'La photo en cours sera incluse dans l’export.'**
+  String get vaultRescueExportIncludesDraft;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de créer l’export : environ {required} d’espace libre sont nécessaires.'**
+  String vaultRescueInsufficientSpace(String required);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'{childName} a été supprimé. La galerie affiche de nouveau tous les dessins.'**
   String galleryFilterReset(String childName);
 

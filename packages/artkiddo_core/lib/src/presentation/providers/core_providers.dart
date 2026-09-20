@@ -7,6 +7,7 @@ import '../config/bootstrap_configuration.dart';
 import '../config/cloud_services.dart';
 import '../../local/database/app_database.dart';
 import '../../local/storage/local_vault.dart';
+import '../../local/storage/vault_rescue_export.dart';
 
 final appCapabilitiesProvider = Provider<AppCapabilities>((ref) {
   return AppCapabilities.local;
@@ -29,6 +30,14 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 
 final localVaultProvider = Provider<LocalVault>((ref) {
   return LocalVault();
+});
+
+/// File-only recovery path. It intentionally does not read AppDatabase.
+final vaultRescueExportProvider = Provider<VaultRescueExport>((ref) {
+  return VaultRescueExport(
+    documentsDirectoryProvider: () =>
+        ref.read(localVaultProvider).documentsDirectory,
+  );
 });
 
 final audioRecorderServiceProvider = Provider<AudioRecorderService>((ref) {

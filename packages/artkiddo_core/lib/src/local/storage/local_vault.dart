@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../database/app_database.dart';
 import '../logging/log.dart';
 import 'image_derivatives.dart';
+import 'local_vault_paths.dart';
 
 /// Result of [LocalVault.generateDerivatives]: either relative path is
 /// `null` when that particular derivative could not be produced (a
@@ -20,7 +21,7 @@ class DerivativePaths {
 /// audio. Guarantees files are safely stored inside the app sandbox,
 /// independently from the device's own photo gallery.
 class LocalVault {
-  static const String masterpiecesFolder = 'masterpieces';
+  static const String masterpiecesFolder = LocalVaultPaths.masterpiecesFolder;
 
   /// Bounded-dimension derivatives kept alongside the untouched
   /// original — `display` for the artwork detail screen (1600px), and
@@ -28,8 +29,8 @@ class LocalVault {
   /// `cacheWidth` clamp already used by the grid's own tiles, so the
   /// thumbnail is never upscaled at any column width/DPR combination
   /// in use today).
-  static const String derivativesFolder = 'masterpieces_derivatives';
-  static const String audioFolder = 'audio';
+  static const String derivativesFolder = LocalVaultPaths.derivativesFolder;
+  static const String audioFolder = LocalVaultPaths.audioFolder;
   static const int displayMaxDimension = 1600;
   static const int thumbnailMaxDimension = 640;
   static const int maxArtworkCloudBytes = 300000;
@@ -59,6 +60,10 @@ class LocalVault {
            documentsDirProvider ?? getApplicationDocumentsDirectory,
        _derivativeCodec = derivativeCodec ?? const ImageDerivativeCodec();
 
+  /// The documents directory used by this vault. Exposed for file-only
+  /// recovery services that must share the vault's injected test location.
+  Future<Directory> get documentsDirectory => _documentsDirProvider();
+
   /// Retrieves the directory where full-resolution photos are stored.
   Future<Directory> get masterPiecesDirectory async {
     final docsDir = await _documentsDirProvider();
@@ -81,6 +86,9 @@ class LocalVault {
     }
     return dir;
   }
+
+  /// Retrieves the derivative directory without opening the database.
+  Future<Directory> get derivativesDirectory => _derivativesDirectory;
 
   /// Retrieves the directory where audio recordings are stored.
   Future<Directory> get audioDirectory async {

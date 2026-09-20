@@ -427,6 +427,9 @@ class CaptureController extends Notifier<CaptureState> {
     final filter = ref.read(galleryFilterProvider);
     if (filter is OneChild) return filter.childId;
 
+    // If the artist stream is unreadable, leave the selection empty on the
+    // all-artists path. The screen offers rescue export for the in-flight
+    // photo instead of inventing a first-launch state or a child selection.
     final children = ref.read(allChildrenStreamProvider).value ?? const [];
     if (filter is AllChildren && children.length == 1) {
       return children.single.id;
@@ -790,19 +793,6 @@ class CaptureController extends Notifier<CaptureState> {
     } else {
       await playAudio();
     }
-  }
-
-  /// Reachable even if the FAB is hidden at 0 children, because the
-  /// last child may be deleted while the draft is open.
-  bool get hasNoChildren =>
-      (ref.read(allChildrenStreamProvider).value ?? const []).isEmpty;
-
-  bool get artistRequiredWithoutSelection {
-    final filter = ref.read(galleryFilterProvider);
-    final children = ref.read(allChildrenStreamProvider).value ?? const [];
-    return filter is AllChildren &&
-        children.length >= 2 &&
-        state.selectedChildId == null;
   }
 }
 
