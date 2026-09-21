@@ -68,7 +68,21 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     if (result == null || !mounted) return;
     _codeController.text = result;
     setState(() {});
-    await ref.read(familyControllerProvider.notifier).redeem(result);
+    await _confirmAndJoin(result);
+  }
+
+  /// The single entry point into a join, from either the submit button or
+  /// the QR scanner: shows the destructive-confirmation dialog first, and
+  /// only calls [FamilyController.redeem] if the user actually confirms.
+  Future<void> _confirmAndJoin(String code) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _JoinFamilyDialog(code: code),
+    );
+    if (confirmed != true || !mounted) return;
+    await ref
+        .read(familyControllerProvider.notifier)
+        .redeem(code, discardPrevious: true);
   }
 
   @override
@@ -207,7 +221,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.s4),
-                      _buildOutcomeBlock(l10n, state),
+                      _buildOutcomeBlock(l10n, state, controller),
                       Row(
                         children: [
                           Expanded(
@@ -246,17 +260,21 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                       ],
                       const SizedBox(height: AppSpacing.s4),
                       AsyncActionButton(
-                        action: state.convergence.isBusy
+                        action: state.joinReset.isBusy
+                            ? state.joinReset
+                            : state.convergence.isBusy
                             ? state.convergence
                             : state.redeem,
                         idleLabel: l10n.familyJoinButton,
-                        busyLabel: state.convergence.isBusy
+                        busyLabel: state.joinReset.isBusy
+                            ? l10n.familyJoinDiscarding
+                            : state.convergence.isBusy
                             ? l10n.familyJoinConverging
                             : l10n.familyJoinChecking,
                         fullWidth: true,
                         enabled: canSubmitCode,
                         onPressed: () =>
-                            controller.redeem(_codeController.text.trim()),
+                            _confirmAndJoin(_codeController.text.trim()),
                       ),
                     ],
                   ),
@@ -266,7 +284,11 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     );
   }
 
-  Widget _buildOutcomeBlock(AppLocalizations l10n, FamilyState state) {
+  Widget _buildOutcomeBlock(
+    AppLocalizations l10n,
+    FamilyState state,
+    FamilyController controller,
+  ) {
     if (state.redeem case ActionError()) {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.s3),
@@ -274,6 +296,20 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
           intent: StateBlockIntent.error,
           title: l10n.errorNetworkTitle,
           body: l10n.errorNetworkBody,
+        ),
+      );
+    }
+    if (state.joinReset case ActionError()) {
+      // The join itself already committed server-side by this point —
+      // only the local vault reset failed, so retrying re-runs just that
+      // step (FamilyController.retryJoinReset), never a fresh redeem.
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+        child: StateBlock(
+          intent: StateBlockIntent.error,
+          title: l10n.familyJoinResetError,
+          actionLabel: l10n.commonRetry,
+          onAction: controller.retryJoinReset,
         ),
       );
     }
@@ -304,5 +340,178 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
         ),
       ),
     };
+  }
+}
+
+enum _JoinStep { summary, confirm }
+
+/// Two-step destructive confirmation shown before every join — both entry
+/// points ([_FamilyScreenState._confirmAndJoin]) go through this, never
+/// straight into [FamilyController.redeem]. Pops `true` only once the
+/// user has seen the local-content bilan (step 1) and explicitly
+/// acknowledged the loss (step 2, gated by a checkbox); `false` or a
+/// dismissed dialog means "do nothing".
+///
+/// Deliberately makes no server call of its own: [FamilyController.joinImpact]
+/// is read-only local content counts plus a membership check, never a
+/// redemption. Showing this for a code that turns out to be invalid, or
+/// the caller's own family, is harmless — [FamilyController.redeem] still
+/// makes that determination itself and touches nothing in either case.
+class _JoinFamilyDialog extends ConsumerStatefulWidget {
+  final String code;
+  const _JoinFamilyDialog({required this.code});
+
+  @override
+  ConsumerState<_JoinFamilyDialog> createState() => _JoinFamilyDialogState();
+}
+
+class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
+  _JoinStep _step = _JoinStep.summary;
+  bool _confirmed = false;
+  bool _impactLoaded = false;
+  bool _impactFailed = false;
+  JoinImpact? _impact;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImpact();
+  }
+
+  Future<void> _loadImpact() async {
+    if (mounted) {
+      setState(() {
+        _impactLoaded = false;
+        _impactFailed = false;
+        _impact = null;
+      });
+    }
+    ref.read(familyControllerProvider.notifier).joinImpact().then((impact) {
+      if (!mounted) return;
+      setState(() {
+        _impact = impact;
+        _impactLoaded = true;
+      });
+    }).catchError((_) {
+      if (!mounted) return;
+      setState(() {
+        _impactFailed = true;
+        _impactLoaded = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+      ),
+      title: Text(l10n.familyJoinConfirmTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: _step == _JoinStep.summary
+              ? _buildSummary(l10n)
+              : _buildConfirm(l10n),
+        ),
+      ),
+      actions: _step == _JoinStep.summary
+          ? [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.commonCancel),
+              ),
+              TextButton(
+                onPressed: _impactFailed
+                    ? _loadImpact
+                    : _impactLoaded && _impact?.isAlone != null
+                    ? () => setState(() => _step = _JoinStep.confirm)
+                    : null,
+                child: Text(
+                  _impactFailed ? l10n.commonRetry : l10n.commonNext,
+                ),
+              ),
+            ]
+          : [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.commonCancel),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                onPressed: _confirmed
+                    ? () => Navigator.of(context).pop(true)
+                    : null,
+                child: Text(
+                  _impact?.isAlone == false
+                      ? l10n.familyJoinConfirmActionLeave
+                      : l10n.familyJoinConfirmAction,
+                ),
+              ),
+            ],
+    );
+  }
+
+  List<Widget> _buildSummary(AppLocalizations l10n) {
+    final impact = _impact;
+    return [
+      Text(l10n.familyJoinConfirmIntro),
+      const SizedBox(height: AppSpacing.s3),
+      if (impact == null && !_impactFailed)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else if (_impactFailed)
+        Text(l10n.familyJoinConfirmCheckFailedWarning)
+      else if (impact?.isAlone == null)
+        Text(l10n.familyJoinConfirmCheckFailedWarning)
+      else
+        Text(
+          '${l10n.familyJoinImpactChildren(impact!.childCount)} · '
+          '${l10n.familyJoinImpactArtworks(impact.artworkCount)}',
+          style: AppTypography.bodyStrong,
+        ),
+      const SizedBox(height: AppSpacing.s3),
+      Text(
+        l10n.familyJoinInviteInsteadHint,
+        style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
+      ),
+    ];
+  }
+
+  List<Widget> _buildConfirm(AppLocalizations l10n) {
+    // Reached only once _impactLoaded is true (step 1 gates the "Next"
+    // button on it) — isAlone can still be null (the membership check
+    // itself failed), which picks the third, most conservative warning.
+    final warning = switch (_impact?.isAlone) {
+      true => l10n.familyJoinConfirmPurgeWarning,
+      false => l10n.familyJoinConfirmLeaveWarning,
+      null => l10n.familyJoinConfirmCheckFailedWarning,
+    };
+    return [
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.s3),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+        ),
+        child: Text(
+          warning,
+          style: AppTypography.body.copyWith(color: AppColors.danger),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.s3),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _confirmed,
+        onChanged: (v) => setState(() => _confirmed = v ?? false),
+        controlAffinity: ListTileControlAffinity.leading,
+        title: Text(l10n.familyJoinConfirmCheck),
+      ),
+    ];
   }
 }

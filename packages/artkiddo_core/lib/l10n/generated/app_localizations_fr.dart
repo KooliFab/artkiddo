@@ -871,6 +871,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsGroupApp => 'Application';
 
   @override
+  String get settingsNotificationsRow => 'Notifications';
+
+  @override
+  String get settingsNotificationsEnabled => 'Activées';
+
+  @override
+  String get settingsNotificationsNotRequested => 'Non demandées';
+
+  @override
+  String get settingsNotificationsDenied => 'Refusées';
+
+  @override
+  String get settingsNotificationsUnavailable => 'Indisponibles';
+
+  @override
+  String get settingsNotificationsEnabledMessage => 'Notifications activées.';
+
+  @override
+  String get settingsNotificationsDeniedMessage =>
+      'Autorisez les notifications dans les réglages de l\'appareil pour suivre l\'état des sauvegardes.';
+
+  @override
+  String get settingsNotificationsRequestError =>
+      'Impossible de mettre à jour l\'autorisation des notifications.';
+
+  @override
   String get settingsGroupDocuments => 'Documents';
 
   @override
@@ -1001,6 +1027,70 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get familyJoinInvalidCode =>
       'Ce code n\'existe pas. Vérifiez-le et réessayez.';
+
+  @override
+  String get familyJoinConfirmTitle => 'Rejoindre une autre famille ?';
+
+  @override
+  String get familyJoinConfirmIntro =>
+      'Cet appareil ne peut être lié qu\'à une seule famille à la fois.';
+
+  @override
+  String familyJoinImpactChildren(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count enfants',
+      one: '1 enfant',
+      zero: 'Aucun enfant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String familyJoinImpactArtworks(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count œuvres',
+      one: '1 œuvre',
+      zero: 'aucune œuvre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyJoinInviteInsteadHint =>
+      'Vous vouliez plutôt partager vos œuvres avec quelqu\'un ? Donnez-lui votre code d\'invitation, affiché plus haut — vous garderez tout.';
+
+  @override
+  String get familyJoinConfirmPurgeWarning =>
+      'Vous êtes le seul membre actif de votre famille actuelle. Rejoindre une autre famille supprimera définitivement tous ses enfants, toutes ses œuvres et tout son contenu cloud.';
+
+  @override
+  String get familyJoinConfirmLeaveWarning =>
+      'Vous quittez votre famille actuelle. Son contenu reste accessible aux autres membres, mais vous en perdrez l\'accès et il sera retiré de cet appareil.';
+
+  @override
+  String get familyJoinConfirmCheckFailedWarning =>
+      'Impossible de vérifier l\'état de votre famille actuelle. Réessayez avant de continuer.';
+
+  @override
+  String get familyJoinConfirmCheck =>
+      'J\'ai compris que cette action est définitive.';
+
+  @override
+  String get familyJoinConfirmAction => 'Rejoindre et tout supprimer';
+
+  @override
+  String get familyJoinConfirmActionLeave => 'Rejoindre et quitter';
+
+  @override
+  String get familyJoinDiscarding => 'Préparation de votre appareil…';
+
+  @override
+  String get familyJoinResetError =>
+      'Le changement de famille a réussi, mais cet appareil n\'a pas pu être réinitialisé.';
 
   @override
   String get familyScanButton => 'Scanner un code';

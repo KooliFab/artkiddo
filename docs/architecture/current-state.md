@@ -147,7 +147,16 @@ success depend on a provider or network.
 - `ObjectUploader` / `ObjectDownloader` move bytes through opaque object keys.
 - `RemoteMediaFetcher` fetches media that exists remotely but not yet locally;
   the local default never fetches anything.
-- `FamilyApi` models household membership and invites.
+- `FamilyApi` models household membership and invites. `redeemInvite`'s
+  `discardPrevious` and `RedeemOutcome.sameFamily`/`vaultReset` (ADR 0015)
+  let a composition leave, and if orphaned purge, a previous family in the
+  same server call as joining a new one — the local vault can only ever be
+  bound to one family at a time, so `familyVaultResetProvider` (no-op by
+  default, alongside `familyConvergenceProvider`) is where a composition
+  plugs in how to erase it first. `FamilyScreen`'s `_JoinFamilyDialog` is
+  the only path into `FamilyController.redeem`: a read-only local bilan,
+  then an explicit checkbox-gated confirmation, before either code path
+  touches anything.
 - `SharingService` models web gallery-link creation, listing, and revocation.
 - `ShareBackup` is an optional presentation action supplied by an application
   composition when gallery links are enabled. The share controller invokes

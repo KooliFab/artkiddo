@@ -173,10 +173,30 @@ class SyncEngine {
   /// to a different family" screen).
   Future<String> ensureFamily() async {
     final familyId = await cloudApi.ensureMyFamily();
+    if (await vaultMeta.isJoinResetPending()) {
+      final localFamilyId = await vaultMeta.getFamilyId();
+      if (localFamilyId != null && localFamilyId != familyId) {
+        await resetLocalVault();
+      } else {
+        await vaultMeta.clearJoinResetPending();
+      }
+    }
     await vaultMeta.attachFamily(familyId);
     Log.d('Family vérifié et attaché', 'Sync');
     return familyId;
   }
+
+  /// Idempotently starts a new local vault. The database clear also removes
+  /// the durable join-reset marker, so a process restart cannot replay the
+  /// destructive operation after it has completed.
+  Future<void> resetLocalVault() async {
+    await vault.eraseEverything();
+    await db.eraseAllData();
+  }
+
+  Future<void> markJoinResetPending() => vaultMeta.markJoinResetPending();
+
+  Future<void> clearJoinResetPending() => vaultMeta.clearJoinResetPending();
 
   // =====================================================================
   // Push — drain the outbox

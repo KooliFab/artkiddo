@@ -192,6 +192,15 @@ void main() {
       final vaultMeta = VaultMetaRepository(db);
       expect(await vaultMeta.getFamilyId(), isNull);
       expect(await vaultMeta.getLastPullCursor(), isNull);
+      expect(await vaultMeta.isJoinResetPending(), isFalse);
+    });
+
+    test('join reset marker survives reads and can be cleared', () async {
+      final vaultMeta = VaultMetaRepository(db);
+      await vaultMeta.markJoinResetPending();
+      expect(await vaultMeta.isJoinResetPending(), isTrue);
+      await vaultMeta.clearJoinResetPending();
+      expect(await vaultMeta.isJoinResetPending(), isFalse);
     });
 
     test('attachFamily is idempotent for the same family', () async {

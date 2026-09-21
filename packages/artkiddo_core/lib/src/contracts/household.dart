@@ -42,7 +42,25 @@ class RedeemOutcome {
   final String? familyId;
   final FamilyMemberRole? role;
 
-  const RedeemOutcome({required this.state, this.familyId, this.role});
+  /// The redeemed code belonged to the caller's own current family: no
+  /// membership change happened, and [vaultReset] is always false.
+  final bool sameFamily;
+
+  /// True only when a previous family was actually discarded as part of
+  /// this redemption ([FamilyApi.redeemInvite]'s `discardPrevious`, honored
+  /// and non-trivial). The local vault can only ever be bound to one
+  /// family at a time (see `VaultMetaRepository.attachFamily`), so a true
+  /// value means the caller must erase its local vault before converging
+  /// against the newly joined family.
+  final bool vaultReset;
+
+  const RedeemOutcome({
+    required this.state,
+    this.familyId,
+    this.role,
+    this.sameFamily = false,
+    this.vaultReset = false,
+  });
 }
 
 class FamilyMembership {
@@ -56,7 +74,16 @@ abstract class FamilyApi {
   Future<FamilyInfo> getFamilyInfo();
   Future<void> renameFamily(String name);
   Future<FamilyMembership?> currentMembership();
-  Future<RedeemOutcome> redeemInvite({required String code});
+
+  /// Redeems [code]. When [discardPrevious] is true and the caller was an
+  /// active member of a different family, that family is left in the same
+  /// server transaction as the join, and purged — content and remote
+  /// storage — if the departure leaves it with zero active members. See
+  /// [RedeemOutcome.vaultReset] for what this implies locally.
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  });
   Future<int> activeMemberCount(String familyId);
 }
 
@@ -83,7 +110,10 @@ final class NoFamilyApi implements FamilyApi {
   Future<FamilyMembership?> currentMembership() async => null;
 
   @override
-  Future<RedeemOutcome> redeemInvite({required String code}) async {
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  }) async {
     throw const HouseholdUnavailableException();
   }
 

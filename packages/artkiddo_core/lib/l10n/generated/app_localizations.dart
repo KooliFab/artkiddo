@@ -1438,6 +1438,54 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotificationsRow;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activées'**
+  String get settingsNotificationsEnabled;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non demandées'**
+  String get settingsNotificationsNotRequested;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refusées'**
+  String get settingsNotificationsDenied;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Indisponibles'**
+  String get settingsNotificationsUnavailable;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications activées.'**
+  String get settingsNotificationsEnabledMessage;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autorisez les notifications dans les réglages de l\'appareil pour suivre l\'état des sauvegardes.'**
+  String get settingsNotificationsDeniedMessage;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de mettre à jour l\'autorisation des notifications.'**
+  String get settingsNotificationsRequestError;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Documents'**
   String get settingsGroupDocuments;
 
@@ -1662,6 +1710,84 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce code n\'existe pas. Vérifiez-le et réessayez.'**
   String get familyJoinInvalidCode;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre une autre famille ?'**
+  String get familyJoinConfirmTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cet appareil ne peut être lié qu\'à une seule famille à la fois.'**
+  String get familyJoinConfirmIntro;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun enfant} =1{1 enfant} other{{count} enfants}}'**
+  String familyJoinImpactChildren(num count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{aucune œuvre} =1{1 œuvre} other{{count} œuvres}}'**
+  String familyJoinImpactArtworks(num count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous vouliez plutôt partager vos œuvres avec quelqu\'un ? Donnez-lui votre code d\'invitation, affiché plus haut — vous garderez tout.'**
+  String get familyJoinInviteInsteadHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes le seul membre actif de votre famille actuelle. Rejoindre une autre famille supprimera définitivement tous ses enfants, toutes ses œuvres et tout son contenu cloud.'**
+  String get familyJoinConfirmPurgeWarning;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous quittez votre famille actuelle. Son contenu reste accessible aux autres membres, mais vous en perdrez l\'accès et il sera retiré de cet appareil.'**
+  String get familyJoinConfirmLeaveWarning;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de vérifier l\'état de votre famille actuelle. Réessayez avant de continuer.'**
+  String get familyJoinConfirmCheckFailedWarning;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai compris que cette action est définitive.'**
+  String get familyJoinConfirmCheck;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre et tout supprimer'**
+  String get familyJoinConfirmAction;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre et quitter'**
+  String get familyJoinConfirmActionLeave;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de votre appareil…'**
+  String get familyJoinDiscarding;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le changement de famille a réussi, mais cet appareil n\'a pas pu être réinitialisé.'**
+  String get familyJoinResetError;
 
   /// Localized user-facing copy.
   ///

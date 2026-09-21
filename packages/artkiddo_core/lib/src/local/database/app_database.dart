@@ -83,6 +83,8 @@ class SyncOutboxTable extends Table {
 class VaultMetaTable extends Table {
   TextColumn get id => text()();
   TextColumn get familyId => text().nullable().named('family_id')();
+  BoolColumn get joinResetPending =>
+      boolean().withDefault(const Constant(false)).named('join_reset_pending')();
 
   DateTimeColumn get lastPullCursor => dateTime().nullable()();
   DateTimeColumn get childrenPullCursor =>
@@ -138,16 +140,21 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.executor);
 
-  /// Schema v1 is a deliberate clean baseline. There is no upgrade path from
-  /// any earlier local vault: those databases are unsupported and must be
-  /// cleared before running this build.
+  /// Schema v1 is a deliberate clean baseline. Schema v2 adds the durable
+  /// join-reset marker used to recover if the process dies after the server
+  /// commits a family switch but before the local vault is erased.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(vaultMetaTable, vaultMetaTable.joinResetPending);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

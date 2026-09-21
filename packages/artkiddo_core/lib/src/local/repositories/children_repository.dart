@@ -22,6 +22,12 @@ abstract class ChildrenRepository {
   Stream<List<Child>> watchAll(); // sorted by name, case-insensitive
   Future<Child?> getById(String id);
   Future<Map<String, int>> countArtworksByChild();
+
+  /// Total number of children, regardless of whether any has artworks.
+  /// Unlike [countArtworksByChild], a child with zero artworks still
+  /// counts — this is "how many children would I lose", not "how many
+  /// have work in them".
+  Future<int> count();
   Future<ActionResult<String>> create({
     required String name,
     required DateTime birthDate,
@@ -99,6 +105,14 @@ class DriftChildrenRepository implements ChildrenRepository {
       _db.childrenTable,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     return row != null ? _toDomain(row) : null;
+  }
+
+  @override
+  Future<int> count() async {
+    final query = _db.selectOnly(_db.childrenTable)
+      ..addColumns([_db.childrenTable.id.count()]);
+    final row = await query.getSingle();
+    return row.read(_db.childrenTable.id.count()) ?? 0;
   }
 
   @override

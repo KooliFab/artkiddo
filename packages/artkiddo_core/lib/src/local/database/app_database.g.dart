@@ -2312,6 +2312,21 @@ class $VaultMetaTableTable extends VaultMetaTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _joinResetPendingMeta = const VerificationMeta(
+    'joinResetPending',
+  );
+  @override
+  late final GeneratedColumn<bool> joinResetPending = GeneratedColumn<bool>(
+    'join_reset_pending',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("join_reset_pending" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _lastPullCursorMeta = const VerificationMeta(
     'lastPullCursor',
   );
@@ -2362,6 +2377,7 @@ class $VaultMetaTableTable extends VaultMetaTable
   List<GeneratedColumn> get $columns => [
     id,
     familyId,
+    joinResetPending,
     lastPullCursor,
     childrenPullCursor,
     artworksPullCursor,
@@ -2388,6 +2404,15 @@ class $VaultMetaTableTable extends VaultMetaTable
       context.handle(
         _familyIdMeta,
         familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
+      );
+    }
+    if (data.containsKey('join_reset_pending')) {
+      context.handle(
+        _joinResetPendingMeta,
+        joinResetPending.isAcceptableOrUnknown(
+          data['join_reset_pending']!,
+          _joinResetPendingMeta,
+        ),
       );
     }
     if (data.containsKey('last_pull_cursor')) {
@@ -2443,6 +2468,10 @@ class $VaultMetaTableTable extends VaultMetaTable
         DriftSqlType.string,
         data['${effectivePrefix}family_id'],
       ),
+      joinResetPending: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}join_reset_pending'],
+      )!,
       lastPullCursor: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_pull_cursor'],
@@ -2471,6 +2500,7 @@ class $VaultMetaTableTable extends VaultMetaTable
 class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   final String id;
   final String? familyId;
+  final bool joinResetPending;
   final DateTime? lastPullCursor;
   final DateTime? childrenPullCursor;
   final DateTime? artworksPullCursor;
@@ -2478,6 +2508,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   const VaultMetaEntity({
     required this.id,
     this.familyId,
+    required this.joinResetPending,
     this.lastPullCursor,
     this.childrenPullCursor,
     this.artworksPullCursor,
@@ -2490,6 +2521,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     if (!nullToAbsent || familyId != null) {
       map['family_id'] = Variable<String>(familyId);
     }
+    map['join_reset_pending'] = Variable<bool>(joinResetPending);
     if (!nullToAbsent || lastPullCursor != null) {
       map['last_pull_cursor'] = Variable<DateTime>(lastPullCursor);
     }
@@ -2511,6 +2543,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       familyId: familyId == null && nullToAbsent
           ? const Value.absent()
           : Value(familyId),
+      joinResetPending: Value(joinResetPending),
       lastPullCursor: lastPullCursor == null && nullToAbsent
           ? const Value.absent()
           : Value(lastPullCursor),
@@ -2534,6 +2567,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     return VaultMetaEntity(
       id: serializer.fromJson<String>(json['id']),
       familyId: serializer.fromJson<String?>(json['familyId']),
+      joinResetPending: serializer.fromJson<bool>(json['joinResetPending']),
       lastPullCursor: serializer.fromJson<DateTime?>(json['lastPullCursor']),
       childrenPullCursor: serializer.fromJson<DateTime?>(
         json['childrenPullCursor'],
@@ -2552,6 +2586,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'familyId': serializer.toJson<String?>(familyId),
+      'joinResetPending': serializer.toJson<bool>(joinResetPending),
       'lastPullCursor': serializer.toJson<DateTime?>(lastPullCursor),
       'childrenPullCursor': serializer.toJson<DateTime?>(childrenPullCursor),
       'artworksPullCursor': serializer.toJson<DateTime?>(artworksPullCursor),
@@ -2562,6 +2597,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   VaultMetaEntity copyWith({
     String? id,
     Value<String?> familyId = const Value.absent(),
+    bool? joinResetPending,
     Value<DateTime?> lastPullCursor = const Value.absent(),
     Value<DateTime?> childrenPullCursor = const Value.absent(),
     Value<DateTime?> artworksPullCursor = const Value.absent(),
@@ -2569,6 +2605,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   }) => VaultMetaEntity(
     id: id ?? this.id,
     familyId: familyId.present ? familyId.value : this.familyId,
+    joinResetPending: joinResetPending ?? this.joinResetPending,
     lastPullCursor: lastPullCursor.present
         ? lastPullCursor.value
         : this.lastPullCursor,
@@ -2586,6 +2623,9 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     return VaultMetaEntity(
       id: data.id.present ? data.id.value : this.id,
       familyId: data.familyId.present ? data.familyId.value : this.familyId,
+      joinResetPending: data.joinResetPending.present
+          ? data.joinResetPending.value
+          : this.joinResetPending,
       lastPullCursor: data.lastPullCursor.present
           ? data.lastPullCursor.value
           : this.lastPullCursor,
@@ -2606,6 +2646,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     return (StringBuffer('VaultMetaEntity(')
           ..write('id: $id, ')
           ..write('familyId: $familyId, ')
+          ..write('joinResetPending: $joinResetPending, ')
           ..write('lastPullCursor: $lastPullCursor, ')
           ..write('childrenPullCursor: $childrenPullCursor, ')
           ..write('artworksPullCursor: $artworksPullCursor, ')
@@ -2618,6 +2659,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   int get hashCode => Object.hash(
     id,
     familyId,
+    joinResetPending,
     lastPullCursor,
     childrenPullCursor,
     artworksPullCursor,
@@ -2629,6 +2671,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       (other is VaultMetaEntity &&
           other.id == this.id &&
           other.familyId == this.familyId &&
+          other.joinResetPending == this.joinResetPending &&
           other.lastPullCursor == this.lastPullCursor &&
           other.childrenPullCursor == this.childrenPullCursor &&
           other.artworksPullCursor == this.artworksPullCursor &&
@@ -2638,6 +2681,7 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
 class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   final Value<String> id;
   final Value<String?> familyId;
+  final Value<bool> joinResetPending;
   final Value<DateTime?> lastPullCursor;
   final Value<DateTime?> childrenPullCursor;
   final Value<DateTime?> artworksPullCursor;
@@ -2646,6 +2690,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   const VaultMetaTableCompanion({
     this.id = const Value.absent(),
     this.familyId = const Value.absent(),
+    this.joinResetPending = const Value.absent(),
     this.lastPullCursor = const Value.absent(),
     this.childrenPullCursor = const Value.absent(),
     this.artworksPullCursor = const Value.absent(),
@@ -2655,6 +2700,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   VaultMetaTableCompanion.insert({
     required String id,
     this.familyId = const Value.absent(),
+    this.joinResetPending = const Value.absent(),
     this.lastPullCursor = const Value.absent(),
     this.childrenPullCursor = const Value.absent(),
     this.artworksPullCursor = const Value.absent(),
@@ -2664,6 +2710,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   static Insertable<VaultMetaEntity> custom({
     Expression<String>? id,
     Expression<String>? familyId,
+    Expression<bool>? joinResetPending,
     Expression<DateTime>? lastPullCursor,
     Expression<DateTime>? childrenPullCursor,
     Expression<DateTime>? artworksPullCursor,
@@ -2673,6 +2720,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (familyId != null) 'family_id': familyId,
+      if (joinResetPending != null) 'join_reset_pending': joinResetPending,
       if (lastPullCursor != null) 'last_pull_cursor': lastPullCursor,
       if (childrenPullCursor != null)
         'children_pull_cursor': childrenPullCursor,
@@ -2686,6 +2734,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   VaultMetaTableCompanion copyWith({
     Value<String>? id,
     Value<String?>? familyId,
+    Value<bool>? joinResetPending,
     Value<DateTime?>? lastPullCursor,
     Value<DateTime?>? childrenPullCursor,
     Value<DateTime?>? artworksPullCursor,
@@ -2695,6 +2744,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     return VaultMetaTableCompanion(
       id: id ?? this.id,
       familyId: familyId ?? this.familyId,
+      joinResetPending: joinResetPending ?? this.joinResetPending,
       lastPullCursor: lastPullCursor ?? this.lastPullCursor,
       childrenPullCursor: childrenPullCursor ?? this.childrenPullCursor,
       artworksPullCursor: artworksPullCursor ?? this.artworksPullCursor,
@@ -2711,6 +2761,9 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     }
     if (familyId.present) {
       map['family_id'] = Variable<String>(familyId.value);
+    }
+    if (joinResetPending.present) {
+      map['join_reset_pending'] = Variable<bool>(joinResetPending.value);
     }
     if (lastPullCursor.present) {
       map['last_pull_cursor'] = Variable<DateTime>(lastPullCursor.value);
@@ -2739,6 +2792,7 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     return (StringBuffer('VaultMetaTableCompanion(')
           ..write('id: $id, ')
           ..write('familyId: $familyId, ')
+          ..write('joinResetPending: $joinResetPending, ')
           ..write('lastPullCursor: $lastPullCursor, ')
           ..write('childrenPullCursor: $childrenPullCursor, ')
           ..write('artworksPullCursor: $artworksPullCursor, ')
@@ -4387,6 +4441,7 @@ typedef $$VaultMetaTableTableCreateCompanionBuilder =
     VaultMetaTableCompanion Function({
       required String id,
       Value<String?> familyId,
+      Value<bool> joinResetPending,
       Value<DateTime?> lastPullCursor,
       Value<DateTime?> childrenPullCursor,
       Value<DateTime?> artworksPullCursor,
@@ -4397,6 +4452,7 @@ typedef $$VaultMetaTableTableUpdateCompanionBuilder =
     VaultMetaTableCompanion Function({
       Value<String> id,
       Value<String?> familyId,
+      Value<bool> joinResetPending,
       Value<DateTime?> lastPullCursor,
       Value<DateTime?> childrenPullCursor,
       Value<DateTime?> artworksPullCursor,
@@ -4420,6 +4476,11 @@ class $$VaultMetaTableTableFilterComposer
 
   ColumnFilters<String> get familyId => $composableBuilder(
     column: $table.familyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get joinResetPending => $composableBuilder(
+    column: $table.joinResetPending,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4463,6 +4524,11 @@ class $$VaultMetaTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get joinResetPending => $composableBuilder(
+    column: $table.joinResetPending,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastPullCursor => $composableBuilder(
     column: $table.lastPullCursor,
     builder: (column) => ColumnOrderings(column),
@@ -4498,6 +4564,11 @@ class $$VaultMetaTableTableAnnotationComposer
 
   GeneratedColumn<String> get familyId =>
       $composableBuilder(column: $table.familyId, builder: (column) => column);
+
+  GeneratedColumn<bool> get joinResetPending => $composableBuilder(
+    column: $table.joinResetPending,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get lastPullCursor => $composableBuilder(
     column: $table.lastPullCursor,
@@ -4559,6 +4630,7 @@ class $$VaultMetaTableTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String?> familyId = const Value.absent(),
+                Value<bool> joinResetPending = const Value.absent(),
                 Value<DateTime?> lastPullCursor = const Value.absent(),
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
                 Value<DateTime?> artworksPullCursor = const Value.absent(),
@@ -4567,6 +4639,7 @@ class $$VaultMetaTableTableTableManager
               }) => VaultMetaTableCompanion(
                 id: id,
                 familyId: familyId,
+                joinResetPending: joinResetPending,
                 lastPullCursor: lastPullCursor,
                 childrenPullCursor: childrenPullCursor,
                 artworksPullCursor: artworksPullCursor,
@@ -4577,6 +4650,7 @@ class $$VaultMetaTableTableTableManager
               ({
                 required String id,
                 Value<String?> familyId = const Value.absent(),
+                Value<bool> joinResetPending = const Value.absent(),
                 Value<DateTime?> lastPullCursor = const Value.absent(),
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
                 Value<DateTime?> artworksPullCursor = const Value.absent(),
@@ -4585,6 +4659,7 @@ class $$VaultMetaTableTableTableManager
               }) => VaultMetaTableCompanion.insert(
                 id: id,
                 familyId: familyId,
+                joinResetPending: joinResetPending,
                 lastPullCursor: lastPullCursor,
                 childrenPullCursor: childrenPullCursor,
                 artworksPullCursor: artworksPullCursor,

@@ -185,8 +185,10 @@ final class _StubFamilyApi implements FamilyApi {
   Future<FamilyMembership?> currentMembership() async => null;
 
   @override
-  Future<RedeemOutcome> redeemInvite({required String code}) async =>
-      const RedeemOutcome(state: RedeemState.invalidCode);
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  }) async => const RedeemOutcome(state: RedeemState.invalidCode);
 
   @override
   Future<int> activeMemberCount(String familyId) async => 1;

@@ -4,9 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:artkiddo_core/src/local/database/app_database.dart';
 
-/// Schema v1 is the only supported local schema. These tests pin the physical
-/// shape a freshly created vault must have, because there is no upgrade path
-/// from any earlier database.
+/// These tests pin the physical shape of the supported local schema.
 void main() {
   late AppDatabase db;
 
@@ -35,11 +33,11 @@ void main() {
     return rows.map((row) => row.data['name'] as String).toSet();
   }
 
-  test('a fresh vault is created at schema version 1', () async {
+  test('a fresh vault is created at schema version 2', () async {
     await db.customStatement('SELECT 1');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(db.schemaVersion, 1);
-    expect(version.data['user_version'], 1);
+    expect(db.schemaVersion, 2);
+    expect(version.data['user_version'], 2);
   });
 
   test('a fresh vault exposes exactly the baseline tables', () async {
@@ -85,6 +83,7 @@ void main() {
       await columnNames('vault_meta'),
       containsAll(<String>{
         'family_id',
+        'join_reset_pending',
         'children_pull_cursor',
         'artworks_pull_cursor',
         'purged_pull_cursor',
