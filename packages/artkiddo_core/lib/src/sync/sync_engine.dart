@@ -543,6 +543,7 @@ class SyncEngine {
           byteSize: row.byteSize,
           imageWidth: row.imageWidth,
           imageHeight: row.imageHeight,
+          addedBy: row.addedBy,
         );
         _throwOnPullFailure(result);
         // D10: thumbnails first — eager for a row new to this device, the

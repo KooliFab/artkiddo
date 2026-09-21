@@ -541,6 +541,12 @@ abstract class AppLocalizations {
   /// **'Ajouté le {date}'**
   String artworkAddedOn(DateTime date);
 
+  /// Attribution de l'auteur du dessin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouté par {author}'**
+  String artworkAddedBy(String author);
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
@@ -2002,6 +2008,66 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Mon profil'**
+  String get accountMyProfile;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
+  String get accountFirstNameLabel;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre prénom'**
+  String get accountFirstNameHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom de famille'**
+  String get accountLastNameLabel;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre nom de famille'**
+  String get accountLastNameHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil mis à jour.'**
+  String get accountProfileSaved;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parent'**
+  String get accountRoleParent;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contributeur'**
+  String get accountRoleContributor;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Membres de la famille'**
+  String get familyMembersTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 membre} other{{count} membres}}'**
+  String familyMemberCount(int count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Se déconnecter'**
   String get accountSignOut;
 
@@ -2520,6 +2586,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Espace famille'**
   String get familyHubTitle;
+
+  /// Titre du hub famille lorsqu'une famille est nommée.
+  ///
+  /// In fr, this message translates to:
+  /// **'Famille {name}'**
+  String familyHubNamedTitle(String name);
 
   /// Localized user-facing copy.
   ///

@@ -127,6 +127,7 @@ abstract class ArtworksRepository {
     required int byteSize,
     int? imageWidth,
     int? imageHeight,
+    String? addedBy,
   });
 
   /// Applies a tombstone (`deleted_at != null`) seen on `pull` by
@@ -208,6 +209,7 @@ class DriftArtworksRepository implements ArtworksRepository {
       relativeAudioPath: entity.relativeAudioPath,
       audioDurationMs: entity.audioDurationMs,
       audioByteSize: entity.audioByteSize,
+      addedBy: entity.addedBy,
       syncState: SyncState.values.firstWhere(
         (s) => s.name == entity.syncState,
         orElse: () => SyncState.localOnly,
@@ -903,6 +905,7 @@ class DriftArtworksRepository implements ArtworksRepository {
     required int byteSize,
     int? imageWidth,
     int? imageHeight,
+    String? addedBy,
   }) async {
     try {
       final existing = await getById(id);
@@ -952,6 +955,7 @@ class DriftArtworksRepository implements ArtworksRepository {
               byteSize: Value(byteSize),
               imageWidth: Value(imageWidth),
               imageHeight: Value(imageHeight),
+              addedBy: Value(addedBy ?? existing?.addedBy),
               deletedAt: const Value(null),
             ),
           );

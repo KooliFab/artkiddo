@@ -51,6 +51,8 @@ class Artwork {
   final int? audioDurationMs;
   final int audioByteSize;
 
+  final String? addedBy;
+
   final SyncState syncState;
 
   const Artwork({
@@ -67,6 +69,7 @@ class Artwork {
     this.relativeAudioPath,
     this.audioDurationMs,
     this.audioByteSize = 0,
+    this.addedBy,
     this.syncState = SyncState.localOnly,
   });
 
@@ -121,6 +124,7 @@ class Artwork {
     Object? relativeAudioPath = _unset,
     Object? audioDurationMs = _unset,
     int? audioByteSize,
+    Object? addedBy = _unset,
     SyncState? syncState,
   }) {
     return Artwork(
@@ -141,6 +145,7 @@ class Artwork {
           ? this.audioDurationMs
           : audioDurationMs as int?,
       audioByteSize: audioByteSize ?? this.audioByteSize,
+      addedBy: identical(addedBy, _unset) ? this.addedBy : addedBy as String?,
       syncState: syncState ?? this.syncState,
     );
   }

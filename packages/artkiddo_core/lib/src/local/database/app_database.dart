@@ -55,6 +55,8 @@ class ArtworksTable extends Table {
       text().nullable().named('audio_object_key')();
   IntColumn get audioByteSize => integer().withDefault(const Constant(0))();
 
+  TextColumn get addedBy => text().nullable().named('added_by')();
+
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
@@ -142,9 +144,10 @@ class AppDatabase extends _$AppDatabase {
 
   /// Schema v1 is a deliberate clean baseline. Schema v2 adds the durable
   /// join-reset marker used to recover if the process dies after the server
-  /// commits a family switch but before the local vault is erased.
+  /// commits a family switch but before the local vault is erased. Schema v3
+  /// adds added_by attribution to artworks.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -154,6 +157,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
         await m.addColumn(vaultMetaTable, vaultMetaTable.joinResetPending);
+      }
+      if (from < 3) {
+        await m.addColumn(artworksTable, artworksTable.addedBy);
       }
     },
     beforeOpen: (details) async {

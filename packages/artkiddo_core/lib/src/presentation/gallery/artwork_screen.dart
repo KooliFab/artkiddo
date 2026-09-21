@@ -24,6 +24,7 @@ import '../ui/state_block.dart';
 import '../utils/app_settings_launcher.dart';
 import 'artwork_zoom_screen.dart';
 import '../navigation/composition_actions.dart';
+import '../family/family_controller.dart';
 import 'gallery_providers.dart';
 
 /// `artwork` — `screens.md` §5.
@@ -56,6 +57,13 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     _artwork = widget.initialArtwork;
     _loading = widget.initialArtwork == null;
     Log.d('📱 [ArtworkScreen] Opening (${widget.artworkId})', 'Navigation');
+    if (ref.read(appCapabilitiesProvider).household) {
+      // Attribution must be available even when the user opens an artwork
+      // directly from the gallery without visiting the Family screen first.
+      unawaited(
+        ref.read(familyControllerProvider.notifier).loadFamilyMembers(),
+      );
+    }
     _load();
   }
 
@@ -462,6 +470,11 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final child = children.where((c) => c.id == m.childId).firstOrNull;
     final childName = child?.name ?? l10n.artworkUnknownArtist;
 
+    final familyMembersMap = ref.watch(familyMembersMapProvider);
+    final authorName = m.addedBy != null
+        ? familyMembersMap[m.addedBy]?.displayName
+        : null;
+
     return Scaffold(
       appBar: AppBar(title: Text(childName, style: AppTypography.h3)),
       body: Stack(
@@ -482,7 +495,14 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
                     childName,
                     wide: wide,
                   );
-                  final panel = _buildPanel(context, l10n, m, child, childName);
+                  final panel = _buildPanel(
+                    context,
+                    l10n,
+                    m,
+                    child,
+                    childName,
+                    authorName: authorName,
+                  );
 
                   if (!wide) {
                     return SingleChildScrollView(
@@ -730,8 +750,9 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     AppLocalizations l10n,
     Artwork m,
     Child? child,
-    String childName,
-  ) {
+    String childName, {
+    String? authorName,
+  }) {
     // A-02: the age is computed on `drawnAt` when known, on `addedAt`
     // otherwise (CONTEXT.md rule 3) — `ageBasis` says which one so the
     // label ("Âge lors du dessin" vs "Âge lors de l'ajout") always matches
@@ -776,6 +797,13 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
           ),
         ],
       ),
+      if (authorName != null && authorName.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.s1),
+        Text(
+          l10n.artworkAddedBy(authorName),
+          style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
+        ),
+      ],
       if (ageLabel != null) ...[
         const SizedBox(height: AppSpacing.s1),
         Text(

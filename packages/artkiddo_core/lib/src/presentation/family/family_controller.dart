@@ -15,6 +15,8 @@ export '../../contracts/household.dart'
         FamilyApi,
         FamilyMemberRole,
         FamilyMembership,
+        FamilyMember,
+        UserProfile,
         RedeemOutcome,
         RedeemState;
 
@@ -94,6 +96,9 @@ class FamilyState {
   final AsyncAction redeem;
   final RedeemOutcome? redeemOutcome;
 
+  final AsyncAction membersAction;
+  final List<FamilyMember> members;
+
   /// Runs right after a confirmed redemption. Tracked separately from
   /// [redeem] so the screen can show "code accepted, now converging
   /// your family" as a distinct step rather than folding it into the
@@ -112,6 +117,8 @@ class FamilyState {
     this.rename = const ActionIdle(),
     this.redeem = const ActionIdle(),
     this.redeemOutcome,
+    this.membersAction = const ActionIdle(),
+    this.members = const [],
     this.convergence = const ActionIdle(),
     this.joinReset = const ActionIdle(),
   });
@@ -127,6 +134,8 @@ class FamilyState {
     // for null. This flag is the escape hatch: a fresh redeem attempt must
     // be able to clear a stale outcome banner from a previous attempt.
     bool clearRedeemOutcome = false,
+    AsyncAction? membersAction,
+    List<FamilyMember>? members,
     AsyncAction? convergence,
     AsyncAction? joinReset,
   }) {
@@ -138,6 +147,8 @@ class FamilyState {
       redeemOutcome: clearRedeemOutcome
           ? null
           : (redeemOutcome ?? this.redeemOutcome),
+      membersAction: membersAction ?? this.membersAction,
+      members: members ?? this.members,
       convergence: convergence ?? this.convergence,
       joinReset: joinReset ?? this.joinReset,
     );
@@ -162,10 +173,29 @@ class FamilyController extends Notifier<FamilyState> {
       final info = await ref.read(familyApiProvider).getFamilyInfo();
       Log.i('Family loaded: ${info.familyId}', 'Family');
       state = state.copyWith(family: const ActionDone(), familyInfo: info);
+      unawaited(loadFamilyMembers());
     } catch (e, st) {
       Log.e('Failed to load family info', e, st, 'Family');
       state = state.copyWith(
         family: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  Future<void> loadFamilyMembers() async {
+    if (state.membersAction.isBusy) return;
+    state = state.copyWith(membersAction: const ActionBusy());
+    try {
+      final members = await ref.read(familyApiProvider).listFamilyMembers();
+      Log.i('Family members loaded: ${members.length}', 'Family');
+      state = state.copyWith(
+        membersAction: const ActionDone(),
+        members: members,
+      );
+    } catch (e, st) {
+      Log.e('Failed to load family members', e, st, 'Family');
+      state = state.copyWith(
+        membersAction: ActionError(NetworkFailure(cause: e, stack: st)),
       );
     }
   }
@@ -345,3 +375,9 @@ class FamilyController extends Notifier<FamilyState> {
 
 final familyControllerProvider =
     NotifierProvider<FamilyController, FamilyState>(FamilyController.new);
+
+/// Map of userId -> FamilyMember for resolving attributions and member names.
+final familyMembersMapProvider = Provider<Map<String, FamilyMember>>((ref) {
+  final members = ref.watch(familyControllerProvider.select((s) => s.members));
+  return {for (final m in members) m.userId: m};
+});

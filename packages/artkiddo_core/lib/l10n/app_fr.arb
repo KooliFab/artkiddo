@@ -379,6 +379,15 @@
       }
     }
   },
+  "artworkAddedBy": "Ajouté par {author}",
+  "@artworkAddedBy": {
+    "description": "Attribution de l'auteur du dessin.",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
   "artworkAgeAtAddition": "Âge lors de l'ajout : {age}",
   "@artworkAgeAtAddition": {
     "description": "Localized user-facing copy.",
@@ -1506,6 +1515,51 @@
       }
     }
   },
+  "accountMyProfile": "Mon profil",
+  "@accountMyProfile": {
+    "description": "Localized user-facing copy."
+  },
+  "accountFirstNameLabel": "Prénom",
+  "@accountFirstNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountFirstNameHint": "Votre prénom",
+  "@accountFirstNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "accountLastNameLabel": "Nom de famille",
+  "@accountLastNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountLastNameHint": "Votre nom de famille",
+  "@accountLastNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "accountProfileSaved": "Profil mis à jour.",
+  "@accountProfileSaved": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRoleParent": "Parent",
+  "@accountRoleParent": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRoleContributor": "Contributeur",
+  "@accountRoleContributor": {
+    "description": "Localized user-facing copy."
+  },
+  "familyMembersTitle": "Membres de la famille",
+  "@familyMembersTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyMemberCount": "{count, plural, =1{1 membre} other{{count} membres}}",
+  "@familyMemberCount": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "accountSignOut": "Se déconnecter",
   "@accountSignOut": {
     "description": "Localized user-facing copy."
@@ -1895,6 +1949,16 @@
   "familyHubTitle": "Espace famille",
   "@familyHubTitle": {
     "description": "Localized user-facing copy."
+  },
+  "familyHubNamedTitle": "Famille {name}",
+  "@familyHubNamedTitle": {
+    "description": "Titre du hub famille lorsqu'une famille est nommée.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Tremblay"
+      }
+    }
   },
   "familyHubSectionArtists": "Artistes",
   "@familyHubSectionArtists": {

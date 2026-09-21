@@ -61,6 +61,7 @@ class RemoteArtworkRow {
   final int byteSize;
   final int? imageWidth;
   final int? imageHeight;
+  final String? addedBy;
 
   const RemoteArtworkRow({
     required this.id,
@@ -77,6 +78,7 @@ class RemoteArtworkRow {
     required this.byteSize,
     this.imageWidth,
     this.imageHeight,
+    this.addedBy,
     this.deletedAt,
   });
 }

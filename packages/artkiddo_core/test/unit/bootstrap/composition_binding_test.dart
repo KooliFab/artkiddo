@@ -192,6 +192,24 @@ final class _StubFamilyApi implements FamilyApi {
 
   @override
   Future<int> activeMemberCount(String familyId) async => 1;
+
+  @override
+  Future<UserProfile> getMyProfile() async => const UserProfile(
+        userId: 'stub',
+        email: 'stub@example.com',
+      );
+
+  @override
+  Future<UserProfile> updateMyProfile({String? firstName, String? lastName}) async =>
+      UserProfile(
+        userId: 'stub',
+        email: 'stub@example.com',
+        firstName: firstName,
+        lastName: lastName,
+      );
+
+  @override
+  Future<List<FamilyMember>> listFamilyMembers() async => const [];
 }
 
 final class _StubSharingService implements SharingService {

@@ -46,6 +46,24 @@ class _FakeFamilyApi implements FamilyApi {
     redeemCallCount++;
     return const RedeemOutcome(state: RedeemState.invalidCode);
   }
+
+  @override
+  Future<UserProfile> getMyProfile() async => const UserProfile(
+        userId: 'family-1',
+        email: 'test@example.com',
+      );
+
+  @override
+  Future<UserProfile> updateMyProfile({String? firstName, String? lastName}) async =>
+      UserProfile(
+        userId: 'family-1',
+        email: 'test@example.com',
+        firstName: firstName,
+        lastName: lastName,
+      );
+
+  @override
+  Future<List<FamilyMember>> listFamilyMembers() async => const [];
 }
 
 /// `noSuchMethod` delegation, same trick `_FlakyArtworks` uses elsewhere in

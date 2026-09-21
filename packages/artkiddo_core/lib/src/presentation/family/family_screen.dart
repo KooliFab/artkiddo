@@ -106,6 +106,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     final state = ref.watch(familyControllerProvider);
     final controller = ref.read(familyControllerProvider.notifier);
     final info = state.familyInfo;
+    final activeMembers = state.members.where((member) => member.isActive);
     if (info != null) _syncNameField(info);
     final loading = state.family.isBusy && info == null;
     final canSubmitCode =
@@ -152,6 +153,83 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                           _nameController.text.trim(),
                         ),
                       ),
+                      const SizedBox(height: AppSpacing.s6),
+                      const Divider(),
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(l10n.familyMembersTitle, style: AppTypography.h3),
+                      const SizedBox(height: AppSpacing.s2),
+                      if (state.members.isEmpty && state.membersAction.isBusy)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSpacing.s3),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else ...[
+                        for (final member in activeMembers)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.s2,
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: AppColors.surfaceSunken,
+                                  child: Text(
+                                    member.displayName.isNotEmpty
+                                        ? member.displayName[0].toUpperCase()
+                                        : '?',
+                                    style: AppTypography.label,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.s3),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        member.displayName,
+                                        style: AppTypography.bodyStrong,
+                                      ),
+                                      if (member.displayName != member.email)
+                                        Text(
+                                          member.email,
+                                          style: AppTypography.caption.copyWith(
+                                            color: AppColors.inkMuted,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.s2,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        member.role == FamilyMemberRole.parent
+                                        ? AppColors.accentSurface
+                                        : AppColors.surfaceSunken,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.sm,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    member.role == FamilyMemberRole.parent
+                                        ? l10n.accountRoleParent
+                                        : l10n.accountRoleContributor,
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.inkMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                       const SizedBox(height: AppSpacing.s6),
                       const Divider(),
                       const SizedBox(height: AppSpacing.s4),
@@ -386,19 +464,23 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
         _impact = null;
       });
     }
-    ref.read(familyControllerProvider.notifier).joinImpact().then((impact) {
-      if (!mounted) return;
-      setState(() {
-        _impact = impact;
-        _impactLoaded = true;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _impactFailed = true;
-        _impactLoaded = true;
-      });
-    });
+    ref
+        .read(familyControllerProvider.notifier)
+        .joinImpact()
+        .then((impact) {
+          if (!mounted) return;
+          setState(() {
+            _impact = impact;
+            _impactLoaded = true;
+          });
+        })
+        .catchError((_) {
+          if (!mounted) return;
+          setState(() {
+            _impactFailed = true;
+            _impactLoaded = true;
+          });
+        });
   }
 
   @override
@@ -430,9 +512,7 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
                     : _impactLoaded && _impact?.isAlone != null
                     ? () => setState(() => _step = _JoinStep.confirm)
                     : null,
-                child: Text(
-                  _impactFailed ? l10n.commonRetry : l10n.commonNext,
-                ),
+                child: Text(_impactFailed ? l10n.commonRetry : l10n.commonNext),
               ),
             ]
           : [

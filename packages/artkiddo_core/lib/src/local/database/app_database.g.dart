@@ -621,6 +621,17 @@ class $ArtworksTableTable extends ArtworksTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _addedByMeta = const VerificationMeta(
+    'addedBy',
+  );
+  @override
+  late final GeneratedColumn<String> addedBy = GeneratedColumn<String>(
+    'added_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -652,6 +663,7 @@ class $ArtworksTableTable extends ArtworksTable
     audioDurationMs,
     audioObjectKey,
     audioByteSize,
+    addedBy,
     deletedAt,
   ];
   @override
@@ -807,6 +819,12 @@ class $ArtworksTableTable extends ArtworksTable
         ),
       );
     }
+    if (data.containsKey('added_by')) {
+      context.handle(
+        _addedByMeta,
+        addedBy.isAcceptableOrUnknown(data['added_by']!, _addedByMeta),
+      );
+    }
     if (data.containsKey('deleted_at')) {
       context.handle(
         _deletedAtMeta,
@@ -894,6 +912,10 @@ class $ArtworksTableTable extends ArtworksTable
         DriftSqlType.int,
         data['${effectivePrefix}audio_byte_size'],
       )!,
+      addedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}added_by'],
+      ),
       deletedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
@@ -929,6 +951,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
   final int? audioDurationMs;
   final String? audioObjectKey;
   final int audioByteSize;
+  final String? addedBy;
   final DateTime? deletedAt;
   const ArtworkEntity({
     required this.id,
@@ -949,6 +972,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     this.audioDurationMs,
     this.audioObjectKey,
     required this.audioByteSize,
+    this.addedBy,
     this.deletedAt,
   });
   @override
@@ -996,6 +1020,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       map['audio_object_key'] = Variable<String>(audioObjectKey);
     }
     map['audio_byte_size'] = Variable<int>(audioByteSize);
+    if (!nullToAbsent || addedBy != null) {
+      map['added_by'] = Variable<String>(addedBy);
+    }
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
@@ -1046,6 +1073,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ? const Value.absent()
           : Value(audioObjectKey),
       audioByteSize: Value(audioByteSize),
+      addedBy: addedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(addedBy),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
@@ -1084,6 +1114,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       audioDurationMs: serializer.fromJson<int?>(json['audioDurationMs']),
       audioObjectKey: serializer.fromJson<String?>(json['audioObjectKey']),
       audioByteSize: serializer.fromJson<int>(json['audioByteSize']),
+      addedBy: serializer.fromJson<String?>(json['addedBy']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
@@ -1109,6 +1140,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       'audioDurationMs': serializer.toJson<int?>(audioDurationMs),
       'audioObjectKey': serializer.toJson<String?>(audioObjectKey),
       'audioByteSize': serializer.toJson<int>(audioByteSize),
+      'addedBy': serializer.toJson<String?>(addedBy),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
@@ -1132,6 +1164,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     Value<int?> audioDurationMs = const Value.absent(),
     Value<String?> audioObjectKey = const Value.absent(),
     int? audioByteSize,
+    Value<String?> addedBy = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => ArtworkEntity(
     id: id ?? this.id,
@@ -1168,6 +1201,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
         ? audioObjectKey.value
         : this.audioObjectKey,
     audioByteSize: audioByteSize ?? this.audioByteSize,
+    addedBy: addedBy.present ? addedBy.value : this.addedBy,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   ArtworkEntity copyWithCompanion(ArtworksTableCompanion data) {
@@ -1212,6 +1246,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       audioByteSize: data.audioByteSize.present
           ? data.audioByteSize.value
           : this.audioByteSize,
+      addedBy: data.addedBy.present ? data.addedBy.value : this.addedBy,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
@@ -1237,6 +1272,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ..write('audioDurationMs: $audioDurationMs, ')
           ..write('audioObjectKey: $audioObjectKey, ')
           ..write('audioByteSize: $audioByteSize, ')
+          ..write('addedBy: $addedBy, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
@@ -1262,6 +1298,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     audioDurationMs,
     audioObjectKey,
     audioByteSize,
+    addedBy,
     deletedAt,
   );
   @override
@@ -1286,6 +1323,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           other.audioDurationMs == this.audioDurationMs &&
           other.audioObjectKey == this.audioObjectKey &&
           other.audioByteSize == this.audioByteSize &&
+          other.addedBy == this.addedBy &&
           other.deletedAt == this.deletedAt);
 }
 
@@ -1308,6 +1346,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
   final Value<int?> audioDurationMs;
   final Value<String?> audioObjectKey;
   final Value<int> audioByteSize;
+  final Value<String?> addedBy;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const ArtworksTableCompanion({
@@ -1329,6 +1368,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioDurationMs = const Value.absent(),
     this.audioObjectKey = const Value.absent(),
     this.audioByteSize = const Value.absent(),
+    this.addedBy = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1351,6 +1391,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioDurationMs = const Value.absent(),
     this.audioObjectKey = const Value.absent(),
     this.audioByteSize = const Value.absent(),
+    this.addedBy = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1375,6 +1416,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Expression<int>? audioDurationMs,
     Expression<String>? audioObjectKey,
     Expression<int>? audioByteSize,
+    Expression<String>? addedBy,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
@@ -1399,6 +1441,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       if (audioDurationMs != null) 'audio_duration_ms': audioDurationMs,
       if (audioObjectKey != null) 'audio_object_key': audioObjectKey,
       if (audioByteSize != null) 'audio_byte_size': audioByteSize,
+      if (addedBy != null) 'added_by': addedBy,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1423,6 +1466,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Value<int?>? audioDurationMs,
     Value<String?>? audioObjectKey,
     Value<int>? audioByteSize,
+    Value<String?>? addedBy,
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
@@ -1445,6 +1489,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
       audioObjectKey: audioObjectKey ?? this.audioObjectKey,
       audioByteSize: audioByteSize ?? this.audioByteSize,
+      addedBy: addedBy ?? this.addedBy,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1507,6 +1552,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     if (audioByteSize.present) {
       map['audio_byte_size'] = Variable<int>(audioByteSize.value);
     }
+    if (addedBy.present) {
+      map['added_by'] = Variable<String>(addedBy.value);
+    }
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
@@ -1537,6 +1585,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
           ..write('audioDurationMs: $audioDurationMs, ')
           ..write('audioObjectKey: $audioObjectKey, ')
           ..write('audioByteSize: $audioByteSize, ')
+          ..write('addedBy: $addedBy, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3398,6 +3447,7 @@ typedef $$ArtworksTableTableCreateCompanionBuilder =
       Value<int?> audioDurationMs,
       Value<String?> audioObjectKey,
       Value<int> audioByteSize,
+      Value<String?> addedBy,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3421,6 +3471,7 @@ typedef $$ArtworksTableTableUpdateCompanionBuilder =
       Value<int?> audioDurationMs,
       Value<String?> audioObjectKey,
       Value<int> audioByteSize,
+      Value<String?> addedBy,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3542,6 +3593,11 @@ class $$ArtworksTableTableFilterComposer
 
   ColumnFilters<int> get audioByteSize => $composableBuilder(
     column: $table.audioByteSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3668,6 +3724,11 @@ class $$ArtworksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
@@ -3779,6 +3840,9 @@ class $$ArtworksTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get addedBy =>
+      $composableBuilder(column: $table.addedBy, builder: (column) => column);
+
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
@@ -3852,6 +3916,7 @@ class $$ArtworksTableTableTableManager
                 Value<int?> audioDurationMs = const Value.absent(),
                 Value<String?> audioObjectKey = const Value.absent(),
                 Value<int> audioByteSize = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion(
@@ -3873,6 +3938,7 @@ class $$ArtworksTableTableTableManager
                 audioDurationMs: audioDurationMs,
                 audioObjectKey: audioObjectKey,
                 audioByteSize: audioByteSize,
+                addedBy: addedBy,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),
@@ -3896,6 +3962,7 @@ class $$ArtworksTableTableTableManager
                 Value<int?> audioDurationMs = const Value.absent(),
                 Value<String?> audioObjectKey = const Value.absent(),
                 Value<int> audioByteSize = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion.insert(
@@ -3917,6 +3984,7 @@ class $$ArtworksTableTableTableManager
                 audioDurationMs: audioDurationMs,
                 audioObjectKey: audioObjectKey,
                 audioByteSize: audioByteSize,
+                addedBy: addedBy,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),

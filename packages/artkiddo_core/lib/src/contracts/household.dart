@@ -70,6 +70,62 @@ class FamilyMembership {
   const FamilyMembership({required this.familyId, required this.role});
 }
 
+class UserProfile {
+  final String userId;
+  final String email;
+  final String? firstName;
+  final String? lastName;
+  final DateTime? updatedAt;
+
+  const UserProfile({
+    required this.userId,
+    required this.email,
+    this.firstName,
+    this.lastName,
+    this.updatedAt,
+  });
+
+  String get displayName {
+    final first = firstName?.trim() ?? '';
+    final last = lastName?.trim() ?? '';
+    if (first.isNotEmpty && last.isNotEmpty) return '$first $last';
+    if (first.isNotEmpty) return first;
+    if (last.isNotEmpty) return last;
+    return email;
+  }
+}
+
+class FamilyMember {
+  final String userId;
+  final FamilyMemberRole role;
+  final String email;
+  final String? firstName;
+  final String? lastName;
+  final DateTime joinedAt;
+  final DateTime? leftAt;
+
+  const FamilyMember({
+    required this.userId,
+    required this.role,
+    required this.email,
+    this.firstName,
+    this.lastName,
+    required this.joinedAt,
+    this.leftAt,
+  });
+
+  bool get isActive => leftAt == null;
+
+  String get displayName {
+    final first = firstName?.trim() ?? '';
+    final last = lastName?.trim() ?? '';
+    if (first.isNotEmpty && last.isNotEmpty) return '$first $last';
+    if (first.isNotEmpty) return first;
+    if (last.isNotEmpty) return last;
+    return email;
+  }
+}
+
 abstract class FamilyApi {
   Future<FamilyInfo> getFamilyInfo();
   Future<void> renameFamily(String name);
@@ -85,6 +141,10 @@ abstract class FamilyApi {
     bool discardPrevious = false,
   });
   Future<int> activeMemberCount(String familyId);
+
+  Future<UserProfile> getMyProfile();
+  Future<UserProfile> updateMyProfile({String? firstName, String? lastName});
+  Future<List<FamilyMember>> listFamilyMembers();
 }
 
 /// Default implementation when no composition has bound a real [FamilyApi].
@@ -119,6 +179,21 @@ final class NoFamilyApi implements FamilyApi {
 
   @override
   Future<int> activeMemberCount(String familyId) async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<UserProfile> getMyProfile() async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<UserProfile> updateMyProfile({String? firstName, String? lastName}) async {
+    throw const HouseholdUnavailableException();
+  }
+
+  @override
+  Future<List<FamilyMember>> listFamilyMembers() async {
     throw const HouseholdUnavailableException();
   }
 }

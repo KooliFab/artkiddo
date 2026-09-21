@@ -292,6 +292,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String artworkAddedBy(String author) {
+    return 'Added by $author';
+  }
+
+  @override
   String artworkAgeAtAddition(String age) {
     return 'Age when added: $age';
   }
@@ -1193,6 +1198,44 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get accountMyProfile => 'My profile';
+
+  @override
+  String get accountFirstNameLabel => 'First name';
+
+  @override
+  String get accountFirstNameHint => 'Your first name';
+
+  @override
+  String get accountLastNameLabel => 'Last name';
+
+  @override
+  String get accountLastNameHint => 'Your last name';
+
+  @override
+  String get accountProfileSaved => 'Profile updated.';
+
+  @override
+  String get accountRoleParent => 'Parent';
+
+  @override
+  String get accountRoleContributor => 'Contributor';
+
+  @override
+  String get familyMembersTitle => 'Family members';
+
+  @override
+  String familyMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get accountSignOut => 'Sign out';
 
   @override
@@ -1495,6 +1538,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyHubTitle => 'Family Space';
+
+  @override
+  String familyHubNamedTitle(String name) {
+    return 'Family $name';
+  }
 
   @override
   String get familyHubSectionArtists => 'Artists';
