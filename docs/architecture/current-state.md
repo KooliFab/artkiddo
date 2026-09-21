@@ -136,6 +136,11 @@ sequenceDiagram
   V-->>U: file-only ZIP(s), without opening D
 ```
 
+After the durable transaction, `CompositionActions.onArtworkSaved` is an
+optional neutral callback. The core invokes it best-effort and never waits for
+it, so a cloud composition can schedule remote work without making local save
+success depend on a provider or network.
+
 ## Public contracts
 
 - `SyncBackend` models remote metadata synchronization with typed values.
@@ -150,6 +155,9 @@ sequenceDiagram
   allowing link creation. The bootstrap rejects a web-link composition without
   this action. Link visibility is evaluated against an injectable clock and
   excludes revoked and expired links.
+- `CompositionActions.onArtworkSaved` is the corresponding post-commit seam for
+  provider-specific upload scheduling; it has no effect in the local
+  composition and does not change the local save result.
 
 Contracts intentionally do not name a database, object store, endpoint,
 authentication system, transport, or remote payload format.

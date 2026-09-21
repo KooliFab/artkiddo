@@ -10,6 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// container whose capabilities and actions disagree, so an enabled capability
 /// can never degrade into a silently hidden control.
 final class CompositionActions {
+  /// Called after an artwork and its durable local sync outbox entry have
+  /// been committed. Cloud compositions may use this to schedule remote work;
+  /// the local composition leaves it null.
+  final Future<void> Function(String artworkId)? onArtworkSaved;
+
   final void Function(BuildContext context)? openFamilyHub;
 
   /// Opens the remote gallery-link surface for one child. The name travels
@@ -22,6 +27,7 @@ final class CompositionActions {
   final Future<String?> Function(BuildContext context)? openQrScanner;
 
   const CompositionActions({
+    this.onArtworkSaved,
     this.openFamilyHub,
     this.openGalleryShare,
     this.openAccount,

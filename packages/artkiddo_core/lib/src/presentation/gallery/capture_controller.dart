@@ -12,6 +12,7 @@ import '../../local/logging/log.dart';
 import '../providers/core_providers.dart';
 import '../../domain/action_result.dart';
 import '../children/children_providers.dart';
+import '../navigation/composition_actions.dart';
 import 'gallery_providers.dart';
 
 /// Where the capture flow was entered from — the gallery FAB, or an
@@ -590,6 +591,21 @@ class CaptureController extends Notifier<CaptureState> {
     switch (result) {
       case ActionSuccess(value: final id):
         Log.i('Œuvre enregistrée ($id)', 'Capture');
+        final onArtworkSaved = ref
+            .read(compositionActionsProvider)
+            .onArtworkSaved;
+        if (onArtworkSaved != null) {
+          unawaited(
+            onArtworkSaved(id).catchError((error, stack) {
+              Log.e(
+                'Planification de la sauvegarde distante impossible ($id)',
+                error,
+                stack,
+                'Capture',
+              );
+            }),
+          );
+        }
         // Best-effort cleanup of temporary files; failure here is not
         // user-visible and does not affect durable success.
         try {

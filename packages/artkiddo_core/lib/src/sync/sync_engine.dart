@@ -77,6 +77,11 @@ class SyncEngine {
   final VaultMetaRepository vaultMeta;
   final String? Function() currentUserId;
 
+  /// Optional composition hook used by a provider-specific transport to keep
+  /// an entry out of the classic drain while a durable native task owns it.
+  /// The core remains unaware of the transport or its task database.
+  final Future<bool> Function(SyncOutboxEntryEntity entry)? isEntryDeferred;
+
   SyncEngine({
     required this.db,
     required this.vault,
@@ -88,6 +93,7 @@ class SyncEngine {
     required this.outbox,
     required this.vaultMeta,
     required this.currentUserId,
+    this.isEntryDeferred,
   });
 
   /// The whole convergence cycle: attach/verify the family, push every
@@ -188,6 +194,10 @@ class SyncEngine {
     AppFailure? lastError;
 
     for (final entry in ready) {
+      if (isEntryDeferred != null && await isEntryDeferred!(entry)) {
+        Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
+        continue;
+      }
       try {
         if (entry.entity == SyncEntityKind.child.wireName) {
           await _pushChild(entry, familyId: familyId);
