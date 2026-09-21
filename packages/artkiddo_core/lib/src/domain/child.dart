@@ -5,14 +5,14 @@ enum SyncState {
   synced,
   syncError,
 
-  /// A masterpiece known through remote synchronization whose thumbnail has
+  /// An artwork known through remote synchronization whose thumbnail has
   /// downloaded but whose display derivative has not (either never
   /// requested yet — deferred until the artwork is opened — or still in
   /// flight). Distinct from [syncError]: nothing has failed here, the
   /// download is simply not complete yet.
   remoteThumbnail,
 
-  /// A masterpiece known through remote synchronization whose thumbnail
+  /// An artwork known through remote synchronization whose thumbnail
   /// download failed and did not recover on its own. The gallery shows a
   /// pending/error tile — never a blank space.
   downloadFailed,

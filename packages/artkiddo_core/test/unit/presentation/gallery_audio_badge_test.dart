@@ -71,12 +71,12 @@ void main() {
   test(
     'ArtworkTile.hasAudio reflète fidèlement la présence d’un audio sur le chef-d’œuvre',
     () {
-      final withoutAudio = Masterpiece(
+      final withoutAudio = Artwork(
         id: 'm1',
         childId: 'c1',
         addedAt: DateTime(2026, 1, 1),
       );
-      final withAudio = Masterpiece(
+      final withAudio = Artwork(
         id: 'm2',
         childId: 'c1',
         addedAt: DateTime(2026, 1, 1),
@@ -84,8 +84,8 @@ void main() {
       );
 
       final tileNoAudio = ArtworkTile(
-        masterpiece: withoutAudio,
-        masterpieceId: withoutAudio.id,
+        artwork: withoutAudio,
+        artworkId: withoutAudio.id,
         childId: 'c1',
         childName: 'Leo',
         imageFile: File('/fake'),
@@ -98,8 +98,8 @@ void main() {
       );
 
       final tileWithAudio = ArtworkTile(
-        masterpiece: withAudio,
-        masterpieceId: withAudio.id,
+        artwork: withAudio,
+        artworkId: withAudio.id,
         childId: 'c1',
         childName: 'Leo',
         imageFile: File('/fake'),
@@ -126,7 +126,7 @@ void main() {
       final dummyAudioFile = File('${tempDir.path}/test_audio.m4a');
       dummyAudioFile.writeAsBytesSync(List.filled(200, 0));
 
-      final masterpieceWithAudio = Masterpiece(
+      final artworkWithAudio = Artwork(
         id: 'm1',
         childId: 'c1',
         addedAt: DateTime(2026, 1, 1),
@@ -135,13 +135,13 @@ void main() {
       );
 
       final tile = ArtworkTile(
-        masterpiece: masterpieceWithAudio,
-        masterpieceId: 'm1',
+        artwork: artworkWithAudio,
+        artworkId: 'm1',
         childId: 'c1',
         childName: 'Leo',
         imageFile: File('${tempDir.path}/test.jpg'),
         imageExists: false,
-        addedAt: masterpieceWithAudio.addedAt,
+        addedAt: artworkWithAudio.addedAt,
         drawnAt: null,
         age: '4 ans',
         story: 'Mon super dessin',

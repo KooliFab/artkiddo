@@ -21,7 +21,7 @@ class DerivativePaths {
 /// audio. Guarantees files are safely stored inside the app sandbox,
 /// independently from the device's own photo gallery.
 class LocalVault {
-  static const String masterpiecesFolder = LocalVaultPaths.masterpiecesFolder;
+  static const String artworksFolder = LocalVaultPaths.artworksFolder;
 
   /// Bounded-dimension derivatives kept alongside the untouched
   /// original — `display` for the artwork detail screen (1600px), and
@@ -65,9 +65,9 @@ class LocalVault {
   Future<Directory> get documentsDirectory => _documentsDirProvider();
 
   /// Retrieves the directory where full-resolution photos are stored.
-  Future<Directory> get masterPiecesDirectory async {
+  Future<Directory> get artworksDirectory async {
     final docsDir = await _documentsDirProvider();
-    final dir = Directory(p.join(docsDir.path, masterpiecesFolder));
+    final dir = Directory(p.join(docsDir.path, artworksFolder));
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -75,7 +75,7 @@ class LocalVault {
   }
 
   /// Retrieves the directory where derivatives are stored — separate
-  /// from [masterPiecesDirectory] so that deleting a masterpiece's
+  /// from [artworksDirectory] so that deleting an artwork's
   /// originals folder entry, or reasoning about what's an original vs.
   /// a cache, is never ambiguous.
   Future<Directory> get _derivativesDirectory async {
@@ -105,25 +105,25 @@ class LocalVault {
   /// directory for easy persistence. Throws a [FileSystemException]
   /// (or subtype) if the copy fails — callers must not treat a thrown
   /// copy as a success.
-  Future<String> storeMasterpieceImage({
+  Future<String> storeArtworkImage({
     required File sourceFile,
-    required String masterpieceId,
+    required String artworkId,
   }) async {
     if (sourceFile.path.isEmpty) {
       throw ArgumentError('sourceFile.path must not be empty');
     }
-    final targetDir = await masterPiecesDirectory;
+    final targetDir = await artworksDirectory;
     final extension = p.extension(sourceFile.path).isNotEmpty
         ? p.extension(sourceFile.path)
         : '.jpg';
-    final targetFileName = '$masterpieceId$extension';
+    final targetFileName = '$artworkId$extension';
     final targetFile = File(p.join(targetDir.path, targetFileName));
 
     await sourceFile.copy(targetFile.path);
 
-    // Store relative path (e.g. "masterpieces/uuid.jpg") so it survives
+    // Store relative path (e.g. "artworks/uuid.jpg") so it survives
     // app container migrations.
-    return p.join(masterpiecesFolder, targetFileName);
+    return p.join(artworksFolder, targetFileName);
   }
 
   /// Resolves a stored relative path to a concrete File.
@@ -141,9 +141,9 @@ class LocalVault {
   /// responsible for clearing [AppDatabase]'s own tables alongside
   /// this, since this class has no reference to it.
   Future<void> eraseEverything() async {
-    final masterpieces = await masterPiecesDirectory;
-    if (await masterpieces.exists()) {
-      await masterpieces.delete(recursive: true);
+    final artworks = await artworksDirectory;
+    if (await artworks.exists()) {
+      await artworks.delete(recursive: true);
     }
     final derivatives = await _derivativesDirectory;
     if (await derivatives.exists()) {
@@ -158,9 +158,9 @@ class LocalVault {
   /// Erases all artwork photos and their derivatives from the vault.
   /// Audio files are preserved.
   Future<void> eraseAllArtworkPhotos() async {
-    final masterpieces = await masterPiecesDirectory;
-    if (await masterpieces.exists()) {
-      await masterpieces.delete(recursive: true);
+    final artworks = await artworksDirectory;
+    if (await artworks.exists()) {
+      await artworks.delete(recursive: true);
     }
     final derivatives = await _derivativesDirectory;
     if (await derivatives.exists()) {
@@ -240,9 +240,9 @@ class LocalVault {
   /// (in the background isolate `resizeMany` runs in) rather than
   /// twice.
   ///
-  /// File names are deterministic (`<masterpieceId>_display.jpg` /
-  /// `<masterpieceId>_thumb.jpg`), so calling this twice for the same
-  /// masterpiece overwrites the same two paths rather than
+  /// File names are deterministic (`<artworkId>_display.jpg` /
+  /// `<artworkId>_thumb.jpg`), so calling this twice for the same
+  /// artwork overwrites the same two paths rather than
   /// accumulating orphans — the idempotence a backfill pass requires.
   /// Each derivative is attempted independently: a failure on one
   /// (corrupt original, decode error, disk full) leaves that one
@@ -251,7 +251,7 @@ class LocalVault {
   /// database row are untouched either way; a derivative is a cache,
   /// not a reference copy.
   Future<DerivativePaths> generateDerivatives({
-    required String masterpieceId,
+    required String artworkId,
     required String originalRelativePath,
   }) async {
     final originalFile = await resolveFile(originalRelativePath);
@@ -264,7 +264,7 @@ class LocalVault {
       bytes = await originalFile.readAsBytes();
     } catch (e, st) {
       Log.e(
-        'Lecture de l’original impossible ($masterpieceId)',
+        'Lecture de l’original impossible ($artworkId)',
         e,
         st,
         'Derivatives',
@@ -289,7 +289,7 @@ class LocalVault {
       ]);
     } catch (e, st) {
       Log.e(
-        'Génération des dérivés impossible ($masterpieceId)',
+        'Génération des dérivés impossible ($artworkId)',
         e,
         st,
         'Derivatives',
@@ -299,12 +299,12 @@ class LocalVault {
 
     final display = await _writeDerivativeBytes(
       resized['display'],
-      masterpieceId: masterpieceId,
+      artworkId: artworkId,
       suffix: 'display',
     );
     final thumbnail = await _writeDerivativeBytes(
       resized['thumb'],
-      masterpieceId: masterpieceId,
+      artworkId: artworkId,
       suffix: 'thumb',
     );
     return DerivativePaths(
@@ -316,7 +316,7 @@ class LocalVault {
   /// Regenerates the local thumbnail from a downloaded display image
   /// derivative.
   Future<String?> generateThumbnailFromDisplay({
-    required String masterpieceId,
+    required String artworkId,
     required String displayRelativePath,
   }) async {
     final displayFile = await resolveFile(displayRelativePath);
@@ -327,7 +327,7 @@ class LocalVault {
       bytes = await displayFile.readAsBytes();
     } catch (e, st) {
       Log.e(
-        'Lecture de l’image display impossible ($masterpieceId)',
+        'Lecture de l’image display impossible ($artworkId)',
         e,
         st,
         'Derivatives',
@@ -346,7 +346,7 @@ class LocalVault {
       ]);
     } catch (e, st) {
       Log.e(
-        'Génération de la miniature depuis display impossible ($masterpieceId)',
+        'Génération de la miniature depuis display impossible ($artworkId)',
         e,
         st,
         'Derivatives',
@@ -356,20 +356,20 @@ class LocalVault {
 
     return _writeDerivativeBytes(
       resized['thumb'],
-      masterpieceId: masterpieceId,
+      artworkId: artworkId,
       suffix: 'thumb',
     );
   }
 
   Future<String?> _writeDerivativeBytes(
     Uint8List? bytes, {
-    required String masterpieceId,
+    required String artworkId,
     required String suffix,
   }) async {
     if (bytes == null) return null;
     try {
       final dir = await _derivativesDirectory;
-      final fileName = '${masterpieceId}_$suffix.jpg';
+      final fileName = '${artworkId}_$suffix.jpg';
       final targetFile = File(p.join(dir.path, fileName));
       // Write-then-rename: a crash mid-write never leaves a half-written
       // file at the path callers will read from.
@@ -379,7 +379,7 @@ class LocalVault {
       return p.join(derivativesFolder, fileName);
     } catch (e, st) {
       Log.e(
-        'Écriture du dérivé $suffix impossible ($masterpieceId)',
+        'Écriture du dérivé $suffix impossible ($artworkId)',
         e,
         st,
         'Derivatives',
@@ -389,22 +389,22 @@ class LocalVault {
   }
 
   /// Writes bytes downloaded from the remote side as one of a
-  /// masterpiece's derivatives — the counterpart, on the pull side, of
+  /// artwork's derivatives — the counterpart, on the pull side, of
   /// [generateDerivatives] on the capture side. Uses the exact same
-  /// deterministic naming (`<masterpieceId>_display.jpg` /
-  /// `<masterpieceId>_thumb.jpg`) so a downloaded derivative and a
+  /// deterministic naming (`<artworkId>_display.jpg` /
+  /// `<artworkId>_thumb.jpg`) so a downloaded derivative and a
   /// locally generated one are indistinguishable to every reader —
-  /// neither `Masterpiece.bestDisplayImagePath` nor the gallery grid
+  /// neither `Artwork.bestDisplayImagePath` nor the gallery grid
   /// needs to know which source produced the file at the path they
   /// read.
   Future<String> storeDownloadedDerivative({
     required List<int> bytes,
-    required String masterpieceId,
+    required String artworkId,
     required bool isDisplay,
   }) async {
     final dir = await _derivativesDirectory;
     final suffix = isDisplay ? 'display' : 'thumb';
-    final fileName = '${masterpieceId}_$suffix.jpg';
+    final fileName = '${artworkId}_$suffix.jpg';
     final targetFile = File(p.join(dir.path, fileName));
     // Write-then-rename, same rationale as [_writeDerivativeBytes]: a
     // crash mid-download never leaves a half-written file at the path
@@ -415,7 +415,7 @@ class LocalVault {
     return p.join(derivativesFolder, fileName);
   }
 
-  /// Counterpart to [deleteFileOrEnqueueCleanup] for a masterpiece's
+  /// Counterpart to [deleteFileOrEnqueueCleanup] for an artwork's
   /// derivatives: called from `delete()` alongside the original's
   /// cleanup. Either argument may be `null` (no derivative was ever
   /// generated) — a no-op in that case.
@@ -442,9 +442,9 @@ class LocalVault {
   /// filename. Uses a temporary write followed by an atomic rename so
   /// an interrupted write never leaves a partial file at the readable
   /// path.
-  Future<String> storeMasterpieceAudio({
+  Future<String> storeArtworkAudio({
     required File sourceFile,
-    required String masterpieceId,
+    required String artworkId,
     int version = 1,
   }) async {
     if (sourceFile.path.isEmpty) {
@@ -454,7 +454,7 @@ class LocalVault {
     final extension = p.extension(sourceFile.path).isNotEmpty
         ? p.extension(sourceFile.path)
         : '.m4a';
-    final targetFileName = '${masterpieceId}_v$version$extension';
+    final targetFileName = '${artworkId}_v$version$extension';
     final targetFile = File(p.join(targetDir.path, targetFileName));
 
     // Temp write + atomic rename: an interrupted write never leaves a
@@ -470,11 +470,11 @@ class LocalVault {
   /// filename, using temporary file writing and atomic rename.
   Future<String> storeDownloadedAudio({
     required List<int> bytes,
-    required String masterpieceId,
+    required String artworkId,
     int version = 1,
   }) async {
     final targetDir = await audioDirectory;
-    final targetFileName = '${masterpieceId}_v$version.m4a';
+    final targetFileName = '${artworkId}_v$version.m4a';
     final targetFile = File(p.join(targetDir.path, targetFileName));
 
     final tmpFile = File('${targetFile.path}.tmp');

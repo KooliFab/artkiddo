@@ -142,7 +142,7 @@ void main() {
   );
 
   test(
-    'durable save creates masterpiece with audio and cleans up temporary audio file',
+    'durable save creates artwork with audio and cleans up temporary audio file',
     () async {
       final childrenRepo = container.read(childrenRepositoryProvider);
       final childResult = await childrenRepo.create(
@@ -181,7 +181,7 @@ void main() {
       expect(saveResult, isA<ActionSuccess<String>>());
       final mpId = (saveResult as ActionSuccess<String>).value;
 
-      final mpRepo = container.read(masterpiecesRepositoryProvider);
+      final mpRepo = container.read(artworksRepositoryProvider);
       final savedMp = await mpRepo.getById(mpId);
       expect(savedMp, isNotNull);
       expect(savedMp!.hasAudio, isTrue);

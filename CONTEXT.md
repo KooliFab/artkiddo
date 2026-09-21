@@ -4,12 +4,12 @@ This document defines the stable vocabulary used in public code.
 
 ## Core entities
 
-- **Masterpiece**: a photographed piece of a child's artwork. Its immutable
+- **Artwork**: a photographed piece of a child's creative work. Its immutable
   identifier is created locally. `addedAt` is the system time at which it was
   stored; `drawnAt` is the optional date supplied by a parent.
-- **Child**: a local profile to which masterpieces belong.
-- **Story**: optional text attached to a masterpiece.
-- **Audio story**: optional local voice recording attached to a masterpiece.
+- **Child**: a local profile to which artworks belong.
+- **Story**: optional text attached to an artwork.
+- **Audio story**: optional local voice recording attached to an artwork.
 - **Local vault**: the device-owned store for images, audio, and metadata.
 - **Object key**: an opaque identifier returned by an optional remote object
   adapter. It is not a URL and has no format in the public domain model.

@@ -50,7 +50,7 @@ class _DebugSettingsScreenState extends ConsumerState<DebugSettingsScreen> {
 
     setState(() => _isSeeding = true);
     final db = ref.read(appDatabaseProvider);
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
 
     try {
       final count = await seedDebugDemoData(
@@ -116,7 +116,7 @@ class _DebugSettingsScreenState extends ConsumerState<DebugSettingsScreen> {
     if (confirmed != true || !mounted) return;
 
     setState(() => _isDeleting = true);
-    final repo = ref.read(masterpiecesRepositoryProvider);
+    final repo = ref.read(artworksRepositoryProvider);
     final result = await repo.deleteAllPhotos();
 
     if (!mounted) return;

@@ -191,19 +191,19 @@ class _TrashRow extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l10n,
-    String masterpieceId,
+    String artworkId,
   ) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => _PurgeDialog(l10n: l10n, masterpieceId: masterpieceId),
+      builder: (ctx) => _PurgeDialog(l10n: l10n, artworkId: artworkId),
     );
   }
 }
 
 class _PurgeDialog extends ConsumerWidget {
   final AppLocalizations l10n;
-  final String masterpieceId;
-  const _PurgeDialog({required this.l10n, required this.masterpieceId});
+  final String artworkId;
+  const _PurgeDialog({required this.l10n, required this.artworkId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -222,7 +222,7 @@ class _PurgeDialog extends ConsumerWidget {
           style: TextButton.styleFrom(foregroundColor: AppColors.danger),
           onPressed: () {
             Navigator.of(context).pop();
-            ref.read(trashControllerProvider.notifier).purge(masterpieceId);
+            ref.read(trashControllerProvider.notifier).purge(artworkId);
           },
           child: Text(l10n.trashPurge),
         ),

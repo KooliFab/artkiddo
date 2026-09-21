@@ -10,14 +10,14 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../ui/formatters.dart';
 import '../../domain/child.dart';
 import '../children/children_providers.dart';
-import '../../local/repositories/masterpieces_repository.dart';
-import '../../domain/masterpiece.dart';
+import '../../local/repositories/artworks_repository.dart';
+import '../../domain/artwork.dart';
 
-final masterpiecesRepositoryProvider = Provider<MasterpiecesRepository>((ref) {
+final artworksRepositoryProvider = Provider<ArtworksRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final vault = ref.watch(localVaultProvider);
   final capabilities = ref.watch(appCapabilitiesProvider);
-  return DriftMasterpiecesRepository(
+  return DriftArtworksRepository(
     db,
     vault,
     deletionStrategy: capabilities.trash == TrashCapability.local
@@ -144,14 +144,14 @@ final galleryScrollOffsetsProvider = Provider<GalleryScrollOffsets>(
 );
 
 /// Presentation-level artwork tile — distinct from the persisted
-/// [Masterpiece] entity. Path resolution and existence check happen
+/// [Artwork] entity. Path resolution and existence check happen
 /// once per batch here, not per-card.
 class ArtworkTile {
   /// The already-resolved row lets the destination mount its matching
   /// Hero in the first route frame, rather than waiting for a second
   /// database read.
-  final Masterpiece masterpiece;
-  final String masterpieceId;
+  final Artwork artwork;
+  final String artworkId;
   final String childId;
   final String childName;
   final File imageFile;
@@ -168,8 +168,8 @@ class ArtworkTile {
   final double aspectRatio;
 
   const ArtworkTile({
-    required this.masterpiece,
-    required this.masterpieceId,
+    required this.artwork,
+    required this.artworkId,
     required this.childId,
     required this.childName,
     required this.imageFile,
@@ -181,7 +181,7 @@ class ArtworkTile {
     required this.aspectRatio,
   });
 
-  bool get hasAudio => masterpiece.hasAudio;
+  bool get hasAudio => artwork.hasAudio;
 }
 
 /// Keeps the gallery stable while images load. Ratios are computed
@@ -217,7 +217,7 @@ class GalleryTilesState {
   const GalleryTilesState({required this.tiles, required this.totalCount});
 }
 
-/// Watches masterpieces for the current filter and joins them with
+/// Watches artworks for the current filter and joins them with
 /// their child, resolving file paths and computing ages once per
 /// emission.
 final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
@@ -226,7 +226,7 @@ final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
     AllChildren() => null,
     OneChild(childId: final id) => id,
   };
-  final repository = ref.watch(masterpiecesRepositoryProvider);
+  final repository = ref.watch(artworksRepositoryProvider);
   final vault = ref.watch(localVaultProvider);
   final aspectRatioCache = ref.watch(imageAspectRatioCacheProvider);
   final locale = ref.watch(effectiveLocaleProvider);
@@ -241,9 +241,9 @@ final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
       ..addEntries(list.map((c) => MapEntry(c.id, c)));
   }, fireImmediately: true);
 
-  await for (final masterpieces in repository.watch(childId: childId)) {
+  await for (final artworks in repository.watch(childId: childId)) {
     final tiles = <ArtworkTile>[];
-    for (final m in masterpieces) {
+    for (final m in artworks) {
       final child = childrenById[m.childId];
       // The grid reads the thumbnail derivative, falling back to the
       // untouched original when no derivative has been generated yet
@@ -265,8 +265,8 @@ final galleryTilesProvider = StreamProvider<GalleryTilesState>((ref) async* {
           : await aspectRatioCache.forFile(file, exists: exists);
       tiles.add(
         ArtworkTile(
-          masterpiece: m,
-          masterpieceId: m.id,
+          artwork: m,
+          artworkId: m.id,
           childId: m.childId,
           childName: child?.name ?? '',
           imageFile: file,

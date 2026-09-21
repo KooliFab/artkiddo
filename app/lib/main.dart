@@ -28,7 +28,7 @@ Future<void> main() async {
   await seedDebugDemoData(
     db: container.read(appDatabaseProvider),
     createArtwork: (childId, sourceImageFile, addedAt, story) =>
-        DriftMasterpiecesRepository(
+        DriftArtworksRepository(
           container.read(appDatabaseProvider),
           container.read(localVaultProvider),
         ).create(

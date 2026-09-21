@@ -22,10 +22,14 @@ void main() {
   late LocalVault vault;
   late ProviderContainer container;
   late String childId;
+  String? callbackArtworkId;
+  var callbackShouldThrow = false;
 
   const entry = CaptureEntry(origin: CaptureOrigin.galleryFab);
 
   setUp(() async {
+    callbackArtworkId = null;
+    callbackShouldThrow = false;
     tempRoot = await Directory.systemTemp.createTemp(
       'artkiddo_capture_regression_test_',
     );
@@ -40,6 +44,14 @@ void main() {
       overrides: [
         appDatabaseProvider.overrideWith((ref) => db),
         localVaultProvider.overrideWith((ref) => vault),
+        compositionActionsProvider.overrideWithValue(
+          CompositionActions(
+            onArtworkSaved: (id) async {
+              callbackArtworkId = id;
+              if (callbackShouldThrow) throw StateError('callback failure');
+            },
+          ),
+        ),
       ],
     );
 
@@ -64,6 +76,48 @@ void main() {
     await file.writeAsString('fake-bytes');
     return file;
   }
+
+  test(
+    'calls onArtworkSaved after the durable local save and keeps outbox intact',
+    () async {
+      final controller = container.read(
+        captureControllerProvider(entry).notifier,
+      );
+      final file = await makeSourceImage('callback.jpg');
+
+      await controller.photoPicked(file.path);
+      controller.confirmPhoto();
+      controller.selectChild(childId);
+      final result = await controller.save();
+      expect(result, isA<ActionSuccess<String>>());
+
+      await Future<void>.delayed(Duration.zero);
+      final savedId = (result as ActionSuccess<String>).value;
+      expect(callbackArtworkId, savedId);
+      expect(await SyncOutboxRepository(db).countPending(), greaterThan(0));
+    },
+  );
+
+  test(
+    'a failing callback never turns a successful local save into a failure',
+    () async {
+      callbackShouldThrow = true;
+      final controller = container.read(
+        captureControllerProvider(entry).notifier,
+      );
+      final file = await makeSourceImage('callback-failure.jpg');
+
+      await controller.photoPicked(file.path);
+      controller.confirmPhoto();
+      controller.selectChild(childId);
+      final result = await controller.save();
+
+      expect(result, isA<ActionSuccess<String>>());
+      await Future<void>.delayed(Duration.zero);
+      expect(callbackArtworkId, isNotNull);
+      expect(await SyncOutboxRepository(db).countPending(), greaterThan(0));
+    },
+  );
 
   test(
     'save() stays retryable after a failure — "Réessayer" is not inert forever (D09)',

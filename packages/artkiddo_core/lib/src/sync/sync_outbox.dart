@@ -4,10 +4,10 @@ import '../local/database/app_database.dart';
 
 /// The two entity kinds the outbox (and the rest of the sync engine)
 /// knows about. A plain `String` on the Drift row (`'child'` /
-/// `'masterpiece'`), typed here so callers never hand-roll the literal.
+/// `'artwork'`), typed here so callers never hand-roll the literal.
 enum SyncEntityKind {
   child('child'),
-  masterpiece('masterpiece');
+  artwork('artwork');
 
   final String wireName;
   const SyncEntityKind(this.wireName);
@@ -24,7 +24,7 @@ enum SyncOutboxOp {
 /// The replayable send queue.
 ///
 /// Every mutating repository method (`ChildrenRepository.create/update/
-/// delete`, `MasterpiecesRepository.create/updateStory/updateDrawnAt/
+/// delete`, `ArtworksRepository.create/updateStory/updateDrawnAt/
 /// delete`) calls [enqueue] **inside the same Drift transaction** as
 /// its own write — the only way an app kill mid-write can never leave
 /// a change made durable locally without a matching outbox entry (or
@@ -48,7 +48,7 @@ class SyncOutboxRepository {
   /// A `delete` supersedes any still-pending `upsert` for the same
   /// entity (no point pushing content that is about to be deleted) —
   /// those are removed first. Duplicate consecutive entries of the
-  /// *same* op are collapsed to one: re-editing a masterpiece's story
+  /// *same* op are collapsed to one: re-editing an artwork's story
   /// five times before the first push drains queues exactly one
   /// `upsert`, not five.
   Future<void> enqueue({

@@ -6,7 +6,7 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 
 class _FakeChildRow {
   final String id;
-  final String foyerId;
+  final String familyId;
   final String name;
   final DateTime birthDate;
   final DateTime createdAt;
@@ -14,7 +14,7 @@ class _FakeChildRow {
   final DateTime? deletedAt;
   const _FakeChildRow({
     required this.id,
-    required this.foyerId,
+    required this.familyId,
     required this.name,
     required this.birthDate,
     required this.createdAt,
@@ -28,7 +28,7 @@ class _FakeChildRow {
     bool clearDeletedAt = false,
   }) => _FakeChildRow(
     id: id,
-    foyerId: foyerId,
+    familyId: familyId,
     name: name,
     birthDate: birthDate,
     createdAt: createdAt,
@@ -37,9 +37,9 @@ class _FakeChildRow {
   );
 }
 
-class _FakeMasterpieceRow {
+class _FakeArtworkRow {
   final String id;
-  final String foyerId;
+  final String familyId;
   final String childId;
   final String? displayObjectKey;
   final String? thumbnailObjectKey;
@@ -54,9 +54,9 @@ class _FakeMasterpieceRow {
   final int byteSize;
   final int? imageWidth;
   final int? imageHeight;
-  const _FakeMasterpieceRow({
+  const _FakeArtworkRow({
     required this.id,
-    required this.foyerId,
+    required this.familyId,
     required this.childId,
     required this.displayObjectKey,
     required this.thumbnailObjectKey,
@@ -73,10 +73,10 @@ class _FakeMasterpieceRow {
     this.deletedAt,
   });
 
-  _FakeMasterpieceRow copyWith({DateTime? updatedAt, DateTime? deletedAt}) =>
-      _FakeMasterpieceRow(
+  _FakeArtworkRow copyWith({DateTime? updatedAt, DateTime? deletedAt}) =>
+      _FakeArtworkRow(
         id: id,
-        foyerId: foyerId,
+        familyId: familyId,
         childId: childId,
         displayObjectKey: displayObjectKey,
         thumbnailObjectKey: thumbnailObjectKey,
@@ -95,14 +95,14 @@ class _FakeMasterpieceRow {
 }
 
 class FakeHomeCloudApi extends SyncBackend {
-  final Map<String, String> membership = {}; // userId -> foyerId
+  final Map<String, String> membership = {}; // userId -> familyId
   final Map<String, _FakeChildRow> _children = {};
-  final Map<String, _FakeMasterpieceRow> _masterpieces = {};
+  final Map<String, _FakeArtworkRow> _artworks = {};
   int _clock = 0;
 
   String? currentUserId;
 
-  Object? throwOnNextMasterpieceUpsert;
+  Object? throwOnNextArtworkUpsert;
 
   DateTime _tick() {
     _clock += 1;
@@ -110,28 +110,28 @@ class FakeHomeCloudApi extends SyncBackend {
   }
 
   @override
-  Future<String> ensureMyFoyer() async {
+  Future<String> ensureMyFamily() async {
     final uid = currentUserId;
     if (uid == null) {
       throw StateError(
-        'FakeHomeCloudApi.currentUserId must be set before calling ensureMyFoyer()',
+        'FakeHomeCloudApi.currentUserId must be set before calling ensureMyFamily()',
       );
     }
     final existing = membership[uid];
     if (existing != null) return existing;
-    final foyerId =
-        'foyer-${membership.values.toSet().length + 1}-${DateTime.now().microsecondsSinceEpoch}';
-    membership[uid] = foyerId;
-    return foyerId;
+    final familyId =
+        'family-${membership.values.toSet().length + 1}-${DateTime.now().microsecondsSinceEpoch}';
+    membership[uid] = familyId;
+    return familyId;
   }
 
-  void seedMembership(String userId, String foyerId) =>
-      membership[userId] = foyerId;
+  void seedMembership(String userId, String familyId) =>
+      membership[userId] = familyId;
 
   @override
   Future<void> upsertChild({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String name,
     required DateTime birthDate,
     required DateTime createdAt,
@@ -144,7 +144,7 @@ class FakeHomeCloudApi extends SyncBackend {
     }
     _children[id] = _FakeChildRow(
       id: id,
-      foyerId: foyerId,
+      familyId: familyId,
       name: name,
       birthDate: birthDate,
       createdAt: existing?.createdAt ?? createdAt,
@@ -160,9 +160,9 @@ class FakeHomeCloudApi extends SyncBackend {
   }
 
   @override
-  Future<void> upsertMasterpiece({
+  Future<void> upsertArtwork({
     required String id,
-    required String foyerId,
+    required String familyId,
     required String childId,
     required String displayObjectKey,
     String? thumbnailObjectKey,
@@ -177,20 +177,20 @@ class FakeHomeCloudApi extends SyncBackend {
     int? imageWidth,
     int? imageHeight,
   }) async {
-    if (throwOnNextMasterpieceUpsert != null) {
-      final e = throwOnNextMasterpieceUpsert!;
-      throwOnNextMasterpieceUpsert = null;
+    if (throwOnNextArtworkUpsert != null) {
+      final e = throwOnNextArtworkUpsert!;
+      throwOnNextArtworkUpsert = null;
       throw e;
     }
-    final existing = _masterpieces[id];
+    final existing = _artworks[id];
     if (existing != null && existing.deletedAt != null) {
       throw const DeletedRowUpdateRejectedException(
         'C06_DELETED_ROW_UPDATE_REJECTED: fake',
       );
     }
-    _masterpieces[id] = _FakeMasterpieceRow(
+    _artworks[id] = _FakeArtworkRow(
       id: id,
-      foyerId: foyerId,
+      familyId: familyId,
       childId: childId,
       displayObjectKey: displayObjectKey,
       thumbnailObjectKey: thumbnailObjectKey,
@@ -208,37 +208,31 @@ class FakeHomeCloudApi extends SyncBackend {
   }
 
   @override
-  Future<void> softDeleteMasterpiece(String id) async {
-    final existing = _masterpieces[id];
+  Future<void> softDeleteArtwork(String id) async {
+    final existing = _artworks[id];
     if (existing == null) return;
-    _masterpieces[id] = existing.copyWith(
-      updatedAt: _tick(),
-      deletedAt: _tick(),
-    );
+    _artworks[id] = existing.copyWith(updatedAt: _tick(), deletedAt: _tick());
   }
 
   @override
-  Future<void> softDeleteMasterpiecesForChild(String childId) async {
+  Future<void> softDeleteArtworksForChild(String childId) async {
     for (final mp
-        in _masterpieces.values
+        in _artworks.values
             .where((m) => m.childId == childId && m.deletedAt == null)
             .toList()) {
-      _masterpieces[mp.id] = mp.copyWith(
-        updatedAt: _tick(),
-        deletedAt: _tick(),
-      );
+      _artworks[mp.id] = mp.copyWith(updatedAt: _tick(), deletedAt: _tick());
     }
   }
 
   @override
   Future<List<RemoteChildRow>> pullChildren({
-    required String foyerId,
+    required String familyId,
     DateTime? since,
   }) async {
     return _children.values
         .where(
           (c) =>
-              c.foyerId == foyerId &&
+              c.familyId == familyId &&
               (since == null || c.updatedAt.isAfter(since)),
         )
         .map(
@@ -255,18 +249,18 @@ class FakeHomeCloudApi extends SyncBackend {
   }
 
   @override
-  Future<List<RemoteMasterpieceRow>> pullMasterpieces({
-    required String foyerId,
+  Future<List<RemoteArtworkRow>> pullArtworks({
+    required String familyId,
     DateTime? since,
   }) async {
-    return _masterpieces.values
+    return _artworks.values
         .where(
           (m) =>
-              m.foyerId == foyerId &&
+              m.familyId == familyId &&
               (since == null || m.updatedAt.isAfter(since)),
         )
         .map(
-          (m) => RemoteMasterpieceRow(
+          (m) => RemoteArtworkRow(
             id: m.id,
             childId: m.childId,
             displayObjectKey: m.displayObjectKey,
@@ -289,30 +283,30 @@ class FakeHomeCloudApi extends SyncBackend {
 
   final Map<String, DateTime> _purgeLog = {};
 
-  void purgeMasterpiece(String id) {
-    _masterpieces.remove(id);
+  void purgeArtwork(String id) {
+    _artworks.remove(id);
     _purgeLog[id] = _tick();
   }
 
   @override
-  Future<List<PurgedMasterpieceRow>> pullPurgedMasterpieceIds({
-    required String foyerId,
+  Future<List<PurgedArtworkRow>> pullPurgedArtworkIds({
+    required String familyId,
     DateTime? since,
   }) async {
     return _purgeLog.entries
         .where((e) => since == null || e.value.isAfter(since))
-        .map((e) => PurgedMasterpieceRow(id: e.key, purgedAt: e.value))
+        .map((e) => PurgedArtworkRow(id: e.key, purgedAt: e.value))
         .toList();
   }
 
   // Test-only introspection.
   bool childExists(String id) => _children.containsKey(id);
   bool childIsDeleted(String id) => _children[id]?.deletedAt != null;
-  bool masterpieceExists(String id) => _masterpieces.containsKey(id);
-  bool masterpieceIsDeleted(String id) => _masterpieces[id]?.deletedAt != null;
-  String? masterpieceStory(String id) => _masterpieces[id]?.story;
-  int masterpiecesInFoyer(String foyerId) =>
-      _masterpieces.values.where((m) => m.foyerId == foyerId).length;
+  bool artworkExists(String id) => _artworks.containsKey(id);
+  bool artworkIsDeleted(String id) => _artworks[id]?.deletedAt != null;
+  String? artworkStory(String id) => _artworks[id]?.story;
+  int artworksInFamily(String familyId) =>
+      _artworks.values.where((m) => m.familyId == familyId).length;
 }
 
 class FakeObjectUploader implements ObjectUploader {
@@ -324,7 +318,7 @@ class FakeObjectUploader implements ObjectUploader {
   @override
   Future<String> uploadDerivative({
     required List<int> bytes,
-    required String masterpieceId,
+    required String artworkId,
     required ObjectVariant variant,
     String? childId,
     String? fileName,
@@ -333,7 +327,7 @@ class FakeObjectUploader implements ObjectUploader {
       throw const QuotaExceededException();
     }
     uploadCount++;
-    final key = 'fake/$masterpieceId/${variant.name}.jpg';
+    final key = 'fake/$artworkId/${variant.name}.jpg';
     objects[key] = Uint8List.fromList(bytes);
     return key;
   }

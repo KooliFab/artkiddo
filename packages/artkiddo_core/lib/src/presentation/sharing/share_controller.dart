@@ -193,7 +193,7 @@ class ShareController extends Notifier<ShareState> {
 
   Future<bool> _childHasSyncedArtworks() async {
     final artworks = await ref
-        .read(masterpiecesRepositoryProvider)
+        .read(artworksRepositoryProvider)
         .watch(childId: args.childId)
         .first;
     return artworks.any((artwork) => artwork.syncState == SyncState.synced);

@@ -11,7 +11,7 @@ The offline-first public core package (`artkiddo_core`) contains the domain mode
 
 Under the consolidation architecture:
 - **Generic never knows specific**: `artkiddo_core` owns the complete visual and interactive presentation for all neutral features (Gallery, Artwork viewer/editor, Capture flow, Audio recording, Children/Trash management, Settings About/Language, and account-free Share & Family interfaces).
-- **Core declares slots, compositions fill them**: generic controllers and screens declare honest default affordances and abstract hooks (`GalleryActions`, `CompositionActions`, `foyerConvergenceProvider`, `RemoteMediaFetcher`). When a destination or capability is unsupported in local offline mode, affordances are hidden or display honest account-free interfaces—they never crash or present inert broken controls.
+- **Core declares slots, compositions fill them**: generic controllers and screens declare honest default affordances and abstract hooks (`GalleryActions`, `CompositionActions`, `familyConvergenceProvider`, `RemoteMediaFetcher`). When a destination or capability is unsupported in local offline mode, affordances are hidden or display honest account-free interfaces—they never crash or present inert broken controls.
 - Application compositions may override these contracts via typed Riverpod
   overrides and action callbacks to connect optional external features. The
   public core does not name or implement those external services.

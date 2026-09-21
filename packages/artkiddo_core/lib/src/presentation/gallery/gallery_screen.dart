@@ -574,7 +574,7 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
 
     // Resolve display image file for a sharp zoom preview if already downloaded
     File previewFile = widget.tile.imageFile;
-    final bestPath = widget.tile.masterpiece.bestDisplayImagePath;
+    final bestPath = widget.tile.artwork.bestDisplayImagePath;
     if (bestPath != null) {
       try {
         final vault = ref.read(localVaultProvider);
@@ -608,7 +608,7 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
     try {
       final vault = ref.read(localVaultProvider);
       File? audioFile;
-      final relPath = widget.tile.masterpiece.relativeAudioPath;
+      final relPath = widget.tile.artwork.relativeAudioPath;
       if (relPath != null) {
         final f = await vault.resolveFile(relPath);
         if (f.existsSync()) {
@@ -617,12 +617,12 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
       }
 
       if (audioFile == null &&
-          !widget.tile.masterpiece.isAudioLocal &&
-          widget.tile.masterpiece.hasAudio) {
+          !widget.tile.artwork.isAudioLocal &&
+          widget.tile.artwork.hasAudio) {
         final fetcher = ref.read(remoteMediaFetcherProvider);
-        await fetcher.ensureAudioDownloaded(widget.tile.masterpieceId);
-        final repo = ref.read(masterpiecesRepositoryProvider);
-        final updated = await repo.getById(widget.tile.masterpieceId);
+        await fetcher.ensureAudioDownloaded(widget.tile.artworkId);
+        final repo = ref.read(artworksRepositoryProvider);
+        final updated = await repo.getById(widget.tile.artworkId);
         if (updated?.relativeAudioPath != null) {
           final f = await vault.resolveFile(updated!.relativeAudioPath!);
           if (f.existsSync()) {
@@ -688,7 +688,7 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
       button: true,
       label: label,
       child: Hero(
-        tag: 'artwork-${widget.tile.masterpieceId}',
+        tag: 'artwork-${widget.tile.artworkId}',
         child: Material(
           color: Colors.transparent,
           child: GestureDetector(
@@ -701,8 +701,8 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => ArtworkScreen(
-                    masterpieceId: widget.tile.masterpieceId,
-                    initialMasterpiece: widget.tile.masterpiece,
+                    artworkId: widget.tile.artworkId,
+                    initialArtwork: widget.tile.artwork,
                     initialHeroFile: widget.tile.imageFile,
                   ),
                 ),

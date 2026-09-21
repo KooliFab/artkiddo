@@ -854,6 +854,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGroupApp => 'App';
 
   @override
+  String get settingsNotificationsRow => 'Notifications';
+
+  @override
+  String get settingsNotificationsEnabled => 'Enabled';
+
+  @override
+  String get settingsNotificationsNotRequested => 'Not requested';
+
+  @override
+  String get settingsNotificationsDenied => 'Denied';
+
+  @override
+  String get settingsNotificationsUnavailable => 'Unavailable';
+
+  @override
+  String get settingsNotificationsEnabledMessage => 'Notifications enabled.';
+
+  @override
+  String get settingsNotificationsDeniedMessage =>
+      'Allow notifications in your device settings to follow backup status.';
+
+  @override
+  String get settingsNotificationsRequestError =>
+      'Unable to update notification permission.';
+
+  @override
   String get settingsGroupDocuments => 'Documents';
 
   @override
@@ -984,6 +1010,69 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get familyJoinInvalidCode =>
       'This code doesn\'t exist. Check it and try again.';
+
+  @override
+  String get familyJoinConfirmTitle => 'Join a different family?';
+
+  @override
+  String get familyJoinConfirmIntro =>
+      'This device can only be linked to one family at a time.';
+
+  @override
+  String familyJoinImpactChildren(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count children',
+      one: '1 child',
+      zero: 'No children',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String familyJoinImpactArtworks(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count artworks',
+      one: '1 artwork',
+      zero: 'no artworks',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyJoinInviteInsteadHint =>
+      'Wanted to share your artworks with someone instead? Give them your invite code, shown above — you\'ll keep everything.';
+
+  @override
+  String get familyJoinConfirmPurgeWarning =>
+      'You\'re the only active member of your current family. Joining another family will permanently delete all of its children, artworks and cloud content.';
+
+  @override
+  String get familyJoinConfirmLeaveWarning =>
+      'You\'re leaving your current family. Its content stays available to its other members, but you\'ll lose access to it and it will be removed from this device.';
+
+  @override
+  String get familyJoinConfirmCheckFailedWarning =>
+      'Couldn\'t check the state of your current family. Retry before continuing.';
+
+  @override
+  String get familyJoinConfirmCheck => 'I understand this action is permanent.';
+
+  @override
+  String get familyJoinConfirmAction => 'Join and delete everything';
+
+  @override
+  String get familyJoinConfirmActionLeave => 'Join and leave';
+
+  @override
+  String get familyJoinDiscarding => 'Preparing your device…';
+
+  @override
+  String get familyJoinResetError =>
+      'The family switch succeeded, but this device couldn\'t be reset.';
 
   @override
   String get familyScanButton => 'Scan a code';
@@ -1384,10 +1473,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorUnavailableBody => 'This action isn\'t available yet.';
 
   @override
-  String get errorFoyerMismatchTitle => 'This device is linked elsewhere';
+  String get errorFamilyMismatchTitle => 'This device is linked elsewhere';
 
   @override
-  String get errorFoyerMismatchBody =>
+  String get errorFamilyMismatchBody =>
       'This vault is already linked to a different household. Sign out to keep working locally, or contact us to start a new vault for this account.';
 
   @override

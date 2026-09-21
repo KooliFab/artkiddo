@@ -1082,6 +1082,38 @@
   "@settingsGroupApp": {
     "description": "Localized user-facing copy."
   },
+  "settingsNotificationsRow": "Notifications",
+  "@settingsNotificationsRow": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsEnabled": "Activées",
+  "@settingsNotificationsEnabled": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsNotRequested": "Non demandées",
+  "@settingsNotificationsNotRequested": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsDenied": "Refusées",
+  "@settingsNotificationsDenied": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsUnavailable": "Indisponibles",
+  "@settingsNotificationsUnavailable": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsEnabledMessage": "Notifications activées.",
+  "@settingsNotificationsEnabledMessage": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsDeniedMessage": "Autorisez les notifications dans les réglages de l'appareil pour suivre l'état des sauvegardes.",
+  "@settingsNotificationsDeniedMessage": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsNotificationsRequestError": "Impossible de mettre à jour l'autorisation des notifications.",
+  "@settingsNotificationsRequestError": {
+    "description": "Localized user-facing copy."
+  },
   "settingsGroupDocuments": "Documents",
   "@settingsGroupDocuments": {
     "description": "Localized user-facing copy."
@@ -1262,6 +1294,68 @@
   "@familyJoinInvalidCode": {
     "description": "Localized user-facing copy."
   },
+  "familyJoinConfirmTitle": "Rejoindre une autre famille ?",
+  "@familyJoinConfirmTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmIntro": "Cet appareil ne peut être lié qu'à une seule famille à la fois.",
+  "@familyJoinConfirmIntro": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinImpactChildren": "{count, plural, =0{Aucun enfant} =1{1 enfant} other{{count} enfants}}",
+  "@familyJoinImpactChildren": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "familyJoinImpactArtworks": "{count, plural, =0{aucune œuvre} =1{1 œuvre} other{{count} œuvres}}",
+  "@familyJoinImpactArtworks": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "familyJoinInviteInsteadHint": "Vous vouliez plutôt partager vos œuvres avec quelqu'un ? Donnez-lui votre code d'invitation, affiché plus haut — vous garderez tout.",
+  "@familyJoinInviteInsteadHint": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmPurgeWarning": "Vous êtes le seul membre actif de votre famille actuelle. Rejoindre une autre famille supprimera définitivement tous ses enfants, toutes ses œuvres et tout son contenu cloud.",
+  "@familyJoinConfirmPurgeWarning": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmLeaveWarning": "Vous quittez votre famille actuelle. Son contenu reste accessible aux autres membres, mais vous en perdrez l'accès et il sera retiré de cet appareil.",
+  "@familyJoinConfirmLeaveWarning": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmCheckFailedWarning": "Impossible de vérifier l'état de votre famille actuelle. Réessayez avant de continuer.",
+  "@familyJoinConfirmCheckFailedWarning": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmCheck": "J'ai compris que cette action est définitive.",
+  "@familyJoinConfirmCheck": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmAction": "Rejoindre et tout supprimer",
+  "@familyJoinConfirmAction": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinConfirmActionLeave": "Rejoindre et quitter",
+  "@familyJoinConfirmActionLeave": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinDiscarding": "Préparation de votre appareil…",
+  "@familyJoinDiscarding": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinResetError": "Le changement de famille a réussi, mais cet appareil n'a pas pu être réinitialisé.",
+  "@familyJoinResetError": {
+    "description": "Localized user-facing copy."
+  },
   "familyScanButton": "Scanner un code",
   "@familyScanButton": {
     "description": "Localized user-facing copy."
@@ -1324,6 +1418,62 @@
   },
   "accountSubmitting": "Connexion…",
   "@accountSubmitting": {
+    "description": "Localized user-facing copy."
+  },
+  "accountForgotPassword": "Mot de passe oublié ?",
+  "@accountForgotPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryTitle": "Réinitialiser votre mot de passe",
+  "@accountRecoveryTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryBody": "Nous vous enverrons un lien si un compte utilise cette adresse courriel.",
+  "@accountRecoveryBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySend": "Envoyer le lien",
+  "@accountRecoverySend": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySending": "Envoi…",
+  "@accountRecoverySending": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentTitle": "Vérifiez votre courriel",
+  "@accountRecoverySentTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoverySentBody": "Si un compte utilise cette adresse, vous recevrez un lien. Vérifiez aussi les indésirables.",
+  "@accountRecoverySentBody": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryNewPassword": "Nouveau mot de passe",
+  "@accountRecoveryNewPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryConfirmPassword": "Confirmer le mot de passe",
+  "@accountRecoveryConfirmPassword": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdate": "Choisir ce mot de passe",
+  "@accountRecoveryUpdate": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdating": "Mise à jour…",
+  "@accountRecoveryUpdating": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryMismatch": "Les mots de passe ne correspondent pas.",
+  "@accountRecoveryMismatch": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryUpdated": "Votre mot de passe a été mis à jour.",
+  "@accountRecoveryUpdated": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRecoveryError": "La demande n’a pas abouti. Réessayez plus tard.",
+  "@accountRecoveryError": {
     "description": "Localized user-facing copy."
   },
   "accountErrorInvalidCredentials": "Adresse ou mot de passe incorrect.",
@@ -1717,12 +1867,12 @@
   "@errorUnavailableBody": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchTitle": "Cet appareil est lié ailleurs",
-  "@errorFoyerMismatchTitle": {
+  "errorFamilyMismatchTitle": "Cet appareil est lié ailleurs",
+  "@errorFamilyMismatchTitle": {
     "description": "Localized user-facing copy."
   },
-  "errorFoyerMismatchBody": "Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.",
-  "@errorFoyerMismatchBody": {
+  "errorFamilyMismatchBody": "Ce coffre est déjà lié à un autre foyer. Déconnectez-vous pour continuer en local, ou contactez-nous pour démarrer un nouveau coffre avec ce compte.",
+  "@errorFamilyMismatchBody": {
     "description": "Localized user-facing copy."
   },
   "errorQuotaExceededTitle": "Espace de stockage du foyer atteint",

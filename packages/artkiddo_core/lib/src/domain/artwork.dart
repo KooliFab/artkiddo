@@ -1,15 +1,15 @@
 import 'child.dart';
 
-/// Sentinel used by [Masterpiece.copyWith] to distinguish an omitted
+/// Sentinel used by [Artwork.copyWith] to distinguish an omitted
 /// argument from an explicit `null`. Not exported.
 const Object _unset = Object();
 
-class Masterpiece {
+class Artwork {
   final String id; // UUIDv4
   final String childId;
 
   /// Path inside the local vault to the untouched original.
-  /// **Nullable**: non-null for every masterpiece captured on this
+  /// **Nullable**: non-null for every artwork captured on this
   /// device; null for one known only through `pull` — the original
   /// never leaves the device that captured it, so a restored/converged
   /// row has no original to point to here, only whatever derivatives
@@ -46,14 +46,14 @@ class Masterpiece {
   final int? imageHeight;
 
   /// Optional child voice note (recorded story) attached to the
-  /// masterpiece.
+  /// artwork.
   final String? relativeAudioPath;
   final int? audioDurationMs;
   final int audioByteSize;
 
   final SyncState syncState;
 
-  const Masterpiece({
+  const Artwork({
     required this.id,
     required this.childId,
     this.relativeImagePath,
@@ -86,7 +86,7 @@ class Masterpiece {
   String? get bestThumbnailImagePath =>
       thumbnailImagePath ?? relativeImagePath ?? displayImagePath;
 
-  /// True once every image this masterpiece will ever have on this
+  /// True once every image this artwork will ever have on this
   /// device (original, display, or thumbnail) is definitively absent
   /// and not pending — i.e. [syncState] is [SyncState.downloadFailed].
   /// Used by the gallery to distinguish "still downloading" (show a
@@ -95,7 +95,7 @@ class Masterpiece {
   /// from [bestThumbnailImagePath].
   bool get imageDownloadFailed => syncState == SyncState.downloadFailed;
 
-  /// True if this masterpiece has an audio story attached (either
+  /// True if this artwork has an audio story attached (either
   /// locally or remotely).
   bool get hasAudio => audioDurationMs != null || relativeAudioPath != null;
 
@@ -107,7 +107,7 @@ class Masterpiece {
   /// cleared, a value → replaced. `addedAt` has no such sentinel — it
   /// is never cleared, only ever kept or replaced wholesale, matching
   /// its "never modifiable" contract.
-  Masterpiece copyWith({
+  Artwork copyWith({
     String? id,
     String? childId,
     String? relativeImagePath,
@@ -123,7 +123,7 @@ class Masterpiece {
     int? audioByteSize,
     SyncState? syncState,
   }) {
-    return Masterpiece(
+    return Artwork(
       id: id ?? this.id,
       childId: childId ?? this.childId,
       relativeImagePath: relativeImagePath ?? this.relativeImagePath,

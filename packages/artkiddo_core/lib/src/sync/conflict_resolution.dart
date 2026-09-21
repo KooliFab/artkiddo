@@ -40,7 +40,7 @@ class PullApplyPlan<T> {
 ///
 /// [idOf]/[updatedAtOf] extract the identity and server timestamp from
 /// each row (works for both `RemoteChildRow` and
-/// `RemoteMasterpieceRow` without either needing a shared interface).
+/// `RemoteArtworkRow` without either needing a shared interface).
 /// [pendingLocalIds] is the current outbox's set of entity ids with an
 /// unpushed local change for this entity kind
 /// (`SyncOutboxRepository.pendingEntityIds`).

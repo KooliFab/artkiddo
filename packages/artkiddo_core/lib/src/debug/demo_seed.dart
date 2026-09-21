@@ -110,11 +110,8 @@ Future<int> seedDebugDemoData({
       final result = await createArtwork(childId, source, addedAt, story);
       if (result case ActionSuccess(value: final id)) {
         createdCount++;
-        await (db.update(
-          db.masterpiecesTable,
-        )..where((t) => t.id.equals(id))).write(
-          const MasterpiecesTableCompanion(syncState: Value('synced')),
-        );
+        await (db.update(db.artworksTable)..where((t) => t.id.equals(id)))
+            .write(const ArtworksTableCompanion(syncState: Value('synced')));
         await (db.delete(
           db.syncOutboxTable,
         )..where((t) => t.entityId.equals(id))).go();

@@ -1,6 +1,6 @@
 library;
 
-/// Thrown by the neutral [NoFoyerApi] when household-scoped work is
+/// Thrown by the neutral [NoFamilyApi] when household-scoped work is
 /// attempted in a composition that never enabled the `household` capability.
 /// The public core still declares this provider (with this honest default)
 /// so widgets never read a capability-owned provider directly; the exception
@@ -14,21 +14,21 @@ class HouseholdUnavailableException implements Exception {
       'HouseholdUnavailableException: no household composition is bound';
 }
 
-enum FoyerMemberRole { parent, contributeur }
+enum FamilyMemberRole { parent, contributor }
 
-extension FoyerMemberRoleWire on FoyerMemberRole {
+extension FamilyMemberRoleWire on FamilyMemberRole {
   String get wireName =>
-      this == FoyerMemberRole.parent ? 'parent' : 'contributeur';
+      this == FamilyMemberRole.parent ? 'parent' : 'contributor';
 }
 
 class FamilyInfo {
-  final String foyerId;
+  final String familyId;
   final String? name;
   final String code;
-  final FoyerMemberRole role;
+  final FamilyMemberRole role;
 
   const FamilyInfo({
-    required this.foyerId,
+    required this.familyId,
     this.name,
     required this.code,
     required this.role,
@@ -39,35 +39,62 @@ enum RedeemState { ok, invalidCode }
 
 class RedeemOutcome {
   final RedeemState state;
-  final String? foyerId;
-  final FoyerMemberRole? role;
+  final String? familyId;
+  final FamilyMemberRole? role;
 
-  const RedeemOutcome({required this.state, this.foyerId, this.role});
+  /// The redeemed code belonged to the caller's own current family: no
+  /// membership change happened, and [vaultReset] is always false.
+  final bool sameFamily;
+
+  /// True only when a previous family was actually discarded as part of
+  /// this redemption ([FamilyApi.redeemInvite]'s `discardPrevious`, honored
+  /// and non-trivial). The local vault can only ever be bound to one
+  /// family at a time (see `VaultMetaRepository.attachFamily`), so a true
+  /// value means the caller must erase its local vault before converging
+  /// against the newly joined family.
+  final bool vaultReset;
+
+  const RedeemOutcome({
+    required this.state,
+    this.familyId,
+    this.role,
+    this.sameFamily = false,
+    this.vaultReset = false,
+  });
 }
 
-class FoyerMembership {
-  final String foyerId;
-  final FoyerMemberRole role;
+class FamilyMembership {
+  final String familyId;
+  final FamilyMemberRole role;
 
-  const FoyerMembership({required this.foyerId, required this.role});
+  const FamilyMembership({required this.familyId, required this.role});
 }
 
-abstract class FoyerApi {
+abstract class FamilyApi {
   Future<FamilyInfo> getFamilyInfo();
   Future<void> renameFamily(String name);
-  Future<FoyerMembership?> currentMembership();
-  Future<RedeemOutcome> redeemInvite({required String code});
-  Future<int> activeMemberCount(String foyerId);
+  Future<FamilyMembership?> currentMembership();
+
+  /// Redeems [code]. When [discardPrevious] is true and the caller was an
+  /// active member of a different family, that family is left in the same
+  /// server transaction as the join, and purged — content and remote
+  /// storage — if the departure leaves it with zero active members. See
+  /// [RedeemOutcome.vaultReset] for what this implies locally.
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  });
+  Future<int> activeMemberCount(String familyId);
 }
 
-/// Default implementation when no composition has bound a real [FoyerApi].
+/// Default implementation when no composition has bound a real [FamilyApi].
 ///
 /// It never fabricates a household: every member throws
 /// [HouseholdUnavailableException]. `currentMembership()` is the one
 /// exception — returning `null` ("no membership") is a truthful answer on
 /// its own, not a stand-in for a household that was never bound.
-final class NoFoyerApi implements FoyerApi {
-  const NoFoyerApi();
+final class NoFamilyApi implements FamilyApi {
+  const NoFamilyApi();
 
   @override
   Future<FamilyInfo> getFamilyInfo() async {
@@ -80,15 +107,18 @@ final class NoFoyerApi implements FoyerApi {
   }
 
   @override
-  Future<FoyerMembership?> currentMembership() async => null;
+  Future<FamilyMembership?> currentMembership() async => null;
 
   @override
-  Future<RedeemOutcome> redeemInvite({required String code}) async {
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  }) async {
     throw const HouseholdUnavailableException();
   }
 
   @override
-  Future<int> activeMemberCount(String foyerId) async {
+  Future<int> activeMemberCount(String familyId) async {
     throw const HouseholdUnavailableException();
   }
 }

@@ -49,7 +49,7 @@ void main() {
                 'webGalleryLinks requires a CompositionActions.openGalleryShare',
               ),
               contains('remoteBackup requires a RemoteMediaFetcher binding'),
-              contains('household requires a FoyerApi binding'),
+              contains('household requires a FamilyApi binding'),
               contains('webGalleryLinks requires a SharingService binding'),
               contains('webGalleryLinks requires a ShareBackup binding'),
             ),
@@ -59,7 +59,7 @@ void main() {
     });
 
     test(
-      'a cloud composition missing only the FoyerApi binding is rejected',
+      'a cloud composition missing only the FamilyApi binding is rejected',
       () {
         expect(
           () => ArtKiddoBootstrap.createContainer(
@@ -86,7 +86,7 @@ void main() {
             isA<BootstrapConfigurationException>().having(
               (error) => error.failures,
               'failures',
-              equals(['household requires a FoyerApi binding']),
+              equals(['household requires a FamilyApi binding']),
             ),
           ),
         );
@@ -101,7 +101,7 @@ void main() {
               remoteMediaFetcherProvider.overrideWithValue(
                 _StubRemoteMediaFetcher(),
               ),
-              foyerApiProvider.overrideWithValue(_StubFoyerApi()),
+              familyApiProvider.overrideWithValue(_StubFamilyApi()),
               sharingServiceProvider.overrideWithValue(_StubSharingService()),
               shareBackupProvider.overrideWithValue(
                 (childId) async => const ActionSuccess(null),
@@ -134,7 +134,7 @@ void main() {
             remoteMediaFetcherProvider.overrideWithValue(
               _StubRemoteMediaFetcher(),
             ),
-            foyerApiProvider.overrideWithValue(_StubFoyerApi()),
+            familyApiProvider.overrideWithValue(_StubFamilyApi()),
             sharingServiceProvider.overrideWithValue(_StubSharingService()),
             shareBackupProvider.overrideWithValue(
               (childId) async => const ActionSuccess(null),
@@ -156,7 +156,7 @@ void main() {
         container.read(remoteMediaFetcherProvider),
         isNot(isA<NoRemoteMediaFetcher>()),
       );
-      expect(container.read(foyerApiProvider), isNot(isA<NoFoyerApi>()));
+      expect(container.read(familyApiProvider), isNot(isA<NoFamilyApi>()));
       expect(
         container.read(sharingServiceProvider),
         isNot(isA<NoSharingService>()),
@@ -167,29 +167,31 @@ void main() {
 
 final class _StubRemoteMediaFetcher implements RemoteMediaFetcher {
   @override
-  Future<bool> ensureAudioDownloaded(String masterpieceId) async => true;
+  Future<bool> ensureAudioDownloaded(String artworkId) async => true;
 }
 
-final class _StubFoyerApi implements FoyerApi {
+final class _StubFamilyApi implements FamilyApi {
   @override
   Future<FamilyInfo> getFamilyInfo() async => const FamilyInfo(
-    foyerId: 'stub',
+    familyId: 'stub',
     code: '000000',
-    role: FoyerMemberRole.parent,
+    role: FamilyMemberRole.parent,
   );
 
   @override
   Future<void> renameFamily(String name) async {}
 
   @override
-  Future<FoyerMembership?> currentMembership() async => null;
+  Future<FamilyMembership?> currentMembership() async => null;
 
   @override
-  Future<RedeemOutcome> redeemInvite({required String code}) async =>
-      const RedeemOutcome(state: RedeemState.invalidCode);
+  Future<RedeemOutcome> redeemInvite({
+    required String code,
+    bool discardPrevious = false,
+  }) async => const RedeemOutcome(state: RedeemState.invalidCode);
 
   @override
-  Future<int> activeMemberCount(String foyerId) async => 1;
+  Future<int> activeMemberCount(String familyId) async => 1;
 }
 
 final class _StubSharingService implements SharingService {

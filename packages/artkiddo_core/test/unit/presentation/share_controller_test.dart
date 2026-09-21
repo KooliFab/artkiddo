@@ -91,17 +91,17 @@ void main() {
     testChildId = (childRes as ActionSuccess<String>).value;
     args = ShareArgs(childId: testChildId, childName: 'Alice');
 
-    final masterRepo = container.read(masterpiecesRepositoryProvider);
+    final masterRepo = container.read(artworksRepositoryProvider);
     final dummyFile = File(p.join(tempRoot.path, 'dummy.jpg'));
     await dummyFile.writeAsBytes([1, 2, 3]);
-    final masterpieceRes = await masterRepo.create(
+    final artworkRes = await masterRepo.create(
       childId: testChildId,
       sourceImageFile: dummyFile,
       addedAt: DateTime.now(),
     );
-    final masterpieceId = (masterpieceRes as ActionSuccess<String>).value;
+    final artworkId = (artworkRes as ActionSuccess<String>).value;
     // Mark synced
-    await masterRepo.markSynced(masterpieceId);
+    await masterRepo.markSynced(artworkId);
   }
 
   setUp(() async {
@@ -117,7 +117,7 @@ void main() {
     sharingService = _FakeSharingService();
     backupAction = (childId) async => const ActionSuccess(null);
 
-    // Insert child and a synced masterpiece
+    // Insert child and a synced artwork
     await initContainer();
   });
 
@@ -249,7 +249,7 @@ void main() {
       final image = File(p.join(tempRoot.path, 'second.jpg'));
       await image.writeAsBytes([1, 2, 3]);
       final artwork = await container
-          .read(masterpiecesRepositoryProvider)
+          .read(artworksRepositoryProvider)
           .create(
             childId: childId,
             sourceImageFile: image,
@@ -278,9 +278,7 @@ void main() {
         expect(requestedChildId, childId);
         calls++;
         await gate.future;
-        await container
-            .read(masterpiecesRepositoryProvider)
-            .markSynced(artworkId);
+        await container.read(artworksRepositoryProvider).markSynced(artworkId);
         return const ActionFailed(ServiceFailure());
       };
       final first = controller.backupNow();

@@ -12,7 +12,7 @@ import '../navigation/composition_actions.dart';
 import '../../contracts/remote_media.dart';
 import '../../contracts/household.dart';
 import '../../contracts/gallery_sharing.dart';
-import '../foyer/foyer_controller.dart' show foyerApiProvider;
+import '../family/family_controller.dart' show familyApiProvider;
 import '../sharing/share_controller.dart'
     show sharingServiceProvider, shareBackupProvider;
 import '../../local/repositories/trash_repository.dart';
@@ -72,8 +72,8 @@ abstract final class ArtKiddoBootstrap {
       failures.add('remoteBackup requires a RemoteMediaFetcher binding');
     }
     if (capabilities.household &&
-        container.read(foyerApiProvider) is NoFoyerApi) {
-      failures.add('household requires a FoyerApi binding');
+        container.read(familyApiProvider) is NoFamilyApi) {
+      failures.add('household requires a FamilyApi binding');
     }
     if (capabilities.webGalleryLinks &&
         container.read(sharingServiceProvider) is NoSharingService) {
@@ -114,7 +114,7 @@ abstract final class ArtKiddoBootstrap {
     );
     unawaited(
       container
-          .read(masterpiecesRepositoryProvider)
+          .read(artworksRepositoryProvider)
           .backfillMissingDerivatives()
           .then((summary) {
             Log.i(

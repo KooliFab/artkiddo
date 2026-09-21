@@ -19,11 +19,10 @@ import 'package:path/path.dart' as p;
 import 'package:artkiddo_core/artkiddo_core.dart';
 
 /// Depot qui echoue le nombre de fois demande, puis delegue reellement.
-class _FlakyMasterpieces implements MasterpiecesRepository {
-  _FlakyMasterpieces(this._inner, {required int failures})
-    : _remaining = failures;
+class _FlakyArtworks implements ArtworksRepository {
+  _FlakyArtworks(this._inner, {required int failures}) : _remaining = failures;
 
-  final MasterpiecesRepository _inner;
+  final ArtworksRepository _inner;
   int _remaining;
 
   @override
@@ -46,7 +45,7 @@ void main() {
   late Directory dir;
   late AppDatabase db;
   late LocalVault vault;
-  late DriftMasterpiecesRepository masterpieces;
+  late DriftArtworksRepository artworks;
   late DriftChildrenRepository children;
 
   setUp(() async {
@@ -56,7 +55,7 @@ void main() {
     );
     vault = LocalVault(documentsDirProvider: () async => dir);
     children = DriftChildrenRepository(db, vault);
-    masterpieces = DriftMasterpiecesRepository(db, vault);
+    artworks = DriftArtworksRepository(db, vault);
   });
 
   tearDown(() async {
@@ -75,24 +74,24 @@ void main() {
 
       final source = File(p.join(dir.path, 'src.jpg'))
         ..writeAsBytesSync(List<int>.filled(64, 7));
-      final art = await masterpieces.create(
+      final art = await artworks.create(
         childId: childId,
         sourceImageFile: source,
         addedAt: DateTime(2026, 9, 3),
       );
       final artId = (art as ActionSuccess<String>).value;
 
-      final flaky = _FlakyMasterpieces(masterpieces, failures: 1);
+      final flaky = _FlakyArtworks(artworks, failures: 1);
 
       // Premier essai : echec annonce comme tel, aucune ecriture.
       final first = await flaky.updateStory(id: artId, story: 'Un chat bleu');
       expect(first, isA<ActionFailed<void>>());
-      expect((await masterpieces.getById(artId))!.story, isNull);
+      expect((await artworks.getById(artId))!.story, isNull);
 
       // Second essai, sans rien reinitialiser : il doit aboutir.
       final second = await flaky.updateStory(id: artId, story: 'Un chat bleu');
       expect(second, isA<ActionSuccess<void>>());
-      expect((await masterpieces.getById(artId))!.story, 'Un chat bleu');
+      expect((await artworks.getById(artId))!.story, 'Un chat bleu');
     },
   );
 }

@@ -66,12 +66,12 @@ class UnknownFailure extends AppFailure {
   const UnknownFailure({super.cause, super.stack});
 }
 
-class FoyerMismatchFailure extends AppFailure {
-  final String vaultFoyerId;
-  final String authenticatedFoyerId;
-  const FoyerMismatchFailure({
-    required this.vaultFoyerId,
-    required this.authenticatedFoyerId,
+class FamilyMismatchFailure extends AppFailure {
+  final String vaultFamilyId;
+  final String authenticatedFamilyId;
+  const FamilyMismatchFailure({
+    required this.vaultFamilyId,
+    required this.authenticatedFamilyId,
     super.cause,
     super.stack,
   });
