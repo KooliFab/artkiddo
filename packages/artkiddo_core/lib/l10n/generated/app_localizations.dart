@@ -1588,6 +1588,12 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Outils de débogage'**
+  String get settingsDebugRow;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Politique de confidentialité'**
   String get settingsPrivacyRow;
 
@@ -2651,7 +2657,7 @@ abstract class AppLocalizations {
   ///
   /// In fr, this message translates to:
   /// **'Synchroniser les photos'**
-  String get familyHubSyncPhotos;
+  String get gallerySyncPhotos;
 
   /// Localized user-facing copy.
   ///

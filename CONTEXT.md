@@ -13,6 +13,15 @@ This document defines the stable vocabulary used in public code.
 - **Local vault**: the device-owned store for images, audio, and metadata.
 - **Object key**: an opaque identifier returned by an optional remote object
   adapter. It is not a URL and has no format in the public domain model.
+- **Family**: the household a local vault is attached to. A vault is bound to
+  at most one at a time; joining another requires erasing it first.
+- **Member**: a person in a family. Their access `role` (parent, contributor)
+  is the authorization model; their `relationLabel` ("Papy", "Tata") is a
+  display label only and authorizes nothing.
+- **Attribution** (`Artwork.addedBy`): which member photographed a piece. It
+  is a member identifier, not a name — names are resolved from the roster at
+  render time, and an artwork with no known author shows none rather than
+  guessing.
 
 ## Invariants
 
@@ -25,3 +34,6 @@ This document defines the stable vocabulary used in public code.
    deletion is intentionally irreversible.
 6. The public model does not promise a backup, remote availability, or remote
    access control. Those are private-product concerns.
+7. Family, member and attribution are meaningful only under the `household`
+   capability. Without it the local vault has one implicit owner, attribution
+   stays null, and nothing in the UI implies a household exists.

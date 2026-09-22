@@ -40,7 +40,9 @@ void main() {
           isA<BootstrapConfigurationException>().having(
             (error) => error.failures,
             'failures',
-            allOf(
+            // A list, not positional args: `allOf` caps at 7 of those and
+            // this composition is missing 8 bindings.
+            allOf([
               contains(
                 'remoteAccount requires a CompositionActions.openAccount',
               ),
@@ -49,10 +51,11 @@ void main() {
                 'webGalleryLinks requires a CompositionActions.openGalleryShare',
               ),
               contains('remoteBackup requires a RemoteMediaFetcher binding'),
+              contains('remoteBackup requires a CompositionActions.syncPhotos'),
               contains('household requires a FamilyApi binding'),
               contains('webGalleryLinks requires a SharingService binding'),
               contains('webGalleryLinks requires a ShareBackup binding'),
-            ),
+            ]),
           ),
         ),
       );
@@ -77,6 +80,7 @@ void main() {
                     openAccount: (context) {},
                     openFamilyHub: (context) {},
                     openGalleryShare: (context, childId, childName) {},
+                    syncPhotos: (context) {},
                   ),
                 ),
               ],
@@ -110,6 +114,7 @@ void main() {
                 CompositionActions(
                   openAccount: (context) {},
                   openFamilyHub: (context) {},
+                  syncPhotos: (context) {},
                 ),
               ),
             ],
@@ -122,6 +127,42 @@ void main() {
             equals([
               'webGalleryLinks requires a CompositionActions.openGalleryShare',
             ]),
+          ),
+        ),
+      );
+    });
+
+    test('a cloud composition missing only the sync action is rejected', () {
+      // remoteBackup drives the gallery's manual-sync control. Enabling the
+      // capability without binding the action used to start normally and
+      // ship background backup with no user-visible trigger.
+      expect(
+        () => ArtKiddoBootstrap.createContainer(
+          cloudConfig(
+            overrides: [
+              remoteMediaFetcherProvider.overrideWithValue(
+                _StubRemoteMediaFetcher(),
+              ),
+              familyApiProvider.overrideWithValue(_StubFamilyApi()),
+              sharingServiceProvider.overrideWithValue(_StubSharingService()),
+              shareBackupProvider.overrideWithValue(
+                (childId) async => const ActionSuccess(null),
+              ),
+              compositionActionsProvider.overrideWithValue(
+                CompositionActions(
+                  openAccount: (context) {},
+                  openFamilyHub: (context) {},
+                  openGalleryShare: (context, childId, childName) {},
+                ),
+              ),
+            ],
+          ),
+        ),
+        throwsA(
+          isA<BootstrapConfigurationException>().having(
+            (error) => error.failures,
+            'failures',
+            equals(['remoteBackup requires a CompositionActions.syncPhotos']),
           ),
         ),
       );
@@ -144,6 +185,7 @@ void main() {
                 openAccount: (context) {},
                 openFamilyHub: (context) {},
                 openGalleryShare: (context, childId, childName) {},
+                syncPhotos: (context) {},
               ),
             ),
           ],

@@ -48,12 +48,18 @@ void main() {
     container
         .read(pendingIntentProvider.notifier)
         .pose(const ShareChildGalleryIntent('child-A'));
-    container.read(pendingIntentProvider.notifier).pose(const SyncNowIntent());
+    container
+        .read(pendingIntentProvider.notifier)
+        .pose(const ShareChildGalleryIntent('child-B'));
 
     final consumed = container.read(pendingIntentProvider.notifier).consume();
     expect(
       consumed,
-      isA<SyncNowIntent>(),
+      isA<ShareChildGalleryIntent>().having(
+        (i) => i.childId,
+        'childId',
+        'child-B',
+      ),
       reason: 'only one intent slot exists; the later pose wins',
     );
   });

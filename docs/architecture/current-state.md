@@ -5,8 +5,8 @@ account-free gallery experience (feed, capture, sharing, and household UI
 behind capability gates). This document is the entry point for a fresh
 conversation; read it before scanning the source tree.
 
-Verified on: 2026-09-20 — HEAD `af37943a20775fa314872205d4cf6d36105c8e58`
-(parent of the clean-name-baseline documentation commit)
+Verified on: 2026-09-22 — separation-of-responsibilities audit pass
+(settings/trash local defaults, one gating rule, schema v2/v3 snapshots)
 
 ## Repository shape
 
@@ -23,14 +23,19 @@ packages/artkiddo_core/
     navigation/                   AppShell, CompositionActions seam
     gallery/                      feed, capture, artwork detail
     sharing/                      web gallery-link screens and controller
-    family/                       household screens and controller
-    children/, settings/, ui/, theme/, locale/, utils/
+    family/                       invite/join screen and household controller
+    settings/                     SettingsScreen and its local-only rows
+    children/, ui/, theme/, locale/, utils/
   test/                           local persistence, sync, and presentation tests
 docs/                             ADRs, operating rules, generated inventory
 ```
 
-`app/lib/main.dart` creates only `AppCapabilities.local`. It does not require
-an account, environment values, network, database server, or object storage.
+`app/lib/main.dart` creates only `AppCapabilities.local` and overrides no
+provider at all. It does not require an account, environment values, network,
+database server, or object storage. That empty override list is load-bearing:
+every destination the account-free build needs is a local default inside the
+core (ADR 0016), so an override appearing here would mean something local-only
+has drifted behind a capability.
 
 ## Visual overview — local application
 
@@ -39,7 +44,7 @@ flowchart TD
   App["app/lib/main.dart\nlocal composition"] --> Bootstrap["ArtKiddoBootstrap\ncapabilities + providers"]
   Bootstrap --> UI["Core presentation\ngallery · capture · trash · local sharing"]
   UI --> Repos["Local repositories\nchildren + artworks"]
-  Repos --> DB["AppDatabase\nDrift schema v1"]
+  Repos --> DB["AppDatabase\nDrift schema v3"]
   Repos --> Vault["LocalVault\noriginals · derivatives · audio"]
   DB --> Outbox["SyncOutbox + cursors\npresent but inactive locally"]
   Vault --> Rescue["VaultRescueExport\nfile-only ZIP, no database"]
@@ -60,9 +65,12 @@ provider or protocol details.
    cannot be enabled without its required `CloudService`.
 2. `_validateComposition` checks what the `overrides` *actually produced* —
    reading `compositionActionsProvider`, `remoteMediaFetcherProvider`,
-   `familyApiProvider`, and `sharingServiceProvider` after construction, and
-   rejecting the container if an enabled capability has no real binding
-   behind it.
+   `familyApiProvider`, `sharingServiceProvider` and `shareBackupProvider`
+   after construction, and rejecting the container if an enabled capability
+   has no real binding behind it. It pairs `remoteAccount` with `openAccount`,
+   `household` with `openFamilyHub` and a `FamilyApi`, `webGalleryLinks` with
+   `openGalleryShare`, a `SharingService` and a `ShareBackup`, and
+   `remoteBackup` with both a `RemoteMediaFetcher` and `syncPhotos`.
 
 This second check exists because the first cannot see a composition that
 enables a capability and then forgets to override its provider — that
@@ -75,9 +83,19 @@ Every optional provider the core declares (`remoteMediaFetcherProvider`,
 defaults to an honest local implementation — `NoRemoteMediaFetcher`,
 `NoFamilyApi`, `NoSharingService`, `CompositionActions.none` — none of which
 fabricate remote state. `NoFamilyApi`/`NoSharingService` throw or return a
-typed `ActionFailed` failure rather than a fake success; `CompositionActions`
-simply renders nothing when an action is null. An application composition
-overrides exactly the providers its enabled capabilities need.
+typed `ActionFailed` failure rather than a fake success. An application
+composition overrides exactly the providers its enabled capabilities need.
+
+A `CompositionActions` entry does one of two jobs, and ADR 0016 fixes which:
+
+- a **capability-gated** action (`openGalleryShare`, `syncPhotos`,
+  `openAccount`) is half of a pair with its capability — missing either half
+  means the control is not rendered, and the bootstrap rejects a build where
+  the two disagree;
+- a **local-default** action (`openSettings`, `openFamilyHub`) *substitutes* a
+  destination the core already has (`SettingsScreen`, `ChildrenScreen`). The
+  control renders either way, so a local-only feature can never disappear
+  because a composition did not bind something.
 
 ## Dependency direction
 
@@ -97,13 +115,19 @@ reconstructs the database.
 
 ## Local persistence
 
-`AppDatabase` is Drift schema v1, a deliberate clean baseline. Its physical
+`AppDatabase` is Drift schema v3. v1 was a deliberate clean baseline (ADR
+0007); v2 added `vault_meta.join_reset_pending`, the durable marker that lets
+an interrupted family switch recover, and v3 added `artworks.added_by`, the
+attribution of who photographed a piece. Both are additive `addColumn` steps,
+each with its own snapshot under `drift_schemas/` and covered by
+`test/unit/local_data/migration_test.dart` — every starting version upgraded
+to the current one, plus a row-preservation check. Its physical
 tables are `children`, `artworks`, `sync_outbox`, `vault_meta`,
 `pending_file_cleanups`, and `share_link_url_cache`. `ChildrenTable` and
 `ArtworksTable` persist the account-free experience. The artwork table stores
 neutral opaque object keys only (`display_object_key`, `thumbnail_object_key`,
 `audio_object_key`); their meaning and lifecycle belong to an external
-implementation. There is no upgrade path from an earlier local vault: those
+implementation. There is no upgrade path from a pre-v1 local vault: those
 databases are unsupported and must be cleared before running this build.
 
 `LocalVault` owns local image and audio files. Local deletion is recoverable for
@@ -114,8 +138,10 @@ write.
 optionally adds in-flight capture files, splits ZIPs around 3.5 GB, and shares
 the archives through the native share sheet. It can recover originals even when
 `AppDatabase` is unreadable; in return, the archive contains no child, date, or
-story metadata because that information lives in SQLite. The single schema
-snapshot `drift_schemas/drift_schema_v1.json` pins the baseline shape.
+story metadata because that information lives in SQLite. `drift_schemas/`
+holds one snapshot per schema version; they pin the physical shape and are
+what the migration tests validate against, so a forgotten upgrade branch
+fails rather than silently dropping a column.
 
 ## Key local flows
 
@@ -172,6 +198,15 @@ success depend on a provider or network.
 - `CompositionActions.onArtworkSaved` is the corresponding post-commit seam for
   provider-specific upload scheduling; it has no effect in the local
   composition and does not change the local save result.
+- `CompositionActions.syncPhotos` is the user's only handle on `remoteBackup`.
+  It is a bare callback because this package models no sync status: the
+  composition runs the sync and reports progress and outcome itself. The
+  bootstrap rejects a `remoteBackup` composition without it, so the capability
+  can never ship as background-only work with no visible trigger.
+
+`AuthGateway` used to sit here as a third identity contract. It had no
+provider, no default and no caller, and duplicated `FamilyApi`'s `UserProfile`;
+it has been removed rather than left as a seam that looked supported.
 
 Contracts intentionally do not name a database, object store, endpoint,
 authentication system, transport, or remote payload format.
@@ -187,7 +222,9 @@ authentication system, transport, or remote payload format.
 
 ## Rules that must remain true
 
-- The local application works without account, configuration, or network.
+- The local application works without account, configuration, or network, and
+  without the composition binding a single provider. Every `local-only` row of
+  `feature-matrix.md` is reachable from `AppCapabilities.local` alone.
 - Public code contains no provider SDK, credentials, remote identifier, wire
   parser, or monetization.
 - There is no implicit fallback between remote and local authority — enforced

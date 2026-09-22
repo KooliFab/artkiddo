@@ -85,8 +85,9 @@ class SyncOutboxTable extends Table {
 class VaultMetaTable extends Table {
   TextColumn get id => text()();
   TextColumn get familyId => text().nullable().named('family_id')();
-  BoolColumn get joinResetPending =>
-      boolean().withDefault(const Constant(false)).named('join_reset_pending')();
+  BoolColumn get joinResetPending => boolean()
+      .withDefault(const Constant(false))
+      .named('join_reset_pending')();
 
   DateTimeColumn get lastPullCursor => dateTime().nullable()();
   DateTimeColumn get childrenPullCursor =>

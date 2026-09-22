@@ -42,22 +42,41 @@ all code in the public repository after the split.
 
 ## Capabilities and presentation
 
-- Validate capability/service combinations before `runApp`.
+- Validate capability/service combinations before `runApp`. A capability with a
+  user-facing control must be paired with that control's binding in
+  `_validateComposition`, not only with its service.
 - Check capability availability before constructing or reading its provider.
+- Gate a control on its capability *and* its binding, never on the binding
+  alone: a bare null check turns a forgotten override into a silently missing
+  feature (ADR 0016).
+- Never gate a `local-only` feature on a `CompositionActions` entry. Give it a
+  local default the composition may substitute, so it survives a composition
+  that binds nothing.
 - Hide unavailable remote actions or provide an honest local alternative. Do
-  not show disabled controls that imply a broken service.
+  not show disabled controls that imply a broken service. A control whose
+  disabled state is unreachable by construction is a sign it is gated in the
+  wrong place.
 - Keep native sharing separate from remote gallery-link sharing.
 - Cover loading, empty, error, retry, double-submit, navigation-away, semantic
   labels, focus, contrast, and French/English formatting where affected.
-- Put user-facing text in localization resources, not inline strings.
+- Put user-facing text in localization resources, not inline strings. The one
+  exception is `DebugSettingsScreen`, which is `kDebugMode`-only and
+  developer-facing; nothing shipped to a user may follow its example.
+- The core keeps localization keys for surfaces a composition renders (account,
+  family settings, notifications), because `AppLocalizations` is the shared
+  translation source. A key is dead only when no composition can render it —
+  a control the core deleted, not one it delegated. Name a key after the
+  surface that renders it: a `familyHub*` key on the gallery means one of the
+  two moved and the other did not follow.
 
 ## Data, sync, and files
 
-- The local database is a clean-break baseline (`schemaVersion = 1`, ADR 0007):
-  no migration history is retained and no upgrade path from a prior schema is
-  supported. Give every Drift schema change an exported schema snapshot,
-  integrity check, forward-only production recovery plan, and realistic
-  fixture. A migration test applies only once a second schema version exists.
+- The local database began with a clean-break v1 baseline (ADR 0007): there is
+  no upgrade path from schemas that predate v1. From v2 onward, maintain every
+  supported forward migration. Give every Drift schema change an exported
+  schema snapshot, integrity check, forward-only production recovery plan, and
+  realistic fixture; cover every supported starting version with a migration
+  test.
 - Make active-record queries explicitly exclude soft-deleted rows.
 - Keep slow image/audio/network work outside database transactions.
 - Use write-then-rename or an equivalent atomic file strategy; persist deferred

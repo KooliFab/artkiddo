@@ -12,17 +12,12 @@ Future<void> main() async {
       capabilities: AppCapabilities.local,
       cloudServices: null,
       environment: AppEnvironment.local,
-      overrides: [
-        compositionActionsProvider.overrideWithValue(
-          CompositionActions(
-            openFamilyHub: (context) {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const ChildrenScreen()),
-              );
-            },
-          ),
-        ),
-      ],
+      // The account-free composition overrides nothing. Every destination it
+      // needs — children, settings, language, about, trash — is a local
+      // default inside the core, reachable without a capability or a bound
+      // action (ADR 0016). An override here would mean this build depends on
+      // something the core cannot guarantee on its own.
+      overrides: const [],
     ),
   );
   await seedDebugDemoData(

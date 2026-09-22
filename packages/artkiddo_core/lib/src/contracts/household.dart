@@ -16,11 +16,6 @@ class HouseholdUnavailableException implements Exception {
 
 enum FamilyMemberRole { parent, contributor }
 
-extension FamilyMemberRoleWire on FamilyMemberRole {
-  String get wireName =>
-      this == FamilyMemberRole.parent ? 'parent' : 'contributor';
-}
-
 class FamilyInfo {
   final String familyId;
   final String? name;

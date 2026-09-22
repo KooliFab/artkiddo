@@ -17,7 +17,10 @@ import '../../local/storage/vault_rescue_export.dart';
 import '../children/child_editor_controller.dart';
 import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
+import '../children/children_screen.dart';
+import '../config/app_capabilities.dart';
 import '../providers/core_providers.dart';
+import '../settings/settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/filter_chip_row.dart';
 import '../ui/state_block.dart';
@@ -181,34 +184,61 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ? 24
       : 12;
 
-  /// The app bar's optional actions, left to right: sync, family, settings.
-  /// Each appears only when the composition offers it, so the trailing margin
-  /// is applied positionally: the last visible action carries the screen
-  /// margin on its right, every earlier one only a small gap.
+  /// The app bar's actions, left to right: share, sync, people, settings.
+  ///
+  /// Two rules, and only two, decide whether a control is rendered — mixing
+  /// them was how a capability-backed action ended up on a bare null check:
+  ///
+  /// * **Capability-gated** (share, sync): shown only when the capability is
+  ///   enabled *and* the composition bound the action. Both halves are
+  ///   required because `ArtKiddoBootstrap` guarantees they agree, so either
+  ///   one missing means the feature genuinely is not part of this build.
+  /// * **Local-default** (people, settings): always shown, because each has an
+  ///   honest account-free destination inside this package. The matching
+  ///   `CompositionActions` entry *substitutes* a richer surface; it does not
+  ///   gate the control (ADR 0016).
+  ///
+  /// The trailing margin is positional: the last visible action carries the
+  /// screen margin on its right, every earlier one a single-step gap.
   List<Widget> _appBarActions(
     BuildContext context,
-    CompositionActions actions,
-    double width,
-  ) {
+    AppCapabilities capabilities,
+    CompositionActions actions, {
+    required double width,
+    required bool shareEnabled,
+    required VoidCallback onShare,
+  }) {
     final buttons = <Widget>[
-      if (actions.syncPhotos != null)
+      if (capabilities.webGalleryLinks && actions.openGalleryShare != null)
+        _ShareButton(enabled: shareEnabled, onPressed: onShare),
+      if (capabilities.remoteBackup && actions.syncPhotos != null)
         _SyncButton(onPressed: () => actions.syncPhotos!(context)),
-      if (actions.openFamilyHub != null)
-        _FamilyButton(onPressed: () => actions.openFamilyHub!(context)),
-      if (actions.openSettings != null)
-        _SettingsButton(onPressed: () => actions.openSettings!(context)),
+      _FamilyButton(
+        opensHousehold: actions.openFamilyHub != null,
+        onPressed: () => actions.openFamilyHub != null
+            ? actions.openFamilyHub!(context)
+            : _pushLocal(context, const ChildrenScreen()),
+      ),
+      _SettingsButton(
+        onPressed: () => actions.openSettings != null
+            ? actions.openSettings!(context)
+            : _pushLocal(context, const SettingsScreen()),
+      ),
     ];
     return [
-      for (var i = 0; i < buttons.length; i++) ...[
-        const SizedBox(width: AppSpacing.s1),
+      for (var i = 0; i < buttons.length; i++)
         Padding(
           padding: EdgeInsets.only(
-            right: i == buttons.length - 1 ? _margin(width) : AppSpacing.s1,
+            left: AppSpacing.s1,
+            right: i == buttons.length - 1 ? _margin(width) : 0,
           ),
           child: buttons[i],
         ),
-      ],
     ];
+  }
+
+  void _pushLocal(BuildContext context, Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   @override
@@ -239,7 +269,18 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               surfaceTintColor: Colors.transparent,
               titleSpacing: _margin(width),
               title: Text('ArtKiddo', style: AppTypography.display),
-              actions: _appBarActions(context, compositionActions, width),
+              actions: _appBarActions(
+                context,
+                capabilities,
+                compositionActions,
+                width: width,
+                // Sharing a gallery link needs at least one artist and a
+                // readable vault. The control stays visible and disabled so
+                // the absence is legible as "nothing to share yet" rather
+                // than as a missing feature.
+                shareEnabled: hasArtists && !vaultUnreadable,
+                onShare: () => _share(context, children, filter),
+              ),
             ),
             if (children.length > 1)
               SliverPersistentHeader(
@@ -249,12 +290,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     children: children,
                     filter: filter,
                     margin: _margin(width),
-                    shareEnabled: hasArtists && !vaultUnreadable,
-                    onShare:
-                        capabilities.webGalleryLinks &&
-                            compositionActions.openGalleryShare != null
-                        ? () => _share(context, children, filter)
-                        : null,
                     onSelect: (next) {
                       ref.read(galleryFilterProvider.notifier).setFilter(next);
                       WidgetsBinding.instance.addPostFrameCallback(
@@ -521,15 +556,11 @@ class _FilterBar extends StatelessWidget {
   final List<Child> children;
   final GalleryFilter filter;
   final double margin;
-  final bool shareEnabled;
-  final VoidCallback? onShare;
   final ValueChanged<GalleryFilter> onSelect;
   const _FilterBar({
     required this.children,
     required this.filter,
     required this.margin,
-    required this.shareEnabled,
-    required this.onShare,
     required this.onSelect,
   });
 
@@ -540,42 +571,28 @@ class _FilterBar extends StatelessWidget {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return ColoredBox(
       color: AppColors.paper,
-      child: Padding(
-        padding: EdgeInsets.only(left: margin, right: margin),
-        child: Row(
-          children: [
-            Expanded(
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(right: AppSpacing.s2),
-                children: [
-                  AppFilterChip(
-                    label: l10n.galleryFilterAll,
-                    selected: filter is AllChildren,
-                    onTap: () => onSelect(const AllChildren()),
-                  ),
-                  for (final child in sorted)
-                    Padding(
-                      padding: const EdgeInsets.only(left: AppSpacing.s2),
-                      child: AppFilterChip(
-                        label: child.name,
-                        selected: switch (filter) {
-                          OneChild(childId: final selectedId) =>
-                            selectedId == child.id,
-                          _ => false,
-                        },
-                        onTap: () => onSelect(OneChild(child.id)),
-                      ),
-                    ),
-                ],
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: margin),
+        children: [
+          AppFilterChip(
+            label: l10n.galleryFilterAll,
+            selected: filter is AllChildren,
+            onTap: () => onSelect(const AllChildren()),
+          ),
+          for (final child in sorted)
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.s2),
+              child: AppFilterChip(
+                label: child.name,
+                selected: switch (filter) {
+                  OneChild(childId: final selectedId) => selectedId == child.id,
+                  _ => false,
+                },
+                onTap: () => onSelect(OneChild(child.id)),
               ),
             ),
-            if (onShare != null) ...[
-              const SizedBox(width: AppSpacing.s2),
-              _ShareButton(enabled: shareEnabled, onPressed: onShare!),
-            ],
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1111,31 +1128,31 @@ class _ShareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.s2),
-      child: TextButton.icon(
-        onPressed: enabled ? onPressed : null,
-        icon: const Icon(Icons.ios_share_outlined, size: 18),
-        label: Text(l10n.shareGalleryHeading),
-        style: TextButton.styleFrom(
-          minimumSize: const Size(48, 44),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          foregroundColor: AppColors.onAccent,
-          backgroundColor: AppColors.share,
-          disabledForegroundColor: AppColors.inkDisabled,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.full),
-          ),
-          textStyle: AppTypography.label,
+    return TextButton.icon(
+      onPressed: enabled ? onPressed : null,
+      icon: const Icon(Icons.ios_share_outlined, size: 18),
+      label: Text(l10n.shareGalleryHeading),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, kMinTapTarget),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        foregroundColor: AppColors.onAccent,
+        backgroundColor: AppColors.share,
+        disabledForegroundColor: AppColors.inkDisabled,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.full),
         ),
+        textStyle: AppTypography.label,
       ),
     );
   }
 }
 
-/// Manual photo sync sits on the gallery's app bar rather than inside the
-/// family hub: it is a one-tap chore, not a family setting. The composition
-/// that binds `syncPhotos` reports progress and outcome.
+/// Manual photo sync is a one-tap chore on the artwork wall, not a family
+/// setting — which is why it is labelled from a gallery-owned key rather
+/// than a `familyHub*` one. Rendered only when `remoteBackup` is enabled
+/// *and* the composition bound `syncPhotos`; that composition runs the sync
+/// and reports progress and outcome itself, since this package models no
+/// sync status.
 class _SyncButton extends StatelessWidget {
   final VoidCallback onPressed;
   const _SyncButton({required this.onPressed});
@@ -1144,7 +1161,7 @@ class _SyncButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return IconButton(
-      tooltip: l10n.familyHubSyncPhotos,
+      tooltip: l10n.gallerySyncPhotos,
       onPressed: onPressed,
       style: IconButton.styleFrom(
         minimumSize: const Size(kMinTapTarget, kMinTapTarget),
@@ -1156,16 +1173,21 @@ class _SyncButton extends StatelessWidget {
   }
 }
 
+/// People surface. Its local default is the children list, so the tooltip
+/// names whichever destination this build actually opens: a composition
+/// substituting a household hub says "Famille", the account-free build says
+/// "Enfants". Labelling the local build "Famille" would promise a household
+/// that no account-free composition has.
 class _FamilyButton extends StatelessWidget {
   final VoidCallback onPressed;
-  const _FamilyButton({required this.onPressed});
+  final bool opensHousehold;
+  const _FamilyButton({required this.onPressed, required this.opensHousehold});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return IconButton(
-      // Settings has its own button now, so this one is just "Famille".
-      tooltip: l10n.familyTitle,
+      tooltip: opensHousehold ? l10n.familyTitle : l10n.childrenTitle,
       onPressed: onPressed,
       style: IconButton.styleFrom(
         minimumSize: const Size(kMinTapTarget, kMinTapTarget),

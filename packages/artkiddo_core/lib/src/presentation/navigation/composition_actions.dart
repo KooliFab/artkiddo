@@ -4,11 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Optional destinations and platform services a composition plugs into the
 /// presentation layer.
 ///
-/// A null entry means the composition offers no such destination, and the
-/// corresponding affordance is not rendered. A composition that enables a
-/// capability must supply the matching entry; `ArtKiddoBootstrap` rejects a
-/// container whose capabilities and actions disagree, so an enabled capability
-/// can never degrade into a silently hidden control.
+/// Capability-gated entries (`openAccount`, `openGalleryShare`, `syncPhotos`)
+/// render only when both their capability and their binding are present. A
+/// composition that enables one must supply its matching entry;
+/// `ArtKiddoBootstrap` rejects a container where those two disagree.
+///
+/// Local-default entries (`openFamilyHub`, `openSettings`) are substitutions:
+/// when null, their controls still render and open the core's local
+/// `ChildrenScreen` or `SettingsScreen`. A composition may replace either
+/// destination, but it must keep the replaced local-only behaviour reachable.
 final class CompositionActions {
   /// Called after an artwork and its durable local sync outbox entry have
   /// been committed. Cloud compositions may use this to schedule remote work;

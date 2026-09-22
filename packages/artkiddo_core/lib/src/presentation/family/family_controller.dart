@@ -183,13 +183,21 @@ class FamilyState {
   }
 }
 
-/// Client-side controller for the unified household screen:
-/// loading/naming the family, sharing its fixed invite code, redeeming
-/// someone else's code, and the join-or-restore handoff to the sync
-/// engine. Deliberately does not decide whether to merge local
-/// artworks into the joined household itself — this controller only
-/// ever calls the convergence hook after a confirmed redemption, and
-/// lets whatever that hook already does happen as-is.
+/// Client-side controller for every household operation the public core
+/// models: loading and naming the family, sharing its fixed invite code,
+/// redeeming someone else's, administering members, and the join-or-restore
+/// handoff to the sync engine.
+///
+/// It is deliberately wider than the one screen this package ships.
+/// [FamilyInviteScreen] renders only the invite/join surface; naming, the
+/// member roster, role and relation-label edits, removal and leaving are
+/// rendered by a household-enabled composition's own family-settings screen,
+/// which drives them through this same controller so both surfaces share one
+/// state machine instead of forking it.
+///
+/// Deliberately does not decide whether to merge local artworks into the
+/// joined household itself — it only ever calls the convergence hook after a
+/// confirmed redemption, and lets whatever that hook already does happen.
 class FamilyController extends Notifier<FamilyState> {
   @override
   FamilyState build() => const FamilyState();
@@ -201,7 +209,11 @@ class FamilyController extends Notifier<FamilyState> {
       final info = await ref.read(familyApiProvider).getFamilyInfo();
       Log.i('Family loaded: ${info.familyId}', 'Family');
       state = state.copyWith(family: const ActionDone(), familyInfo: info);
-      unawaited(loadFamilyMembers());
+      // Deliberately does not chain loadFamilyMembers(). The two are read by
+      // different surfaces now — the invite screen shows the code and never
+      // the roster, while attribution loads the roster without ever needing
+      // the code — so chaining them made each surface pay for the other's
+      // round trip. Callers that need both ask for both.
     } catch (e, st) {
       Log.e('Failed to load family info', e, st, 'Family');
       state = state.copyWith(
@@ -210,8 +222,19 @@ class FamilyController extends Notifier<FamilyState> {
     }
   }
 
-  Future<void> loadFamilyMembers() async {
+  /// Loads the family roster.
+  ///
+  /// Attribution asks for this every time an artwork is opened, so a roster
+  /// already loaded in this session is reused rather than re-fetched: the
+  /// alternative was one network round trip per artwork tap. [force] is for
+  /// callers that just mutated membership and need the server's view again.
+  Future<void> loadFamilyMembers({bool force = false}) async {
     if (state.membersAction.isBusy) return;
+    if (!force &&
+        state.membersAction is ActionDone &&
+        state.members.isNotEmpty) {
+      return;
+    }
     state = state.copyWith(membersAction: const ActionBusy());
     try {
       final members = await ref.read(familyApiProvider).listFamilyMembers();
@@ -266,7 +289,7 @@ class FamilyController extends Notifier<FamilyState> {
       await ref.read(familyApiProvider).removeFamilyMember(userId);
       Log.i('Family member removed', 'Family');
       state = state.copyWith(removeMember: const ActionDone());
-      await loadFamilyMembers();
+      await loadFamilyMembers(force: true);
     } catch (e, st) {
       Log.e('Failed to remove family member', e, st, 'Family');
       state = state.copyWith(

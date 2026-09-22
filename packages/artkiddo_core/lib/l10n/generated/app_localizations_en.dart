@@ -946,6 +946,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAboutRow => 'About';
 
   @override
+  String get settingsDebugRow => 'Debug tools';
+
+  @override
   String get settingsPrivacyRow => 'Privacy policy';
 
   @override
@@ -1565,7 +1568,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyHubTrashRow => 'View deleted photos';
 
   @override
-  String get familyHubSyncPhotos => 'Sync photos';
+  String get gallerySyncPhotos => 'Sync photos';
 
   @override
   String get familySettingsTitle => 'Family settings';

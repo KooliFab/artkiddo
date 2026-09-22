@@ -1210,6 +1210,10 @@
   "@settingsAboutRow": {
     "description": "Localized user-facing copy."
   },
+  "settingsDebugRow": "Outils de débogage",
+  "@settingsDebugRow": {
+    "description": "Localized user-facing copy."
+  },
   "settingsPrivacyRow": "Politique de confidentialité",
   "@settingsPrivacyRow": {
     "description": "Localized user-facing copy."
@@ -1991,8 +1995,8 @@
   "@familyHubTrashRow": {
     "description": "Localized user-facing copy."
   },
-  "familyHubSyncPhotos": "Synchroniser les photos",
-  "@familyHubSyncPhotos": {
+  "gallerySyncPhotos": "Synchroniser les photos",
+  "@gallerySyncPhotos": {
     "description": "Localized user-facing copy."
   },
   "familySettingsTitle": "Réglages famille",
