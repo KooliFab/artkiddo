@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +18,6 @@ import '../children/child_editor_controller.dart';
 import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
 import '../providers/core_providers.dart';
-import '../settings/debug_settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/filter_chip_row.dart';
 import '../ui/state_block.dart';
@@ -183,6 +181,36 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ? 24
       : 12;
 
+  /// The app bar's optional actions, left to right: sync, family, settings.
+  /// Each appears only when the composition offers it, so the trailing margin
+  /// is applied positionally: the last visible action carries the screen
+  /// margin on its right, every earlier one only a small gap.
+  List<Widget> _appBarActions(
+    BuildContext context,
+    CompositionActions actions,
+    double width,
+  ) {
+    final buttons = <Widget>[
+      if (actions.syncPhotos != null)
+        _SyncButton(onPressed: () => actions.syncPhotos!(context)),
+      if (actions.openFamilyHub != null)
+        _FamilyButton(onPressed: () => actions.openFamilyHub!(context)),
+      if (actions.openSettings != null)
+        _SettingsButton(onPressed: () => actions.openSettings!(context)),
+    ];
+    return [
+      for (var i = 0; i < buttons.length; i++) ...[
+        const SizedBox(width: AppSpacing.s1),
+        Padding(
+          padding: EdgeInsets.only(
+            right: i == buttons.length - 1 ? _margin(width) : AppSpacing.s1,
+          ),
+          child: buttons[i],
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -211,32 +239,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               surfaceTintColor: Colors.transparent,
               titleSpacing: _margin(width),
               title: Text('ArtKiddo', style: AppTypography.display),
-              actions: [
-                if (capabilities.webGalleryLinks &&
-                    compositionActions.openGalleryShare != null)
-                  _ShareButton(
-                    enabled: hasArtists && !vaultUnreadable,
-                    onPressed: () => _share(context, children, filter),
-                  ),
-                if (compositionActions.openFamilyHub != null) ...[
-                  const SizedBox(width: AppSpacing.s1),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      right: kDebugMode ? AppSpacing.s1 : _margin(width),
-                    ),
-                    child: _FamilyButton(
-                      onPressed: () =>
-                          compositionActions.openFamilyHub!(context),
-                    ),
-                  ),
-                ],
-                if (kDebugMode) ...[
-                  Padding(
-                    padding: EdgeInsets.only(right: _margin(width)),
-                    child: const _DebugSettingsButton(),
-                  ),
-                ],
-              ],
+              actions: _appBarActions(context, compositionActions, width),
             ),
             if (children.length > 1)
               SliverPersistentHeader(
@@ -246,6 +249,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     children: children,
                     filter: filter,
                     margin: _margin(width),
+                    shareEnabled: hasArtists && !vaultUnreadable,
+                    onShare:
+                        capabilities.webGalleryLinks &&
+                            compositionActions.openGalleryShare != null
+                        ? () => _share(context, children, filter)
+                        : null,
                     onSelect: (next) {
                       ref.read(galleryFilterProvider.notifier).setFilter(next);
                       WidgetsBinding.instance.addPostFrameCallback(
@@ -512,11 +521,15 @@ class _FilterBar extends StatelessWidget {
   final List<Child> children;
   final GalleryFilter filter;
   final double margin;
+  final bool shareEnabled;
+  final VoidCallback? onShare;
   final ValueChanged<GalleryFilter> onSelect;
   const _FilterBar({
     required this.children,
     required this.filter,
     required this.margin,
+    required this.shareEnabled,
+    required this.onShare,
     required this.onSelect,
   });
 
@@ -527,28 +540,42 @@ class _FilterBar extends StatelessWidget {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return ColoredBox(
       color: AppColors.paper,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: margin),
-        children: [
-          AppFilterChip(
-            label: l10n.galleryFilterAll,
-            selected: filter is AllChildren,
-            onTap: () => onSelect(const AllChildren()),
-          ),
-          for (final child in sorted)
-            Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.s2),
-              child: AppFilterChip(
-                label: child.name,
-                selected: switch (filter) {
-                  OneChild(childId: final selectedId) => selectedId == child.id,
-                  _ => false,
-                },
-                onTap: () => onSelect(OneChild(child.id)),
+      child: Padding(
+        padding: EdgeInsets.only(left: margin, right: margin),
+        child: Row(
+          children: [
+            Expanded(
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: AppSpacing.s2),
+                children: [
+                  AppFilterChip(
+                    label: l10n.galleryFilterAll,
+                    selected: filter is AllChildren,
+                    onTap: () => onSelect(const AllChildren()),
+                  ),
+                  for (final child in sorted)
+                    Padding(
+                      padding: const EdgeInsets.only(left: AppSpacing.s2),
+                      child: AppFilterChip(
+                        label: child.name,
+                        selected: switch (filter) {
+                          OneChild(childId: final selectedId) =>
+                            selectedId == child.id,
+                          _ => false,
+                        },
+                        onTap: () => onSelect(OneChild(child.id)),
+                      ),
+                    ),
+                ],
               ),
             ),
-        ],
+            if (onShare != null) ...[
+              const SizedBox(width: AppSpacing.s2),
+              _ShareButton(enabled: shareEnabled, onPressed: onShare!),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1106,6 +1133,29 @@ class _ShareButton extends StatelessWidget {
   }
 }
 
+/// Manual photo sync sits on the gallery's app bar rather than inside the
+/// family hub: it is a one-tap chore, not a family setting. The composition
+/// that binds `syncPhotos` reports progress and outcome.
+class _SyncButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _SyncButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return IconButton(
+      tooltip: l10n.familyHubSyncPhotos,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+        backgroundColor: AppColors.surface,
+        side: const BorderSide(color: AppColors.border),
+      ),
+      icon: const Icon(Icons.cloud_sync_outlined),
+    );
+  }
+}
+
 class _FamilyButton extends StatelessWidget {
   final VoidCallback onPressed;
   const _FamilyButton({required this.onPressed});
@@ -1114,7 +1164,8 @@ class _FamilyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return IconButton(
-      tooltip: l10n.familyHubFamilyAndSettings,
+      // Settings has its own button now, so this one is just "Famille".
+      tooltip: l10n.familyTitle,
       onPressed: onPressed,
       style: IconButton.styleFrom(
         minimumSize: const Size(kMinTapTarget, kMinTapTarget),
@@ -1126,18 +1177,18 @@ class _FamilyButton extends StatelessWidget {
   }
 }
 
-class _DebugSettingsButton extends StatelessWidget {
-  const _DebugSettingsButton();
+/// Global settings live one tap from the gallery, not buried inside the
+/// family hub. The debug-only screen is reached from inside settings.
+class _SettingsButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _SettingsButton({required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return IconButton(
-      tooltip: 'Debug / Réglages',
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const DebugSettingsScreen()),
-        );
-      },
+      tooltip: l10n.settingsTitle,
+      onPressed: onPressed,
       style: IconButton.styleFrom(
         minimumSize: const Size(kMinTapTarget, kMinTapTarget),
         backgroundColor: AppColors.surface,

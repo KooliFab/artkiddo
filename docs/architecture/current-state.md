@@ -153,10 +153,15 @@ success depend on a provider or network.
   same server call as joining a new one — the local vault can only ever be
   bound to one family at a time, so `familyVaultResetProvider` (no-op by
   default, alongside `familyConvergenceProvider`) is where a composition
-  plugs in how to erase it first. `FamilyScreen`'s `_JoinFamilyDialog` is
-  the only path into `FamilyController.redeem`: a read-only local bilan,
+  plugs in how to erase it first. `FamilyInviteScreen`'s `_JoinFamilyDialog`
+  is the only path into `FamilyController.redeem`: a read-only local bilan,
   then an explicit checkbox-gated confirmation, before either code path
-  touches anything.
+  touches anything. `removeFamilyMember`/`updateFamilyMemberRole` are
+  implicitly scoped to the caller's own family, like every other method on
+  this contract, and are administered from an application composition's own
+  family-settings UI, not from `FamilyInviteScreen` itself — that screen is
+  deliberately limited to the invite/join surface, which is why `NoFamilyApi`
+  throws `HouseholdUnavailableException` for both like every other member.
 - `SharingService` models web gallery-link creation, listing, and revocation.
 - `ShareBackup` is an optional presentation action supplied by an application
   composition when gallery links are enabled. The share controller invokes

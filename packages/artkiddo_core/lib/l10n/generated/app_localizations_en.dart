@@ -888,9 +888,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGroupDocuments => 'Documents';
 
   @override
-  String get settingsAccountRow => 'Backup and account';
-
-  @override
   String get settingsAccountOff => 'Not turned on';
 
   @override
@@ -907,9 +904,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return 'Last backup: $dateString';
   }
-
-  @override
-  String get settingsBackupRun => 'Back up now';
 
   @override
   String settingsBackupRunning(int n, int total) {
@@ -961,12 +955,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String settingsVersion(String version) {
     return 'Version $version';
   }
-
-  @override
-  String get settingsGroupFamily => 'Family';
-
-  @override
-  String get familyRow => 'Invite a member';
 
   @override
   String get familyTitle => 'Family';
@@ -1220,20 +1208,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountRoleContributor => 'Contributor';
-
-  @override
-  String get familyMembersTitle => 'Family members';
-
-  @override
-  String familyMemberCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count members',
-      one: '1 member',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get accountSignOut => 'Sign out';
@@ -1551,20 +1525,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyHubAddArtist => 'Add an artist';
 
   @override
-  String get familyHubSectionFamilyBackup => 'Family & backup';
-
-  @override
-  String get familyHubAccountLocalOnly => 'Backup on this device';
-
-  @override
-  String get familyHubAccountLocalSubtitle =>
-      'Activate a private backup whenever you want.';
-
-  @override
-  String get familyHubFamilySubtitle => 'Invite, join or manage the household.';
-
-  @override
   String get familyHubFamilyAndSettings => 'Family & settings';
+
+  @override
+  String get familyHubSectionParents => 'Parents';
+
+  @override
+  String get familyHubSectionContributors => 'Contributors';
+
+  @override
+  String get familyHubSectionOtherMembers => 'Other members';
+
+  @override
+  String get familyHubLeaveFamily => 'Leave family';
+
+  @override
+  String get familyHubLeaveFamilyTitle => 'Leave this family?';
+
+  @override
+  String get familyHubLeaveFamilyBody =>
+      'You will lose access to this family and its shared content. Your local data will not be deleted.';
+
+  @override
+  String get familyHubLeaveFamilyConfirm => 'Leave family';
+
+  @override
+  String get familyMemberRelationLabel => 'Family relationship';
+
+  @override
+  String get familyMemberRelationHint => 'E.g. Uncle, Grandpa, Auntie';
+
+  @override
+  String get familyHubAddMember => 'Add a member';
+
+  @override
+  String get familyHubCreateAccount => 'Create an account or sign in';
+
+  @override
+  String get familyHubTrashRow => 'View deleted photos';
+
+  @override
+  String get familyHubSyncPhotos => 'Sync photos';
+
+  @override
+  String get familySettingsTitle => 'Family settings';
+
+  @override
+  String get familySettingsRemoveMemberTitle => 'Remove this member?';
+
+  @override
+  String get familySettingsRemoveMemberBody =>
+      'This person will lose access to the family and its shared content. Nothing is deleted from their device.';
+
+  @override
+  String get familySettingsRemoveMemberAction => 'Remove';
+
+  @override
+  String get familySettingsMakeParent => 'Make parent';
+
+  @override
+  String get familySettingsMakeContributor => 'Make contributor';
+
+  @override
+  String get familySettingsLastParentError =>
+      'The household must keep at least one active parent.';
+
+  @override
+  String get settingsAccountRowNeutral => 'Sign-in and account';
 
   @override
   String get captureAnecdoteTitle => 'Add a note';

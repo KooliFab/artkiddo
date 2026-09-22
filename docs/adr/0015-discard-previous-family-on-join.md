@@ -8,8 +8,8 @@ throws `FamilyMismatchException` on a mismatch; nothing ever resolved
 that exception). A parent could lose every local child and artwork by
 mis-scanning a code.
 
-`FamilyScreen` now routes both entry points through a single
-`_JoinFamilyDialog`: a read-only local bilan (child/artwork counts,
+`FamilyScreen` (renamed `FamilyInviteScreen`) now routes both entry points
+through a single `_JoinFamilyDialog`: a read-only local bilan (child/artwork counts,
 never a server call) followed by an explicit, checkbox-gated
 acknowledgement. Nothing is touched until that second step is
 confirmed.

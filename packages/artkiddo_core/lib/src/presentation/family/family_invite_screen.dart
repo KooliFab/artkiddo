@@ -14,25 +14,26 @@ import '../ui/app_button.dart';
 import '../ui/state_block.dart';
 import 'family_controller.dart';
 
-/// Single « Famille » screen: family name, fixed invite code (to share, in text or QR),
-/// and section to join another family (manual input or QR scan).
-class FamilyScreen extends ConsumerStatefulWidget {
-  const FamilyScreen({super.key});
+/// Invite-only « Famille » screen: the fixed invite code (to share, in text
+/// or QR), and the section to join another family (manual input or QR
+/// scan). Family naming and the active-members list live in the cloud
+/// composition's family-settings surface, not here — this screen is
+/// deliberately the smallest, fully account-free-safe surface: invite out,
+/// or join in.
+class FamilyInviteScreen extends ConsumerStatefulWidget {
+  const FamilyInviteScreen({super.key});
 
   @override
-  ConsumerState<FamilyScreen> createState() => _FamilyScreenState();
+  ConsumerState<FamilyInviteScreen> createState() => _FamilyInviteScreenState();
 }
 
-class _FamilyScreenState extends ConsumerState<FamilyScreen> {
-  late final TextEditingController _nameController;
+class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
   late final TextEditingController _codeController;
-  String? _lastLoadedName;
 
   @override
   void initState() {
     super.initState();
-    Log.d('📱 [FamilyScreen] Opening', 'Navigation');
-    _nameController = TextEditingController();
+    Log.d('📱 [FamilyInviteScreen] Opening', 'Navigation');
     _codeController = TextEditingController();
     if (!ref.read(appCapabilitiesProvider).household) return;
     Future.microtask(
@@ -42,15 +43,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _codeController.dispose();
     super.dispose();
-  }
-
-  void _syncNameField(FamilyInfo info) {
-    if (_lastLoadedName == info.name) return;
-    _lastLoadedName = info.name;
-    _nameController.text = info.name ?? '';
   }
 
   Future<void> _pasteFromClipboard() async {
@@ -106,8 +100,6 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     final state = ref.watch(familyControllerProvider);
     final controller = ref.read(familyControllerProvider.notifier);
     final info = state.familyInfo;
-    final activeMembers = state.members.where((member) => member.isActive);
-    if (info != null) _syncNameField(info);
     final loading = state.family.isBusy && info == null;
     final canSubmitCode =
         _codeController.text.trim().length >= 6 && !state.redeem.isBusy;
@@ -126,113 +118,6 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        l10n.familyNameLabel,
-                        style: AppTypography.label.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      TextField(
-                        controller: _nameController,
-                        textCapitalization: TextCapitalization.words,
-                        enabled: !state.rename.isBusy,
-                        decoration: InputDecoration(
-                          hintText: l10n.familyNameHint,
-                        ),
-                        onSubmitted: (value) =>
-                            controller.renameFamily(value.trim()),
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      AsyncActionButton(
-                        action: state.rename,
-                        idleLabel: l10n.commonSave,
-                        busyLabel: l10n.commonSaving,
-                        variant: AppButtonVariant.tertiary,
-                        onPressed: () => controller.renameFamily(
-                          _nameController.text.trim(),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s6),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(l10n.familyMembersTitle, style: AppTypography.h3),
-                      const SizedBox(height: AppSpacing.s2),
-                      if (state.members.isEmpty && state.membersAction.isBusy)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(AppSpacing.s3),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      else ...[
-                        for (final member in activeMembers)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.s2,
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: AppColors.surfaceSunken,
-                                  child: Text(
-                                    member.displayName.isNotEmpty
-                                        ? member.displayName[0].toUpperCase()
-                                        : '?',
-                                    style: AppTypography.label,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.s3),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        member.displayName,
-                                        style: AppTypography.bodyStrong,
-                                      ),
-                                      if (member.displayName != member.email)
-                                        Text(
-                                          member.email,
-                                          style: AppTypography.caption.copyWith(
-                                            color: AppColors.inkMuted,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.s2,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        member.role == FamilyMemberRole.parent
-                                        ? AppColors.accentSurface
-                                        : AppColors.surfaceSunken,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadii.sm,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    member.role == FamilyMemberRole.parent
-                                        ? l10n.accountRoleParent
-                                        : l10n.accountRoleContributor,
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.inkMuted,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                      const SizedBox(height: AppSpacing.s6),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.s4),
                       Text(
                         l10n.familyInviteExplain,
                         style: AppTypography.body.copyWith(
@@ -424,8 +309,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
 enum _JoinStep { summary, confirm }
 
 /// Two-step destructive confirmation shown before every join — both entry
-/// points ([_FamilyScreenState._confirmAndJoin]) go through this, never
-/// straight into [FamilyController.redeem]. Pops `true` only once the
+/// points ([_FamilyInviteScreenState._confirmAndJoin]) go through this,
+/// never straight into [FamilyController.redeem]. Pops `true` only once the
 /// user has seen the local-content bilan (step 1) and explicitly
 /// acknowledged the loss (step 2, gated by a checkbox); `false` or a
 /// dismissed dialog means "do nothing".

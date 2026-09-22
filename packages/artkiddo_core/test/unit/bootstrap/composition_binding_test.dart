@@ -194,22 +194,51 @@ final class _StubFamilyApi implements FamilyApi {
   Future<int> activeMemberCount(String familyId) async => 1;
 
   @override
-  Future<UserProfile> getMyProfile() async => const UserProfile(
-        userId: 'stub',
-        email: 'stub@example.com',
-      );
+  Future<UserProfile> getMyProfile() async =>
+      const UserProfile(userId: 'stub', email: 'stub@example.com');
 
   @override
-  Future<UserProfile> updateMyProfile({String? firstName, String? lastName}) async =>
-      UserProfile(
-        userId: 'stub',
-        email: 'stub@example.com',
-        firstName: firstName,
-        lastName: lastName,
-      );
+  Future<UserProfile> updateMyProfile({
+    String? firstName,
+    String? lastName,
+  }) async => UserProfile(
+    userId: 'stub',
+    email: 'stub@example.com',
+    firstName: firstName,
+    lastName: lastName,
+  );
 
   @override
   Future<List<FamilyMember>> listFamilyMembers() async => const [];
+
+  @override
+  Future<void> removeFamilyMember(String userId) async {}
+
+  @override
+  Future<void> leaveFamily() async {}
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRole(
+    String userId,
+    FamilyMemberRole role,
+  ) async => FamilyMember(
+    userId: userId,
+    role: role,
+    email: 'stub@example.com',
+    joinedAt: DateTime(2026),
+  );
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRelationLabel(
+    String userId,
+    String? relationLabel,
+  ) async => FamilyMember(
+    userId: userId,
+    role: FamilyMemberRole.contributor,
+    email: 'stub@example.com',
+    relationLabel: relationLabel,
+    joinedAt: DateTime(2026),
+  );
 }
 
 final class _StubSharingService implements SharingService {

@@ -1127,10 +1127,6 @@
   "@settingsGroupDocuments": {
     "description": "Localized user-facing copy."
   },
-  "settingsAccountRow": "Backup and account",
-  "@settingsAccountRow": {
-    "description": "Localized user-facing copy."
-  },
   "settingsAccountOff": "Not turned on",
   "@settingsAccountOff": {
     "description": "Localized user-facing copy."
@@ -1153,10 +1149,6 @@
         "isCustomDateFormat": "true"
       }
     }
-  },
-  "settingsBackupRun": "Back up now",
-  "@settingsBackupRun": {
-    "description": "Localized user-facing copy."
   },
   "settingsBackupRunning": "Backup in progress… {n} of {total}",
   "@settingsBackupRunning": {
@@ -1234,14 +1226,6 @@
         "type": "String"
       }
     }
-  },
-  "settingsGroupFamily": "Family",
-  "@settingsGroupFamily": {
-    "description": "Localized user-facing copy."
-  },
-  "familyRow": "Invite a member",
-  "@familyRow": {
-    "description": "Localized user-facing copy."
   },
   "familyTitle": "Family",
   "@familyTitle": {
@@ -1546,19 +1530,6 @@
   "accountRoleContributor": "Contributor",
   "@accountRoleContributor": {
     "description": "Localized user-facing copy."
-  },
-  "familyMembersTitle": "Family members",
-  "@familyMembersTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyMemberCount": "{count, plural, =1{1 member} other{{count} members}}",
-  "@familyMemberCount": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "accountSignOut": "Sign out",
   "@accountSignOut": {
@@ -1968,24 +1939,92 @@
   "@familyHubAddArtist": {
     "description": "Localized user-facing copy."
   },
-  "familyHubSectionFamilyBackup": "Family & backup",
-  "@familyHubSectionFamilyBackup": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubAccountLocalOnly": "Backup on this device",
-  "@familyHubAccountLocalOnly": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubAccountLocalSubtitle": "Activate a private backup whenever you want.",
-  "@familyHubAccountLocalSubtitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubFamilySubtitle": "Invite, join or manage the household.",
-  "@familyHubFamilySubtitle": {
-    "description": "Localized user-facing copy."
-  },
   "familyHubFamilyAndSettings": "Family & settings",
   "@familyHubFamilyAndSettings": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionParents": "Parents",
+  "@familyHubSectionParents": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionContributors": "Contributors",
+  "@familyHubSectionContributors": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionOtherMembers": "Other members",
+  "@familyHubSectionOtherMembers": {
+    "description": "Heading for family members other than parents."
+  },
+  "familyHubLeaveFamily": "Leave family",
+  "@familyHubLeaveFamily": {
+    "description": "Action allowing the signed-in member to leave their family."
+  },
+  "familyHubLeaveFamilyTitle": "Leave this family?",
+  "@familyHubLeaveFamilyTitle": {
+    "description": "Family-leave confirmation title."
+  },
+  "familyHubLeaveFamilyBody": "You will lose access to this family and its shared content. Your local data will not be deleted.",
+  "@familyHubLeaveFamilyBody": {
+    "description": "Family-leave consequence."
+  },
+  "familyHubLeaveFamilyConfirm": "Leave family",
+  "@familyHubLeaveFamilyConfirm": {
+    "description": "Destructive confirmation for leaving a family."
+  },
+  "familyMemberRelationLabel": "Family relationship",
+  "@familyMemberRelationLabel": {
+    "description": "Parent-managed label such as Uncle or Grandpa."
+  },
+  "familyMemberRelationHint": "E.g. Uncle, Grandpa, Auntie",
+  "@familyMemberRelationHint": {
+    "description": "Hint for entering a family relationship label."
+  },
+  "familyHubAddMember": "Add a member",
+  "@familyHubAddMember": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubCreateAccount": "Create an account or sign in",
+  "@familyHubCreateAccount": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubTrashRow": "View deleted photos",
+  "@familyHubTrashRow": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSyncPhotos": "Sync photos",
+  "@familyHubSyncPhotos": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsTitle": "Family settings",
+  "@familySettingsTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberTitle": "Remove this member?",
+  "@familySettingsRemoveMemberTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberBody": "This person will lose access to the family and its shared content. Nothing is deleted from their device.",
+  "@familySettingsRemoveMemberBody": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberAction": "Remove",
+  "@familySettingsRemoveMemberAction": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsMakeParent": "Make parent",
+  "@familySettingsMakeParent": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsMakeContributor": "Make contributor",
+  "@familySettingsMakeContributor": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsLastParentError": "The household must keep at least one active parent.",
+  "@familySettingsLastParentError": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAccountRowNeutral": "Sign-in and account",
+  "@settingsAccountRowNeutral": {
     "description": "Localized user-facing copy."
   },
   "captureAnecdoteTitle": "Add a note",

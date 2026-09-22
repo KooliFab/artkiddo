@@ -24,6 +24,17 @@ final class CompositionActions {
   openGalleryShare;
 
   final void Function(BuildContext context)? openAccount;
+
+  /// Opens the global settings surface (language, about, notifications,
+  /// documents, account) independent of the family hub or household state.
+  final void Function(BuildContext context)? openSettings;
+
+  /// Triggers a manual photo/backup sync. A callback rather than anything
+  /// status-bearing: this package owns no sync-status abstraction, so the
+  /// composition that binds it runs the sync and reports progress and
+  /// outcome to the user itself.
+  final void Function(BuildContext context)? syncPhotos;
+
   final Future<String?> Function(BuildContext context)? openQrScanner;
 
   const CompositionActions({
@@ -31,6 +42,8 @@ final class CompositionActions {
     this.openFamilyHub,
     this.openGalleryShare,
     this.openAccount,
+    this.openSettings,
+    this.syncPhotos,
     this.openQrScanner,
   });
 

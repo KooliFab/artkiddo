@@ -1498,12 +1498,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Sauvegarde et compte'**
-  String get settingsAccountRow;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Non activée'**
   String get settingsAccountOff;
 
@@ -1524,12 +1518,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Dernière sauvegarde : {date}'**
   String settingsBackupLast(DateTime date);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sauvegarder maintenant'**
-  String get settingsBackupRun;
 
   /// Localized user-facing copy.
   ///
@@ -1614,18 +1602,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Version {version}'**
   String settingsVersion(String version);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Famille'**
-  String get settingsGroupFamily;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Inviter un membre'**
-  String get familyRow;
 
   /// Localized user-facing copy.
   ///
@@ -2052,18 +2028,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Contributeur'**
   String get accountRoleContributor;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Membres de la famille'**
-  String get familyMembersTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 membre} other{{count} membres}}'**
-  String familyMemberCount(int count);
 
   /// Localized user-facing copy.
   ///
@@ -2608,32 +2572,134 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Famille et sauvegarde'**
-  String get familyHubSectionFamilyBackup;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sauvegarde sur cet appareil'**
-  String get familyHubAccountLocalOnly;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Activez une sauvegarde privée quand vous le souhaitez.'**
-  String get familyHubAccountLocalSubtitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Inviter, rejoindre ou gérer le foyer.'**
-  String get familyHubFamilySubtitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Famille et réglages'**
   String get familyHubFamilyAndSettings;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parents'**
+  String get familyHubSectionParents;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contributeurs'**
+  String get familyHubSectionContributors;
+
+  /// Titre de la section des membres de la famille autres que les parents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres membres'**
+  String get familyHubSectionOtherMembers;
+
+  /// Action permettant au membre connecté de quitter sa famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter la famille'**
+  String get familyHubLeaveFamily;
+
+  /// Titre de confirmation de sortie de la famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter cette famille ?'**
+  String get familyHubLeaveFamilyTitle;
+
+  /// Conséquence de la sortie de famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous perdrez l’accès à cette famille et à son contenu partagé. Vos données locales ne seront pas supprimées.'**
+  String get familyHubLeaveFamilyBody;
+
+  /// Confirmation destructive de sortie de famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter la famille'**
+  String get familyHubLeaveFamilyConfirm;
+
+  /// Libellé administré par un parent, par exemple Oncle ou Papy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien avec la famille'**
+  String get familyMemberRelationLabel;
+
+  /// Exemple pour la saisie du libellé de relation familiale.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex. : Oncle, Papy, Tata'**
+  String get familyMemberRelationHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un membre'**
+  String get familyHubAddMember;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer un compte ou se connecter'**
+  String get familyHubCreateAccount;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir les photos supprimés'**
+  String get familyHubTrashRow;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchroniser les photos'**
+  String get familyHubSyncPhotos;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages famille'**
+  String get familySettingsTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer ce membre ?'**
+  String get familySettingsRemoveMemberTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette personne perdra l\'accès à la famille et à son contenu partagé. Rien n\'est supprimé sur son appareil.'**
+  String get familySettingsRemoveMemberBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer'**
+  String get familySettingsRemoveMemberAction;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nommer parent'**
+  String get familySettingsMakeParent;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nommer contributeur'**
+  String get familySettingsMakeContributor;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le foyer doit garder au moins un parent actif.'**
+  String get familySettingsLastParentError;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion et compte'**
+  String get settingsAccountRowNeutral;
 
   /// Localized user-facing copy.
   ///

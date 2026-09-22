@@ -41,9 +41,7 @@ class FamilyJoinResetStore {
 
   const FamilyJoinResetStore({required this.mark, required this.clear});
 
-  const FamilyJoinResetStore.noop()
-    : mark = _noop,
-      clear = _noop;
+  const FamilyJoinResetStore.noop() : mark = _noop, clear = _noop;
 
   static Future<void> _noop() async {}
 }
@@ -111,6 +109,23 @@ class FamilyState {
   /// implying the join itself, or convergence, failed.
   final AsyncAction joinReset;
 
+  /// Tracks [FamilyController.removeFamilyMember]. Removal is a logical,
+  /// server-owned state change (`leftAt`); on success the controller
+  /// re-fetches [members] rather than fabricating that timestamp locally.
+  final AsyncAction removeMember;
+
+  /// Tracks [FamilyController.updateFamilyMemberRole]. On success the
+  /// controller splices the adapter-returned [FamilyMember] back into
+  /// [members] in place, since the round trip already returned the
+  /// authoritative updated member.
+  final AsyncAction updateRole;
+
+  /// Tracks a parent-managed relationship-label edit.
+  final AsyncAction updateRelationLabel;
+
+  /// Tracks the signed-in member leaving their family.
+  final AsyncAction leaveFamily;
+
   const FamilyState({
     this.family = const ActionIdle(),
     this.familyInfo,
@@ -121,11 +136,16 @@ class FamilyState {
     this.members = const [],
     this.convergence = const ActionIdle(),
     this.joinReset = const ActionIdle(),
+    this.removeMember = const ActionIdle(),
+    this.updateRole = const ActionIdle(),
+    this.updateRelationLabel = const ActionIdle(),
+    this.leaveFamily = const ActionIdle(),
   });
 
   FamilyState copyWith({
     AsyncAction? family,
     FamilyInfo? familyInfo,
+    bool clearFamilyInfo = false,
     AsyncAction? rename,
     AsyncAction? redeem,
     RedeemOutcome? redeemOutcome,
@@ -138,10 +158,14 @@ class FamilyState {
     List<FamilyMember>? members,
     AsyncAction? convergence,
     AsyncAction? joinReset,
+    AsyncAction? removeMember,
+    AsyncAction? updateRole,
+    AsyncAction? updateRelationLabel,
+    AsyncAction? leaveFamily,
   }) {
     return FamilyState(
       family: family ?? this.family,
-      familyInfo: familyInfo ?? this.familyInfo,
+      familyInfo: clearFamilyInfo ? null : (familyInfo ?? this.familyInfo),
       rename: rename ?? this.rename,
       redeem: redeem ?? this.redeem,
       redeemOutcome: clearRedeemOutcome
@@ -151,6 +175,10 @@ class FamilyState {
       members: members ?? this.members,
       convergence: convergence ?? this.convergence,
       joinReset: joinReset ?? this.joinReset,
+      removeMember: removeMember ?? this.removeMember,
+      updateRole: updateRole ?? this.updateRole,
+      updateRelationLabel: updateRelationLabel ?? this.updateRelationLabel,
+      leaveFamily: leaveFamily ?? this.leaveFamily,
     );
   }
 }
@@ -222,6 +250,105 @@ class FamilyController extends Notifier<FamilyState> {
       Log.e('Failed to rename family', e, st, 'Family');
       state = state.copyWith(
         rename: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Removes [userId] from the caller's own family. Removal itself is a
+  /// server-owned state change ([FamilyApi.removeFamilyMember] sets
+  /// `leftAt`, never inferred client-side), so on success this reloads
+  /// [FamilyState.members] from the server rather than fabricating that
+  /// timestamp locally.
+  Future<void> removeFamilyMember(String userId) async {
+    if (state.removeMember.isBusy) return;
+    state = state.copyWith(removeMember: const ActionBusy());
+    try {
+      await ref.read(familyApiProvider).removeFamilyMember(userId);
+      Log.i('Family member removed', 'Family');
+      state = state.copyWith(removeMember: const ActionDone());
+      await loadFamilyMembers();
+    } catch (e, st) {
+      Log.e('Failed to remove family member', e, st, 'Family');
+      state = state.copyWith(
+        removeMember: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Changes [userId]'s role within the caller's own family. The adapter
+  /// call already returns the updated member, so this splices it back into
+  /// [FamilyState.members] in place instead of triggering a second fetch.
+  Future<void> updateFamilyMemberRole(
+    String userId,
+    FamilyMemberRole role,
+  ) async {
+    if (state.updateRole.isBusy) return;
+    state = state.copyWith(updateRole: const ActionBusy());
+    try {
+      final updated = await ref
+          .read(familyApiProvider)
+          .updateFamilyMemberRole(userId, role);
+      Log.i('Family member role updated', 'Family');
+      state = state.copyWith(
+        updateRole: const ActionDone(),
+        members: [
+          for (final member in state.members)
+            if (member.userId == userId) updated else member,
+        ],
+      );
+    } catch (e, st) {
+      Log.e('Failed to update family member role', e, st, 'Family');
+      state = state.copyWith(
+        updateRole: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Updates the human-friendly family label independently from the member's
+  /// access role. The returned server row remains authoritative, so it is
+  /// replaced in place just like [updateFamilyMemberRole].
+  Future<void> updateFamilyMemberRelationLabel(
+    String userId,
+    String? relationLabel,
+  ) async {
+    if (state.updateRelationLabel.isBusy) return;
+    state = state.copyWith(updateRelationLabel: const ActionBusy());
+    try {
+      final updated = await ref
+          .read(familyApiProvider)
+          .updateFamilyMemberRelationLabel(userId, relationLabel);
+      state = state.copyWith(
+        updateRelationLabel: const ActionDone(),
+        members: [
+          for (final member in state.members)
+            if (member.userId == userId) updated else member,
+        ],
+      );
+    } catch (e, st) {
+      Log.e('Failed to update family member relation label', e, st, 'Family');
+      state = state.copyWith(
+        updateRelationLabel: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Leaves the caller's current family. The server owns the membership
+  /// mutation; locally we clear the loaded family state so the hub cannot
+  /// continue presenting stale members after the sheet closes.
+  Future<void> leaveFamily() async {
+    if (state.leaveFamily.isBusy) return;
+    state = state.copyWith(leaveFamily: const ActionBusy());
+    try {
+      await ref.read(familyApiProvider).leaveFamily();
+      state = state.copyWith(
+        leaveFamily: const ActionDone(),
+        members: const [],
+        clearFamilyInfo: true,
+      );
+    } catch (e, st) {
+      Log.e('Failed to leave family', e, st, 'Family');
+      state = state.copyWith(
+        leaveFamily: ActionError(NetworkFailure(cause: e, stack: st)),
       );
     }
   }

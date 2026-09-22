@@ -76,5 +76,5 @@ export 'src/presentation/settings/debug_settings_screen.dart';
 export 'src/presentation/sharing/share_controller.dart';
 export 'src/presentation/sharing/share_screen.dart';
 export 'src/presentation/family/family_controller.dart';
-export 'src/presentation/family/family_screen.dart';
+export 'src/presentation/family/family_invite_screen.dart';
 export 'src/debug/demo_seed.dart';

@@ -905,9 +905,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsGroupDocuments => 'Documents';
 
   @override
-  String get settingsAccountRow => 'Sauvegarde et compte';
-
-  @override
   String get settingsAccountOff => 'Non activée';
 
   @override
@@ -924,9 +921,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Dernière sauvegarde : $dateString';
   }
-
-  @override
-  String get settingsBackupRun => 'Sauvegarder maintenant';
 
   @override
   String settingsBackupRunning(int n, int total) {
@@ -978,12 +972,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String settingsVersion(String version) {
     return 'Version $version';
   }
-
-  @override
-  String get settingsGroupFamily => 'Famille';
-
-  @override
-  String get familyRow => 'Inviter un membre';
 
   @override
   String get familyTitle => 'Famille';
@@ -1240,20 +1228,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accountRoleContributor => 'Contributeur';
-
-  @override
-  String get familyMembersTitle => 'Membres de la famille';
-
-  @override
-  String familyMemberCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count membres',
-      one: '1 membre',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get accountSignOut => 'Se déconnecter';
@@ -1579,20 +1553,73 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyHubAddArtist => 'Ajouter un artiste';
 
   @override
-  String get familyHubSectionFamilyBackup => 'Famille et sauvegarde';
-
-  @override
-  String get familyHubAccountLocalOnly => 'Sauvegarde sur cet appareil';
-
-  @override
-  String get familyHubAccountLocalSubtitle =>
-      'Activez une sauvegarde privée quand vous le souhaitez.';
-
-  @override
-  String get familyHubFamilySubtitle => 'Inviter, rejoindre ou gérer le foyer.';
-
-  @override
   String get familyHubFamilyAndSettings => 'Famille et réglages';
+
+  @override
+  String get familyHubSectionParents => 'Parents';
+
+  @override
+  String get familyHubSectionContributors => 'Contributeurs';
+
+  @override
+  String get familyHubSectionOtherMembers => 'Autres membres';
+
+  @override
+  String get familyHubLeaveFamily => 'Quitter la famille';
+
+  @override
+  String get familyHubLeaveFamilyTitle => 'Quitter cette famille ?';
+
+  @override
+  String get familyHubLeaveFamilyBody =>
+      'Vous perdrez l’accès à cette famille et à son contenu partagé. Vos données locales ne seront pas supprimées.';
+
+  @override
+  String get familyHubLeaveFamilyConfirm => 'Quitter la famille';
+
+  @override
+  String get familyMemberRelationLabel => 'Lien avec la famille';
+
+  @override
+  String get familyMemberRelationHint => 'Ex. : Oncle, Papy, Tata';
+
+  @override
+  String get familyHubAddMember => 'Ajouter un membre';
+
+  @override
+  String get familyHubCreateAccount => 'Créer un compte ou se connecter';
+
+  @override
+  String get familyHubTrashRow => 'Voir les photos supprimés';
+
+  @override
+  String get familyHubSyncPhotos => 'Synchroniser les photos';
+
+  @override
+  String get familySettingsTitle => 'Réglages famille';
+
+  @override
+  String get familySettingsRemoveMemberTitle => 'Retirer ce membre ?';
+
+  @override
+  String get familySettingsRemoveMemberBody =>
+      'Cette personne perdra l\'accès à la famille et à son contenu partagé. Rien n\'est supprimé sur son appareil.';
+
+  @override
+  String get familySettingsRemoveMemberAction => 'Retirer';
+
+  @override
+  String get familySettingsMakeParent => 'Nommer parent';
+
+  @override
+  String get familySettingsMakeContributor => 'Nommer contributeur';
+
+  @override
+  String get familySettingsLastParentError =>
+      'Le foyer doit garder au moins un parent actif.';
+
+  @override
+  String get settingsAccountRowNeutral => 'Connexion et compte';
 
   @override
   String get captureAnecdoteTitle => 'Ajouter une anecdote';
