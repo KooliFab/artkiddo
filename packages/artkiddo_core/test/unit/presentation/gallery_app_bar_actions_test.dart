@@ -7,7 +7,7 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 /// The gallery app bar mixes two kinds of control, and the whole point of
 /// this suite is that they never blur into one another:
 ///
-/// * capability-gated (share, sync) — absent unless the capability is on
+/// * capability-gated (share) — absent unless the capability is on
 ///   *and* the composition bound the action;
 /// * local-default (people, settings) — always present, because each has an
 ///   account-free destination inside this package.
@@ -96,42 +96,18 @@ void main() {
   });
 
   group('capability-gated controls', () {
-    testWidgets('no sync control without the remoteBackup capability, even '
-        'when the action is bound', (tester) async {
-      await tester.pumpWidget(
-        appWith(actions: CompositionActions(syncPhotos: (_) {})),
-      );
-      await tester.pump();
-
-      expect(find.byIcon(Icons.cloud_sync_outlined), findsNothing);
-    });
-
-    testWidgets('no sync control with the capability but no bound action', (
+    testWidgets('sync is not rendered on the gallery, even when it is bound', (
       tester,
     ) async {
-      await tester.pumpWidget(appWith(capabilities: AppCapabilities.cloud));
-      await tester.pump();
-
-      expect(find.byIcon(Icons.cloud_sync_outlined), findsNothing);
-    });
-
-    testWidgets('sync appears when capability and action agree', (
-      tester,
-    ) async {
-      var calls = 0;
       await tester.pumpWidget(
         appWith(
           capabilities: AppCapabilities.cloud,
-          actions: CompositionActions(syncPhotos: (_) => calls++),
+          actions: CompositionActions(syncPhotos: (_) {}),
         ),
       );
       await tester.pump();
 
-      final button = find.byTooltip(l10n.gallerySyncPhotos);
-      expect(button, findsOneWidget);
-      await tester.tap(button);
-      await tester.pump();
-      expect(calls, 1);
+      expect(find.byIcon(Icons.cloud_sync_outlined), findsNothing);
     });
 
     testWidgets('no share control in the account-free build', (tester) async {
@@ -183,7 +159,7 @@ void main() {
     });
   });
 
-  testWidgets('orders the app bar actions share, sync, people, settings', (
+  testWidgets('orders the app bar actions share, people, settings', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -193,7 +169,6 @@ void main() {
           openGalleryShare: (_, _, _) {},
           openFamilyHub: (_) {},
           openSettings: (_) {},
-          syncPhotos: (_) {},
         ),
         children: [child('c1', 'Léa')],
       ),
@@ -204,10 +179,6 @@ void main() {
 
     expect(
       left(Icons.ios_share_outlined),
-      lessThan(left(Icons.cloud_sync_outlined)),
-    );
-    expect(
-      left(Icons.cloud_sync_outlined),
       lessThan(left(Icons.people_outline)),
     );
     expect(left(Icons.people_outline), lessThan(left(Icons.settings_outlined)));

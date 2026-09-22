@@ -1568,7 +1568,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyHubTrashRow => 'View deleted photos';
 
   @override
-  String get gallerySyncPhotos => 'Sync photos';
+  String get familyHubSyncPhotos => 'Sync photos';
 
   @override
   String get familySettingsTitle => 'Family settings';

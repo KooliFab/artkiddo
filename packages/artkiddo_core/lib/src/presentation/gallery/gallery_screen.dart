@@ -184,12 +184,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ? 24
       : 12;
 
-  /// The app bar's actions, left to right: share, sync, people, settings.
+  /// The app bar's actions, left to right: share, people, settings.
   ///
   /// Two rules, and only two, decide whether a control is rendered — mixing
   /// them was how a capability-backed action ended up on a bare null check:
   ///
-  /// * **Capability-gated** (share, sync): shown only when the capability is
+  /// * **Capability-gated** (share): shown only when the capability is
   ///   enabled *and* the composition bound the action. Both halves are
   ///   required because `ArtKiddoBootstrap` guarantees they agree, so either
   ///   one missing means the feature genuinely is not part of this build.
@@ -211,8 +211,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final buttons = <Widget>[
       if (capabilities.webGalleryLinks && actions.openGalleryShare != null)
         _ShareButton(enabled: shareEnabled, onPressed: onShare),
-      if (capabilities.remoteBackup && actions.syncPhotos != null)
-        _SyncButton(onPressed: () => actions.syncPhotos!(context)),
       _FamilyButton(
         opensHousehold: actions.openFamilyHub != null,
         onPressed: () => actions.openFamilyHub != null
@@ -1143,32 +1141,6 @@ class _ShareButton extends StatelessWidget {
         ),
         textStyle: AppTypography.label,
       ),
-    );
-  }
-}
-
-/// Manual photo sync is a one-tap chore on the artwork wall, not a family
-/// setting — which is why it is labelled from a gallery-owned key rather
-/// than a `familyHub*` one. Rendered only when `remoteBackup` is enabled
-/// *and* the composition bound `syncPhotos`; that composition runs the sync
-/// and reports progress and outcome itself, since this package models no
-/// sync status.
-class _SyncButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _SyncButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return IconButton(
-      tooltip: l10n.gallerySyncPhotos,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-        backgroundColor: AppColors.surface,
-        side: const BorderSide(color: AppColors.border),
-      ),
-      icon: const Icon(Icons.cloud_sync_outlined),
     );
   }
 }

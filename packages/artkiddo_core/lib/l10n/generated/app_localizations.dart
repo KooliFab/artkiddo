@@ -2657,7 +2657,7 @@ abstract class AppLocalizations {
   ///
   /// In fr, this message translates to:
   /// **'Synchroniser les photos'**
-  String get gallerySyncPhotos;
+  String get familyHubSyncPhotos;
 
   /// Localized user-facing copy.
   ///
