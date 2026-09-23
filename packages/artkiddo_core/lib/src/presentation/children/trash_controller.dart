@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../async_action.dart';
@@ -7,6 +9,7 @@ import '../../local/logging/log.dart';
 import '../providers/core_providers.dart';
 import '../../domain/action_result.dart';
 import '../../local/repositories/trash_repository.dart';
+import '../family/family_controller.dart';
 
 class TrashState {
   final bool loading;
@@ -62,10 +65,8 @@ class TrashState {
   }
 }
 
-/// Loads and acts on the local trash. `isParent`/`familyId` stay part
-/// of [TrashState]'s shape for a shared-household trash composition;
-/// this controller itself only ever operates on
-/// [TrashCapability.local] and rejects any other capability.
+/// Loads and acts on the trash. Supports both [TrashCapability.local]
+/// and [TrashCapability.sharedRemote].
 class TrashController extends Notifier<TrashState> {
   @override
   TrashState build() {
@@ -76,16 +77,32 @@ class TrashController extends Notifier<TrashState> {
   Future<void> _load() async {
     final capabilities = ref.read(appCapabilitiesProvider);
     final repository = ref.read(trashRepositoryProvider);
-    if (capabilities.trash != TrashCapability.local) {
-      throw StateError('The public core only supports local trash');
+
+    if (capabilities.trash == TrashCapability.local) {
+      state = state.copyWith(loading: true, isParent: true, familyId: null);
+      // Opening the screen is the second deterministic purge trigger
+      // after startup. The repository keeps the database write
+      // authoritative and journals any file cleanup that needs another
+      // retry.
+      await repository.purgeExpired();
+      final result = await repository.listTrash();
+      _applyListResult(result);
+      return;
     }
-    state = state.copyWith(loading: true, isParent: true, familyId: null);
-    // Opening the screen is the second deterministic purge trigger
-    // after startup. The repository keeps the database write
-    // authoritative and journals any file cleanup that needs another
-    // retry.
-    await repository.purgeExpired();
-    final result = await repository.listTrash();
+
+    final membership = await ref.read(familyApiProvider).currentMembership();
+    if (membership == null) {
+      state = state.copyWith(loading: false, items: const []);
+      return;
+    }
+
+    state = state.copyWith(
+      loading: true,
+      familyId: membership.familyId,
+      isParent: membership.role == FamilyMemberRole.parent,
+    );
+
+    final result = await repository.listTrash(scopeId: membership.familyId);
     _applyListResult(result);
   }
 
@@ -119,6 +136,12 @@ class TrashController extends Notifier<TrashState> {
           items: remaining,
           clearBusyItemId: true,
         );
+        // Remote restore needs a prompt sync so the shared gallery
+        // reappears immediately. Local restore already changed the durable
+        // Drift row; it must not construct or read a cloud provider.
+        if (ref.read(appCapabilitiesProvider).remoteBackup) {
+          unawaited(ref.read(familyConvergenceProvider)());
+        }
       case ActionFailed(failure: final f):
         state = state.copyWith(restore: ActionError(f), clearBusyItemId: true);
       case ActionCancelled():
@@ -152,9 +175,14 @@ class TrashController extends Notifier<TrashState> {
   }
 
   Future<void> purgeAll() async {
-    if (state.purgeAll.isBusy) return;
+    final familyId = state.familyId;
+    final local =
+        ref.read(appCapabilitiesProvider).trash == TrashCapability.local;
+    if ((!local && familyId == null) || state.purgeAll.isBusy) return;
     state = state.copyWith(purgeAll: const ActionBusy());
-    final result = await ref.read(trashRepositoryProvider).purgeAll();
+    final result = await ref
+        .read(trashRepositoryProvider)
+        .purgeAll(scopeId: local ? null : familyId);
     switch (result) {
       case ActionSuccess():
         state = state.copyWith(purgeAll: const ActionDone(), items: const []);
