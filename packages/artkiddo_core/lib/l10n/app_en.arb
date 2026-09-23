@@ -1006,6 +1006,10 @@
   "@childEditorTitleEdit": {
     "description": "Localized user-facing copy."
   },
+  "childEditorTitleArtist": "Artist",
+  "@childEditorTitleArtist": {
+    "description": "Title shown while editing an artist profile."
+  },
   "childEditorFromDraft": "Your drawing is kept in the meantime.",
   "@childEditorFromDraft": {
     "description": "Localized user-facing copy."
@@ -1232,6 +1236,7 @@
     }
   },
   "familyTitle": "Family",
+  "familyInviteTitle": "Invite a member",
   "@familyTitle": {
     "description": "Localized user-facing copy."
   },
@@ -1255,7 +1260,7 @@
   "@familyInviteCodeLabel": {
     "description": "Localized user-facing copy."
   },
-  "familyInviteCopy": "Copy code",
+  "familyInviteCopy": "Invite",
   "@familyInviteCopy": {
     "description": "Localized user-facing copy."
   },
@@ -1271,7 +1276,7 @@
   "@familyJoinCodeHint": {
     "description": "Localized user-facing copy."
   },
-  "familyJoinButton": "Join",
+  "familyJoinButton": "Join a family",
   "@familyJoinButton": {
     "description": "Localized user-facing copy."
   },
@@ -1373,7 +1378,7 @@
   "@settingsOffline": {
     "description": "Localized user-facing copy."
   },
-  "accountTitle": "Backup and account",
+  "accountTitle": "Create an account",
   "@accountTitle": {
     "description": "Localized user-facing copy."
   },

@@ -11,8 +11,13 @@ enum ChildEditorOrigin { galleryEmpty, childrenList, captureDraft }
 class ChildEditorArgs {
   final String? childId; // null = create
   final ChildEditorOrigin origin;
+  final bool presentedAsSheet;
 
-  const ChildEditorArgs({this.childId, required this.origin});
+  const ChildEditorArgs({
+    this.childId,
+    required this.origin,
+    this.presentedAsSheet = false,
+  });
 }
 
 enum ChildFieldError {

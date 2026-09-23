@@ -1321,6 +1321,12 @@ abstract class AppLocalizations {
   /// **'Modifier le profil'**
   String get childEditorTitleEdit;
 
+  /// Title shown while editing an artist profile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Artiste'**
+  String get childEditorTitleArtist;
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
@@ -1614,6 +1620,8 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Famille'**
   String get familyTitle;
+
+  String get familyInviteTitle;
 
   /// Localized user-facing copy.
   ///

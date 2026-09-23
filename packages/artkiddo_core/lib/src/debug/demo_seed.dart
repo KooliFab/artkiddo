@@ -10,6 +10,12 @@ import 'package:path_provider/path_provider.dart';
 import '../domain/action_result.dart';
 import '../local/database/app_database.dart';
 
+/// Prefix of the ids given to seeded demo children. Sync skips anything
+/// carrying it so fixture data never reaches the cloud.
+const debugDemoIdPrefix = 'debug-demo-';
+
+bool isDebugDemoId(String id) => id.startsWith(debugDemoIdPrefix);
+
 /// Loads the shared QA gallery in debug builds when the local database is empty.
 ///
 /// The original project documents eight synthetic `demo-*.png` illustrations,
@@ -33,8 +39,8 @@ Future<int> seedDebugDemoData({
     return 0;
   }
 
-  const leaId = 'debug-demo-child-lea';
-  const noahId = 'debug-demo-child-noah';
+  const leaId = '${debugDemoIdPrefix}child-lea';
+  const noahId = '${debugDemoIdPrefix}child-noah';
   final children = [
     (id: leaId, name: 'Léa', birthDate: DateTime(2021, 3, 14)),
     (id: noahId, name: 'Noah', birthDate: DateTime(2023, 11, 2)),

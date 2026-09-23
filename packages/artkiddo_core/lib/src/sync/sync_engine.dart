@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../contracts/object_storage.dart';
 import '../contracts/sync_backend.dart';
+import '../debug/demo_seed.dart';
 import '../domain/action_result.dart';
 import '../domain/app_failure.dart';
 import '../local/database/app_database.dart';
@@ -218,6 +219,11 @@ class SyncEngine {
         Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
         continue;
       }
+      if (entry.entity == SyncEntityKind.child.wireName &&
+          isDebugDemoId(entry.entityId)) {
+        await outbox.markSucceeded(entry.seq);
+        continue;
+      }
       try {
         if (entry.entity == SyncEntityKind.child.wireName) {
           await _pushChild(entry, familyId: familyId);
@@ -336,6 +342,7 @@ class SyncEngine {
     if (m == null) {
       return; // already gone locally (e.g. cascaded away with its child)
     }
+    if (isDebugDemoId(m.childId)) return; // demo fixture, never uploaded
 
     final row = await (db.select(
       db.artworksTable,

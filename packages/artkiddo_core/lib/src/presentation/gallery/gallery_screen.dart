@@ -210,7 +210,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   }) {
     final buttons = <Widget>[
       if (capabilities.webGalleryLinks && actions.openGalleryShare != null)
-        _ShareButton(enabled: shareEnabled, onPressed: onShare),
+        _ShareButton(
+          enabled: shareEnabled,
+          onPressed: onShare,
+          // 600 is the phone/tablet grid breakpoint, not a title-fit one:
+          // every phone falls under it, so reusing it here made the button
+          // compact unconditionally. This narrower cutoff only kicks in on
+          // genuinely tight widths (small phones, split screen).
+          compact: width < 400,
+        ),
       _FamilyButton(
         opensHousehold: actions.openFamilyHub != null,
         onPressed: () => actions.openFamilyHub != null
@@ -1121,11 +1129,34 @@ class _TileImage extends StatelessWidget {
 class _ShareButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback onPressed;
-  const _ShareButton({required this.enabled, required this.onPressed});
+  final bool compact;
+  const _ShareButton({
+    required this.enabled,
+    required this.onPressed,
+    required this.compact,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    if (compact) {
+      // Icon-only on narrow screens: the "Share" label would otherwise
+      // steal the width the "ArtKiddo" title needs and get it cropped.
+      return IconButton(
+        tooltip: l10n.shareGalleryHeading,
+        onPressed: enabled ? onPressed : null,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          foregroundColor: AppColors.onAccent,
+          backgroundColor: AppColors.share,
+          disabledForegroundColor: AppColors.inkDisabled,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.full),
+          ),
+        ),
+        icon: const Icon(Icons.ios_share_outlined, size: 18),
+      );
+    }
     return TextButton.icon(
       onPressed: enabled ? onPressed : null,
       icon: const Icon(Icons.ios_share_outlined, size: 18),

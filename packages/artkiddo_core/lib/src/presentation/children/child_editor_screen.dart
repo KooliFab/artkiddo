@@ -111,6 +111,7 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(childEditorControllerProvider(widget.args));
     final isCreate = widget.args.childId == null;
+    final isSheet = widget.args.presentedAsSheet;
 
     if (_nameController.text != state.name &&
         !_nameController.value.composing.isValid) {
@@ -149,6 +150,7 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
         : null;
 
     final canSave =
+        state.isDirty &&
         state.name.trim().isNotEmpty &&
         state.birthDate != null &&
         !state.loading;
@@ -157,9 +159,20 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
       isDirty: state.isDirty && !state.save.isBusy,
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: !isSheet && isCreate,
           title: Text(
-            isCreate ? l10n.childEditorTitleCreate : l10n.childEditorTitleEdit,
+            isCreate
+                ? l10n.childEditorTitleCreate
+                : l10n.childEditorTitleArtist,
           ),
+          actions: [
+            if (!isCreate || isSheet)
+              IconButton(
+                tooltip: l10n.commonClose,
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.close),
+              ),
+          ],
         ),
         body: state.loading
             ? const Center(child: CircularProgressIndicator())
@@ -200,7 +213,7 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
                             const SizedBox(height: AppSpacing.s1),
                             TextField(
                               controller: _nameController,
-                              autofocus: isCreate,
+                              autofocus: true,
                               textCapitalization: TextCapitalization.words,
                               enabled: !state.save.isBusy,
                               maxLength: 40,
@@ -298,24 +311,19 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
                                 color: AppColors.inkMuted,
                               ),
                             ),
+                            const SizedBox(height: AppSpacing.s6),
+                            AsyncActionButton(
+                              action: state.save,
+                              idleLabel: l10n.commonSave,
+                              busyLabel: l10n.commonSaving,
+                              fullWidth: true,
+                              enabled: canSave,
+                              disabledReason: canSave
+                                  ? null
+                                  : l10n.childEditorSaveDisabledReason,
+                              onPressed: _handleSave,
+                            ),
                           ],
-                        ),
-                      ),
-                    ),
-                    SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.s4),
-                        child: AsyncActionButton(
-                          action: state.save,
-                          idleLabel: l10n.commonSave,
-                          busyLabel: l10n.commonSaving,
-                          fullWidth: true,
-                          enabled: canSave,
-                          disabledReason: canSave
-                              ? null
-                              : l10n.childEditorSaveDisabledReason,
-                          onPressed: _handleSave,
                         ),
                       ),
                     ),

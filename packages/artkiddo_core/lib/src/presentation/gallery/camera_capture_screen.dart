@@ -39,6 +39,7 @@ class CameraCaptureScreen extends StatefulWidget {
 class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     with WidgetsBindingObserver {
   CameraController? _controller;
+  bool _releasedForBackground = false;
   Future<void>? _initializeFuture;
   bool _denied = false;
   bool _unavailable = false;
@@ -85,11 +86,16 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     final controller = _controller;
-    if (controller == null || !controller.value.isInitialized) return;
     if (lifecycleState == AppLifecycleState.inactive) {
-      _controller = null;
+      if (controller == null || !controller.value.isInitialized) return;
+      // Drop the preview from the tree before disposing, otherwise the next
+      // frame builds CameraPreview on a disposed controller.
+      setState(() => _controller = null);
+      _releasedForBackground = true;
       controller.dispose();
-    } else if (lifecycleState == AppLifecycleState.resumed) {
+    } else if (lifecycleState == AppLifecycleState.resumed &&
+        _releasedForBackground) {
+      _releasedForBackground = false;
       setState(() => _initializeFuture = _init());
     }
   }

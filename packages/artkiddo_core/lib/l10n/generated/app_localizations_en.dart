@@ -791,6 +791,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childEditorTitleEdit => 'Edit profile';
 
   @override
+  String get childEditorTitleArtist => 'Artist';
+
+  @override
   String get childEditorFromDraft => 'Your drawing is kept in the meantime.';
 
   @override
@@ -963,6 +966,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyTitle => 'Family';
 
   @override
+  String get familyInviteTitle => 'Invite a member';
+
+  @override
   String get familyNameLabel => 'Family name';
 
   @override
@@ -979,7 +985,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteCodeLabel => 'Invitation code';
 
   @override
-  String get familyInviteCopy => 'Copy code';
+  String get familyInviteCopy => 'Invite';
 
   @override
   String get familyInviteCopied => 'Code copied.';
@@ -992,7 +998,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyJoinCodeHint => 'Ex.: 7K4RTQ2M';
 
   @override
-  String get familyJoinButton => 'Join';
+  String get familyJoinButton => 'Join a family';
 
   @override
   String get familyJoinChecking => 'Checking…';
@@ -1089,7 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'No connection. Backup and sharing features are unavailable.';
 
   @override
-  String get accountTitle => 'Backup and account';
+  String get accountTitle => 'Create an account';
 
   @override
   String get accountIntroTitle => 'What an account gives you';

@@ -806,6 +806,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get childEditorTitleEdit => 'Modifier le profil';
 
   @override
+  String get childEditorTitleArtist => 'Artiste';
+
+  @override
   String get childEditorFromDraft =>
       'Votre dessin est conservé pendant ce temps.';
 
@@ -980,6 +983,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyTitle => 'Famille';
 
   @override
+  String get familyInviteTitle => 'Inviter un membre';
+
+  @override
   String get familyNameLabel => 'Nom de la famille';
 
   @override
@@ -996,7 +1002,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyInviteCodeLabel => 'Code d\'invitation';
 
   @override
-  String get familyInviteCopy => 'Copier le code';
+  String get familyInviteCopy => 'Inviter';
 
   @override
   String get familyInviteCopied => 'Code copié.';
@@ -1009,7 +1015,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyJoinCodeHint => 'Ex. : 7K4RTQ2M';
 
   @override
-  String get familyJoinButton => 'Rejoindre';
+  String get familyJoinButton => 'Rejoindre une famille';
 
   @override
   String get familyJoinChecking => 'Vérification…';
@@ -1107,7 +1113,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.';
 
   @override
-  String get accountTitle => 'Sauvegarde et compte';
+  String get accountTitle => 'Créer un compte';
 
   @override
   String get accountIntroTitle => 'Ce qu\'un compte apporte';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../local/logging/log.dart';
@@ -21,7 +22,14 @@ import 'family_controller.dart';
 /// deliberately the smallest, fully account-free-safe surface: invite out,
 /// or join in.
 class FamilyInviteScreen extends ConsumerStatefulWidget {
-  const FamilyInviteScreen({super.key});
+  final bool presentedAsSheet;
+  final bool joinMode;
+
+  const FamilyInviteScreen({
+    super.key,
+    this.presentedAsSheet = false,
+    this.joinMode = false,
+  });
 
   @override
   ConsumerState<FamilyInviteScreen> createState() => _FamilyInviteScreenState();
@@ -79,13 +87,21 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
         .redeem(code, discardPrevious: true);
   }
 
+  Future<void> _shareInvite(String code) async {
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'Rejoins ma famille dans ArtKiddo avec ce code : $code',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final capabilities = ref.watch(appCapabilitiesProvider);
     if (!capabilities.household) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.familyTitle)),
+        appBar: _buildAppBar(l10n),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -107,7 +123,7 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
         ref.watch(compositionActionsProvider).openQrScanner != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.familyTitle)),
+      appBar: _buildAppBar(l10n),
       body: SafeArea(
         child: loading
             ? const Center(child: CircularProgressIndicator())
@@ -119,13 +135,15 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        l10n.familyInviteExplain,
+                        widget.joinMode
+                            ? l10n.familyJoinExplain
+                            : l10n.familyInviteExplain,
                         style: AppTypography.body.copyWith(
                           color: AppColors.inkMuted,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.s4),
-                      if (info != null) ...[
+                      if (!widget.joinMode && info != null) ...[
                         Center(
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -163,33 +181,17 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                           label: l10n.familyInviteCopy,
                           variant: AppButtonVariant.secondary,
                           fullWidth: true,
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: info.code),
-                            );
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.familyInviteCopied)),
-                            );
-                          },
+                          onPressed: () => _shareInvite(info.code),
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.s6),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        l10n.familyJoinExplain,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s4),
-                      _buildOutcomeBlock(l10n, state, controller),
-                      Row(
+                      if (widget.joinMode) ...[
+                        _buildOutcomeBlock(l10n, state, controller),
+                        Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _codeController,
+                              autofocus: true,
                               textCapitalization: TextCapitalization.characters,
                               maxLength: 8,
                               enabled:
@@ -207,8 +209,8 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                             child: Text(l10n.accountCodePaste),
                           ),
                         ],
-                      ),
-                      if (canScanQr) ...[
+                        ),
+                        if (canScanQr) ...[
                         const SizedBox(height: AppSpacing.s2),
                         AppButton(
                           label: l10n.familyScanButton,
@@ -220,9 +222,9 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                               ? null
                               : _scanCode,
                         ),
-                      ],
-                      const SizedBox(height: AppSpacing.s4),
-                      AsyncActionButton(
+                        ],
+                        const SizedBox(height: AppSpacing.s4),
+                        AsyncActionButton(
                         action: state.joinReset.isBusy
                             ? state.joinReset
                             : state.convergence.isBusy
@@ -238,7 +240,8 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                         enabled: canSubmitCode,
                         onPressed: () =>
                             _confirmAndJoin(_codeController.text.trim()),
-                      ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -304,6 +307,21 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
       ),
     };
   }
+
+  AppBar _buildAppBar(AppLocalizations l10n) => AppBar(
+    title: Text(
+      widget.joinMode ? l10n.familyJoinButton : l10n.familyInviteTitle,
+    ),
+    automaticallyImplyLeading: !widget.presentedAsSheet,
+    actions: [
+      if (widget.presentedAsSheet)
+        IconButton(
+          tooltip: l10n.commonClose,
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+    ],
+  );
 }
 
 enum _JoinStep { summary, confirm }
