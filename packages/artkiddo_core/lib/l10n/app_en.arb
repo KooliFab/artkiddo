@@ -2059,5 +2059,39 @@
   "syncUploadSuspendedBody": "New cloud backups are temporarily suspended to keep the app free.\n\nYour existing galleries, restores, and deletions remain fully available.",
   "@syncUploadSuspendedBody": {
     "description": "Localized user-facing copy."
+  },
+  "galleryPeekVoiceOf": "{childName}'s voice",
+  "@galleryPeekVoiceOf": {
+    "description": "Pill under a long-pressed artwork while its voice story plays.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryPeekListening": "Playing the story…",
+  "@galleryPeekListening": {
+    "description": "Same pill when the artwork's child is unknown."
+  },
+  "syncProgressPreparing": "Preparing sync…",
+  "@syncProgressPreparing": {
+    "description": "Sync progress toast."
+  },
+  "syncProgressReceiving": "{n, plural, =0{Getting the family's drawings…} =1{Getting drawings… 1 received} other{Getting drawings… {n} received}}",
+  "@syncProgressReceiving": {
+    "description": "Sync progress toast.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncProgressUpToDate": "Gallery up to date",
+  "@syncProgressUpToDate": {
+    "description": "Sync progress toast."
+  },
+  "syncProgressDismiss": "Close",
+  "@syncProgressDismiss": {
+    "description": "Sync progress toast."
   }
 }

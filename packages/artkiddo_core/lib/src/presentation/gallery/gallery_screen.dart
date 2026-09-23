@@ -1,11 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +28,7 @@ import '../ui/state_block.dart';
 import 'artwork_screen.dart';
 import 'capture_controller.dart';
 import 'capture_screen.dart';
+import 'masonry_layout.dart';
 import '../navigation/composition_actions.dart';
 import 'gallery_providers.dart';
 
@@ -39,7 +41,21 @@ class GalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
+  static const _appBarHeight = 64.0;
+
   final ScrollController _scrollController = ScrollController();
+
+  /// The feed exactly as laid out, newest first, and the delegate that
+  /// placed it: together they map a scroll offset back to a tile's month.
+  List<ArtworkTile> _feed = const [];
+  SliverGridDelegateWithMasonryPlan? _gridDelegate;
+
+  /// The month label is transient: it names where the parent is while the
+  /// feed moves and fades out once it rests, so the feed itself stays one
+  /// continuous wall with no headers.
+  final ValueNotifier<String?> _scrollMonth = ValueNotifier(null);
+  final ValueNotifier<bool> _scrollMonthVisible = ValueNotifier(false);
+  Timer? _hideScrollMonth;
 
   @override
   void initState() {
@@ -50,10 +66,56 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   void dispose() {
+    _hideScrollMonth?.cancel();
+    _scrollMonth.dispose();
+    _scrollMonthVisible.dispose();
     _scrollController
       ..removeListener(_saveScroll)
       ..dispose();
     super.dispose();
+  }
+
+  bool _onFeedScroll(ScrollNotification notification) {
+    // Only the feed itself: the horizontal filter bar nests its own
+    // scrollable inside this one.
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification is ScrollUpdateNotification) {
+      _hideScrollMonth?.cancel();
+      final month = _monthAt(notification.metrics.pixels);
+      _scrollMonth.value = month;
+      // Near the top the newest artworks speak for themselves.
+      _scrollMonthVisible.value =
+          month != null &&
+          notification.metrics.pixels >
+              notification.metrics.viewportDimension / 2;
+    } else if (notification is ScrollEndNotification) {
+      _hideScrollMonth?.cancel();
+      _hideScrollMonth = Timer(const Duration(seconds: 1), () {
+        if (mounted) _scrollMonthVisible.value = false;
+      });
+    }
+    return false;
+  }
+
+  /// Month of the first tile at the top of the viewport. Pinned headers
+  /// keep their scroll extent, so the viewport's top edge in feed
+  /// coordinates is simply the scroll offset minus the feed's top padding.
+  String? _monthAt(double pixels) {
+    final plan = _gridDelegate?.lastPlan;
+    if (plan == null || plan.length == 0 || plan.length != _feed.length) {
+      return null;
+    }
+    final index = math.min(
+      plan.firstIndexBelow(pixels - AppSpacing.s3),
+      plan.length - 1,
+    );
+    return _capitalize(
+      DateFormat.yMMMM(
+        Localizations.localeOf(context).toLanguageTag(),
+      ).format(_dateFor(_feed[index])),
+    );
   }
 
   void _saveScroll() {
@@ -260,63 +322,111 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     // An unreadable vault is not an empty first-launch state.
     final vaultUnreadable = childrenAsync.hasError;
     final hasArtists = children.isNotEmpty;
+    final showFilter = children.length > 1;
+    // Pinned chrome above the feed: the app bar, plus the filter bar when
+    // there is more than one artist to filter by.
+    final chromeExtent =
+        _appBarHeight + (showFilter ? _FilterHeaderDelegate.height : 0);
+    // Capability-gated like share (ADR 0016): the gesture exists only when
+    // the build backs up remotely *and* the composition bound the action.
+    // A local build has nothing to pull, so it gets no gesture at all
+    // rather than a spinner that syncs nothing.
+    final syncPhotos = capabilities.remoteBackup && !vaultUnreadable
+        ? compositionActions.syncPhotos
+        : null;
+
+    Widget feed = NotificationListener<ScrollNotification>(
+      onNotification: _onFeedScroll,
+      child: CustomScrollView(
+        controller: _scrollController,
+        // The pull gesture must work on a short or empty feed too.
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            toolbarHeight: _appBarHeight,
+            backgroundColor: AppColors.paper,
+            surfaceTintColor: Colors.transparent,
+            titleSpacing: _margin(width),
+            title: Text('ArtKiddo', style: AppTypography.display),
+            actions: _appBarActions(
+              context,
+              capabilities,
+              compositionActions,
+              width: width,
+              // Sharing a gallery link needs at least one artist and a
+              // readable vault. The control stays visible and disabled so
+              // the absence is legible as "nothing to share yet" rather
+              // than as a missing feature.
+              shareEnabled: hasArtists && !vaultUnreadable,
+              onShare: () => _share(context, children, filter),
+            ),
+          ),
+          if (showFilter)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _FilterHeaderDelegate(
+                child: _FilterBar(
+                  children: children,
+                  filter: filter,
+                  margin: _margin(width),
+                  onSelect: (next) {
+                    _scrollMonthVisible.value = false;
+                    ref.read(galleryFilterProvider.notifier).setFilter(next);
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _restoreScroll(),
+                    );
+                  },
+                ),
+              ),
+            )
+          else
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s2)),
+          ..._buildGallerySlivers(
+            context,
+            l10n,
+            tilesAsync,
+            filter,
+            children,
+            vaultUnreadable: vaultUnreadable,
+            columns: _columns(width),
+            gutter: _gutter(width),
+            margin: _margin(width),
+          ),
+        ],
+      ),
+    );
+    if (syncPhotos != null) {
+      feed = RefreshIndicator(
+        // Starts below the pinned chrome, where the feed actually begins.
+        edgeOffset: chromeExtent,
+        color: AppColors.accent,
+        backgroundColor: AppColors.surface,
+        // Resolves as soon as the sync is launched: the composition owns
+        // progress and outcome (see `CompositionActions.syncPhotos`), so a
+        // spinner held for the whole run would be a second, mute indicator.
+        onRefresh: () async => syncPhotos(context),
+        child: feed,
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              toolbarHeight: 64,
-              backgroundColor: AppColors.paper,
-              surfaceTintColor: Colors.transparent,
-              titleSpacing: _margin(width),
-              title: Text('ArtKiddo', style: AppTypography.display),
-              actions: _appBarActions(
-                context,
-                capabilities,
-                compositionActions,
-                width: width,
-                // Sharing a gallery link needs at least one artist and a
-                // readable vault. The control stays visible and disabled so
-                // the absence is legible as "nothing to share yet" rather
-                // than as a missing feature.
-                shareEnabled: hasArtists && !vaultUnreadable,
-                onShare: () => _share(context, children, filter),
-              ),
-            ),
-            if (children.length > 1)
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _FilterHeaderDelegate(
-                  child: _FilterBar(
-                    children: children,
-                    filter: filter,
-                    margin: _margin(width),
-                    onSelect: (next) {
-                      ref.read(galleryFilterProvider.notifier).setFilter(next);
-                      WidgetsBinding.instance.addPostFrameCallback(
-                        (_) => _restoreScroll(),
-                      );
-                    },
-                  ),
+        child: Stack(
+          children: [
+            feed,
+            Positioned(
+              top: chromeExtent + AppSpacing.s2,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _ScrollMonthLabel(
+                  month: _scrollMonth,
+                  visible: _scrollMonthVisible,
                 ),
-              )
-            else
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s2)),
-            ..._buildGallerySlivers(
-              context,
-              l10n,
-              tilesAsync,
-              filter,
-              children,
-              vaultUnreadable: vaultUnreadable,
-              columns: _columns(width),
-              gutter: _gutter(width),
-              margin: _margin(width),
+              ),
             ),
           ],
         ),
@@ -458,72 +568,53 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             ),
           ];
         }
-        final groups = _monthGroups(
-          data.tiles,
-          Localizations.localeOf(context),
-        );
-        final slivers = <Widget>[];
-        for (var index = 0; index < groups.length; index++) {
-          final group = groups[index];
-          slivers.add(
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  margin,
-                  index == 0 ? AppSpacing.s3 : AppSpacing.s8,
-                  margin,
-                  AppSpacing.s3,
+        // One continuous wall, newest first: no month headers. Where the
+        // parent is in time shows only while scrolling (`_ScrollMonthLabel`).
+        final feed = [...data.tiles]
+          ..sort((a, b) => _dateFor(b).compareTo(_dateFor(a)));
+        final ratios = [
+          for (final tile in feed) MosaicArtworkTile.ratioOf(tile),
+        ];
+        final previous = _gridDelegate;
+        // Reusing an equivalent delegate keeps its computed plan instead of
+        // re-placing every tile on each rebuild.
+        final delegate =
+            previous != null &&
+                previous.columns == columns &&
+                previous.gutter == gutter &&
+                listEquals(previous.aspectRatios, ratios)
+            ? previous
+            : SliverGridDelegateWithMasonryPlan(
+                aspectRatios: ratios,
+                columns: columns,
+                gutter: gutter,
+              );
+        _feed = feed;
+        _gridDelegate = delegate;
+        final indexById = {
+          for (var i = 0; i < feed.length; i++) feed[i].artworkId: i,
+        };
+        return [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(margin, AppSpacing.s3, margin, 104),
+            sliver: SliverGrid(
+              gridDelegate: delegate,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => MosaicArtworkTile(
+                  key: ValueKey(feed[index].artworkId),
+                  tile: feed[index],
                 ),
-                child: Text(group.label, style: AppTypography.h2),
+                childCount: feed.length,
+                // A new capture lands at index 0; keyed lookup keeps each
+                // mounted tile (and a peek in progress) on its artwork.
+                findChildIndexCallback: (key) =>
+                    indexById[(key as ValueKey<String>).value],
               ),
             ),
-          );
-          slivers.add(
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                margin,
-                0,
-                margin,
-                index == groups.length - 1 ? 104 : 0,
-              ),
-              sliver: SliverMasonryGrid.count(
-                crossAxisCount: columns,
-                mainAxisSpacing: gutter,
-                crossAxisSpacing: gutter,
-                childCount: group.tiles.length,
-                itemBuilder: (context, itemIndex) =>
-                    MosaicArtworkTile(tile: group.tiles[itemIndex]),
-              ),
-            ),
-          );
-        }
-        return slivers;
+          ),
+        ];
       },
     );
-  }
-
-  List<_MonthGroup> _monthGroups(List<ArtworkTile> tiles, Locale locale) {
-    final sorted = [...tiles]
-      ..sort((a, b) => _dateFor(b).compareTo(_dateFor(a)));
-    final groups = <_MonthGroup>[];
-    for (final tile in sorted) {
-      final date = _dateFor(tile);
-      final key = '${date.year}-${date.month}';
-      if (groups.isEmpty || groups.last.key != key) {
-        groups.add(
-          _MonthGroup(
-            key: key,
-            label: _capitalize(
-              DateFormat.yMMMM(locale.toLanguageTag()).format(date),
-            ),
-            tiles: [tile],
-          ),
-        );
-      } else {
-        groups.last.tiles.add(tile);
-      }
-    }
-    return groups;
   }
 
   DateTime _dateFor(ArtworkTile tile) => tile.drawnAt ?? tile.addedAt;
@@ -532,21 +623,16 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 }
 
-class _MonthGroup {
-  final String key;
-  final String label;
-  final List<ArtworkTile> tiles;
-  _MonthGroup({required this.key, required this.label, required this.tiles});
-}
-
 class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  static const height = 52.0;
+
   final Widget child;
   const _FilterHeaderDelegate({required this.child});
 
   @override
-  double get minExtent => 52;
+  double get minExtent => height;
   @override
-  double get maxExtent => 52;
+  double get maxExtent => height;
   @override
   Widget build(
     BuildContext context,
@@ -604,9 +690,77 @@ class _FilterBar extends StatelessWidget {
   }
 }
 
+/// Transient month pill shown over the feed while it scrolls.
+///
+/// Decorative for assistive technology: every tile already announces its
+/// own date, and a label that appears and fades on motion would only repeat
+/// it out of context.
+class _ScrollMonthLabel extends StatelessWidget {
+  final ValueListenable<String?> month;
+  final ValueListenable<bool> visible;
+  const _ScrollMonthLabel({required this.month, required this.visible});
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: IgnorePointer(
+        child: ValueListenableBuilder<bool>(
+          valueListenable: visible,
+          builder: (context, isVisible, child) => AnimatedOpacity(
+            opacity: isVisible ? 1 : 0,
+            duration: AppMotion.standard,
+            curve: AppMotion.curve,
+            child: child,
+          ),
+          child: ValueListenableBuilder<String?>(
+            valueListenable: month,
+            builder: (context, value, _) => value == null
+                ? const SizedBox.shrink()
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadii.full),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1F000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                        vertical: AppSpacing.s2,
+                      ),
+                      child: Text(
+                        value,
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class MosaicArtworkTile extends ConsumerStatefulWidget {
   final ArtworkTile tile;
   const MosaicArtworkTile({super.key, required this.tile});
+
+  static const _minRatio = 0.60;
+  static const _maxRatio = 1.70;
+
+  /// The ratio a tile is displayed at. Extreme drawings are clamped (and
+  /// shown uncropped inside that frame) so one panorama or scroll cannot
+  /// dominate the wall. The feed's layout plan uses this same value.
+  static double ratioOf(ArtworkTile tile) =>
+      tile.aspectRatio.clamp(_minRatio, _maxRatio);
 
   @override
   ConsumerState<MosaicArtworkTile> createState() => _MosaicArtworkTileState();
@@ -721,9 +875,8 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = widget.tile.aspectRatio.clamp(0.60, 1.70);
-    final extreme =
-        widget.tile.aspectRatio < 0.60 || widget.tile.aspectRatio > 1.70;
+    final ratio = MosaicArtworkTile.ratioOf(widget.tile);
+    final extreme = ratio != widget.tile.aspectRatio;
     final l10n = AppLocalizations.of(context);
     final date = widget.tile.drawnAt ?? widget.tile.addedAt;
     final label = widget.tile.story == null || widget.tile.story!.isEmpty
@@ -882,6 +1035,8 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      _PeekHeader(tile: widget.tile),
+                      const SizedBox(height: AppSpacing.s3),
                       Flexible(
                         child: Container(
                           decoration: BoxDecoration(
@@ -952,8 +1107,14 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                               const SizedBox(width: AppSpacing.s2 + 2),
                               Text(
                                 widget.tile.childName.isNotEmpty
-                                    ? 'Voix de ${widget.tile.childName}'
-                                    : 'Écoute de l’anecdote...',
+                                    ? AppLocalizations.of(
+                                        context,
+                                      ).galleryPeekVoiceOf(
+                                        widget.tile.childName,
+                                      )
+                                    : AppLocalizations.of(
+                                        context,
+                                      ).galleryPeekListening,
                                 style: AppTypography.bodyStrong.copyWith(
                                   color: AppColors.ink,
                                 ),
@@ -990,6 +1151,57 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// When and by whom, above the peeked artwork: the two facts a parent
+/// looks for first, readable on the blurred backdrop without opening it.
+class _PeekHeader extends StatelessWidget {
+  final ArtworkTile tile;
+  const _PeekHeader({required this.tile});
+
+  static const _shadows = [Shadow(color: Colors.black54, blurRadius: 8)];
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final drawnAt = tile.drawnAt;
+    // Say which date this is (CONTEXT.md invariant 3): the parent-supplied
+    // drawing date, or only the day it was added.
+    final date = drawnAt != null
+        ? l10n.artworkDrawnOn(drawnAt)
+        : l10n.artworkAddedOn(tile.addedAt);
+    final artist = [
+      if (tile.childName.isNotEmpty) tile.childName,
+      if (tile.age.isNotEmpty) tile.age,
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            date,
+            textAlign: TextAlign.center,
+            style: AppTypography.h3.copyWith(
+              color: Colors.white,
+              shadows: _shadows,
+            ),
+          ),
+          if (artist.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              artist,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyStrong.copyWith(
+                color: Colors.white.withValues(alpha: 0.88),
+                shadows: _shadows,
+              ),
+            ),
+          ],
         ],
       ),
     );

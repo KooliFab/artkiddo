@@ -1620,4 +1620,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncUploadSuspendedBody =>
       'New cloud backups are temporarily suspended to keep the app free.\n\nYour existing galleries, restores, and deletions remain fully available.';
+
+  @override
+  String galleryPeekVoiceOf(String childName) {
+    return '$childName\'s voice';
+  }
+
+  @override
+  String get galleryPeekListening => 'Playing the story…';
+
+  @override
+  String get syncProgressPreparing => 'Preparing sync…';
+
+  @override
+  String syncProgressReceiving(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Getting drawings… $n received',
+      one: 'Getting drawings… 1 received',
+      zero: 'Getting the family\'s drawings…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncProgressUpToDate => 'Gallery up to date';
+
+  @override
+  String get syncProgressDismiss => 'Close';
 }

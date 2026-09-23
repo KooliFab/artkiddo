@@ -221,6 +221,51 @@ void main() {
     );
   });
 
+  group('progress', () {
+    test('reports sending against a known total, then receiving', () async {
+      final a = await newDevice('user-a');
+      await a.sync(); // creates the family
+      final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
+      final childId =
+          (await a.children.create(name: 'Zoé', birthDate: DateTime(2019))
+                  as ActionSuccess<String>)
+              .value;
+      for (var i = 0; i < 3; i++) {
+        await createSyncedArtwork(a, childId: childId, seed: i);
+      }
+
+      final sent = <SyncProgress>[];
+      cloudApi.currentUserId = a.userId;
+      await a.engine.syncAll(onProgress: sent.add);
+
+      final sending = sent.where((p) => p.phase == SyncPhase.sending);
+      // One child + three artworks were waiting in the outbox.
+      expect(sending.map((p) => p.done), [0, 1, 2, 3, 4]);
+      expect(sending.every((p) => p.total == 4), isTrue);
+      expect(
+        sent.indexWhere((p) => p.phase == SyncPhase.receiving),
+        greaterThan(sent.lastIndexWhere((p) => p.phase == SyncPhase.sending)),
+        reason: 'receiving starts only once sending is over',
+      );
+
+      cloudApi.seedMembership('user-b', familyId);
+      final b = await newDevice('user-b');
+      final received = <SyncProgress>[];
+      cloudApi.currentUserId = b.userId;
+      await b.engine.syncAll(onProgress: received.add);
+
+      final receiving = received
+          .where((p) => p.phase == SyncPhase.receiving)
+          .toList();
+      expect(receiving.map((p) => p.done), [0, 1, 2, 3]);
+      expect(
+        receiving.every((p) => p.total == null),
+        isTrue,
+        reason: 'remote pages have no known total',
+      );
+    });
+  });
+
   group('D13 — join and restore are the same operation', () {
     test(
       'a fresh device joining an already-populated family pulls everything (restore)',

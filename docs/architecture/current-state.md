@@ -5,8 +5,9 @@ account-free gallery experience (feed, capture, sharing, and household UI
 behind capability gates). This document is the entry point for a fresh
 conversation; read it before scanning the source tree.
 
-Verified on: 2026-09-22 — separation-of-responsibilities audit pass
-(settings/trash local defaults, one gating rule, schema v2/v3 snapshots)
+Verified on: 2026-09-23 — gallery feed rework (exact masonry placement,
+pull-to-refresh on `syncPhotos`, neutral `SyncProgress`); previously
+2026-09-22 separation-of-responsibilities audit pass
 
 ## Repository shape
 
@@ -202,7 +203,21 @@ success depend on a provider or network.
   It is a bare callback because this package models no sync status: the
   composition runs the sync and reports progress and outcome itself. The
   bootstrap rejects a `remoteBackup` composition without it, so the capability
-  can never ship as background-only work with no visible trigger.
+  can never ship as background-only work with no visible trigger. The gallery
+  binds it to pull-to-refresh, rendered only when `remoteBackup` is enabled
+  *and* the action is bound (ADR 0016); the gesture resolves as soon as the
+  sync is launched, leaving progress to the composition.
+- `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress` steps
+  (`sending` against the known count of ready outbox entries, then
+  `receiving` with no total, since remote pages end when the remote says so)
+  so a composition can render live progress without the core owning a
+  sync-status model.
+
+The gallery feed is one continuous masonry wall, newest first, placed exactly
+by `SliverGridDelegateWithMasonryPlan` from the tiles' known aspect ratios.
+Its scroll extent is computed, never estimated: an estimating masonry sliver
+corrected the scroll offset near the end of long galleries (ADR 0006). The
+month shows only as a transient label while the feed scrolls.
 
 `AuthGateway` used to sit here as a third identity contract. It had no
 provider, no default and no caller, and duplicated `FamilyApi`'s `UserProfile`;

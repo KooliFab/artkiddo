@@ -27,7 +27,6 @@ Under `public-code-rules.md`, public dependencies must satisfy four strict crite
 The following third-party dependencies are declared in `artkiddo_core/pubspec.yaml` and justified under the four criteria:
 
 ### 1. Presentation & UI Layout
-- `flutter_staggered_grid_view` (^0.7.0): Required for the responsive, multi-column masonry feed displaying artworks with variable aspect ratios without artificial cropping (MIT).
 - `photo_view` (^0.15.0): Enables interactive pinch-to-zoom and pan on artwork details in the full-screen view (MIT).
 - `qr_flutter` (^4.1.0): Renders QR codes in pure Dart without native platform permissions or network access, used for displaying invite and share codes offline (BSD-3-Clause). Note: QR *scanning* (`mobile_scanner`) remains private in the composition and is injected dynamically.
 
@@ -44,6 +43,13 @@ The following third-party dependencies are declared in `artkiddo_core/pubspec.ya
 
 ### 4. Deliberately excluded
 
+- `flutter_staggered_grid_view`: removed on 2026-09-23. Its lazily measured
+  masonry sliver estimates its scroll extent and corrects the offset as it
+  discovers tile heights, which pulled the viewport back up near the end of
+  a long gallery and made the oldest artworks unreachable. Every gallery tile
+  already knows its aspect ratio, so the core places the feed exactly with a
+  `SliverGridDelegate` of its own (`masonry_layout.dart`) on Flutter's
+  `SliverGrid`. The dependency bought nothing that exact placement does not.
 - `mobile_scanner`: stays outside the public package. Rendering a QR code is a
   pure Dart drawing operation, but reading one requires a device capability the
   account-free product does not need. The public core exposes

@@ -1649,4 +1649,33 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get syncUploadSuspendedBody =>
       'Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l\'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.';
+
+  @override
+  String galleryPeekVoiceOf(String childName) {
+    return 'Voix de $childName';
+  }
+
+  @override
+  String get galleryPeekListening => 'Écoute de l’anecdote…';
+
+  @override
+  String get syncProgressPreparing => 'Préparation de la synchronisation…';
+
+  @override
+  String syncProgressReceiving(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Réception… $n dessins reçus',
+      one: 'Réception… 1 dessin reçu',
+      zero: 'Réception des dessins de la famille…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncProgressUpToDate => 'Galerie à jour';
+
+  @override
+  String get syncProgressDismiss => 'Fermer';
 }

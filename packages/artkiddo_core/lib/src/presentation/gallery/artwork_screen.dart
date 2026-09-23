@@ -60,9 +60,14 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     if (ref.read(appCapabilitiesProvider).household) {
       // Attribution must be available even when the user opens an artwork
       // directly from the gallery without visiting the Family screen first.
-      unawaited(
-        ref.read(familyControllerProvider.notifier).loadFamilyMembers(),
-      );
+      // Deferred past the first frame: the load flips the controller to busy
+      // synchronously, which Riverpod forbids while the tree is building.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref.read(familyControllerProvider.notifier).loadFamilyMembers(),
+        );
+      });
     }
     _load();
   }

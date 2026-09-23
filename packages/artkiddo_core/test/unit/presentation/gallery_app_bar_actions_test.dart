@@ -110,6 +110,45 @@ void main() {
       expect(find.byIcon(Icons.cloud_sync_outlined), findsNothing);
     });
 
+    testWidgets('pull-to-refresh is absent in the account-free build', (
+      tester,
+    ) async {
+      await tester.pumpWidget(appWith());
+      await tester.pump();
+
+      expect(find.byType(RefreshIndicator), findsNothing);
+    });
+
+    testWidgets('pull-to-refresh needs the binding, not only the capability', (
+      tester,
+    ) async {
+      await tester.pumpWidget(appWith(capabilities: AppCapabilities.cloud));
+      await tester.pump();
+
+      expect(find.byType(RefreshIndicator), findsNothing);
+    });
+
+    testWidgets('pulling the feed triggers one photo sync', (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(
+        appWith(
+          capabilities: AppCapabilities.cloud,
+          actions: CompositionActions(syncPhotos: (_) => calls++),
+          children: [child('c1', 'Léa')],
+        ),
+      );
+      await tester.pump();
+
+      await tester.fling(
+        find.byType(CustomScrollView),
+        const Offset(0, 400),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      expect(calls, 1);
+    });
+
     testWidgets('no share control in the account-free build', (tester) async {
       await tester.pumpWidget(appWith(children: [child('c1', 'Léa')]));
       await tester.pump();

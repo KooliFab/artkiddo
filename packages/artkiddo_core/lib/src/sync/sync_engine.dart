@@ -34,6 +34,39 @@ class SyncRunSummary {
   });
 }
 
+/// Which half of a [SyncEngine.syncAll] run a [SyncProgress] describes.
+enum SyncPhase {
+  /// Sending this device's pending outbox entries.
+  sending,
+
+  /// Receiving and applying the family's remote changes.
+  receiving,
+}
+
+/// A step of a running [SyncEngine.syncAll], for a composition to render
+/// progress. Sending has a known [total] (the ready outbox entries);
+/// receiving does not, because pages arrive until the remote says there are
+/// no more, so its [total] is null and [done] counts the artworks applied.
+class SyncProgress {
+  final SyncPhase phase;
+  final int done;
+  final int? total;
+  const SyncProgress({required this.phase, required this.done, this.total});
+
+  @override
+  bool operator ==(Object other) =>
+      other is SyncProgress &&
+      other.phase == phase &&
+      other.done == done &&
+      other.total == total;
+
+  @override
+  int get hashCode => Object.hash(phase, done, total);
+
+  @override
+  String toString() => 'SyncProgress($phase, $done/${total ?? '?'})';
+}
+
 /// Thrown internally to short-circuit one outbox entry as a *terminal*
 /// failure — never retried, exits the queue immediately (spec §5).
 class _TerminalOutboxFailure implements Exception {
@@ -120,7 +153,9 @@ class SyncEngine {
   /// *different* family than the authenticated account (§1's isolation
   /// rule) — the caller (`AccountController`) is responsible for turning
   /// that into a `blocked` status rather than a retryable `failed` one.
-  Future<SyncRunSummary> syncAll() async {
+  Future<SyncRunSummary> syncAll({
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
     final userId = currentUserId();
     if (userId == null) {
       Log.w('Synchronisation ignorée : session absente', 'Sync');
@@ -135,11 +170,15 @@ class SyncEngine {
     Log.i('Synchronisation démarrée', 'Sync');
     final familyId = await ensureFamily();
 
-    final pushResult = await _push(userId: userId, familyId: familyId);
+    final pushResult = await _push(
+      userId: userId,
+      familyId: familyId,
+      onProgress: onProgress,
+    );
     (int, int) pullResult;
     AppFailure? pullError;
     try {
-      pullResult = await _pull(familyId: familyId);
+      pullResult = await _pull(familyId: familyId, onProgress: onProgress);
     } on _PullApplyFailure catch (error, stack) {
       pullResult = (0, 0);
       pullError = error.failure;
@@ -207,6 +246,7 @@ class SyncEngine {
   Future<(int, int, AppFailure?)> _push({
     required String userId,
     required String familyId,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final ready = await outbox.listReady();
     Log.i('${ready.length} entrée(s) prêtes à envoyer', 'Sync');
@@ -214,7 +254,17 @@ class SyncEngine {
     var failed = 0;
     AppFailure? lastError;
 
-    for (final entry in ready) {
+    for (var index = 0; index < ready.length; index++) {
+      final entry = ready[index];
+      // Reported before each entry, so deferred and skipped entries (which
+      // `continue`) still advance the count.
+      onProgress?.call(
+        SyncProgress(
+          phase: SyncPhase.sending,
+          done: index,
+          total: ready.length,
+        ),
+      );
       if (isEntryDeferred != null && await isEntryDeferred!(entry)) {
         Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
         continue;
@@ -296,6 +346,13 @@ class SyncEngine {
       // Isolation: one entry's exception never stops the loop (spec §5 —
       // "échecs isolés par entrée").
     }
+    onProgress?.call(
+      SyncProgress(
+        phase: SyncPhase.sending,
+        done: ready.length,
+        total: ready.length,
+      ),
+    );
 
     return (succeeded, failed, lastError);
   }
@@ -465,7 +522,11 @@ class SyncEngine {
   // =====================================================================
 
   /// Returns (children applied, artworks applied).
-  Future<(int, int)> _pull({required String familyId}) async {
+  Future<(int, int)> _pull({
+    required String familyId,
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
+    onProgress?.call(const SyncProgress(phase: SyncPhase.receiving, done: 0));
     final cursors = await vaultMeta.getPullCursors();
     Log.d(
       'Récupération distante : enfants=${cursors.children?.toIso8601String() ?? 'epoch'}, '
@@ -530,6 +591,7 @@ class SyncEngine {
         updatedAtOf: (r) => r.updatedAt,
         pendingLocalIds: pendingIds,
       );
+      var receivedInPage = 0;
       for (final row in plan.toApply) {
         if (row.deletedAt != null) {
           final result = await artworksRepo.applyRemoteTombstone(row.id);
@@ -556,6 +618,12 @@ class SyncEngine {
         // D10: thumbnails first — eager for a row new to this device, the
         // display derivative stays deferred to [ensureDisplayImageDownloaded].
         await _downloadThumbnailIfNeeded(row);
+        onProgress?.call(
+          SyncProgress(
+            phase: SyncPhase.receiving,
+            done: artworksApplied + ++receivedInPage,
+          ),
+        );
       }
       artworksApplied += plan.toApply.length;
       artworkCursor = _nextPageCursor(

@@ -2059,5 +2059,39 @@
   "syncUploadSuspendedBody": "Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.",
   "@syncUploadSuspendedBody": {
     "description": "Localized user-facing copy."
+  },
+  "galleryPeekVoiceOf": "Voix de {childName}",
+  "@galleryPeekVoiceOf": {
+    "description": "Pill under a long-pressed artwork while its voice story plays.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryPeekListening": "Écoute de l’anecdote…",
+  "@galleryPeekListening": {
+    "description": "Same pill when the artwork's child is unknown."
+  },
+  "syncProgressPreparing": "Préparation de la synchronisation…",
+  "@syncProgressPreparing": {
+    "description": "Sync toast before the first progress step arrives."
+  },
+  "syncProgressReceiving": "{n, plural, =0{Réception des dessins de la famille…} =1{Réception… 1 dessin reçu} other{Réception… {n} dessins reçus}}",
+  "@syncProgressReceiving": {
+    "description": "Sync toast while the family's drawings are being received; n counts drawings received so far.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncProgressUpToDate": "Galerie à jour",
+  "@syncProgressUpToDate": {
+    "description": "Sync toast outcome when the run succeeded and there is no earlier backup date to show."
+  },
+  "syncProgressDismiss": "Fermer",
+  "@syncProgressDismiss": {
+    "description": "Tooltip of the sync toast close button."
   }
 }

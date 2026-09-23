@@ -184,6 +184,12 @@ void main() {
 
       expect(fakePlayer.isPlaying, isTrue);
 
+      // The peek names when and by whom above the artwork. No `drawnAt`
+      // here, so it says the date is the day the artwork was added.
+      expect(find.text('Added on January 1, 2026'), findsOneWidget);
+      expect(find.text('Leo · 4 ans'), findsOneWidget);
+      expect(find.text("Leo's voice"), findsOneWidget);
+
       await gesture.up();
       await tester.pump(const Duration(milliseconds: 100));
 

@@ -1621,6 +1621,10 @@ abstract class AppLocalizations {
   /// **'Famille'**
   String get familyTitle;
 
+  /// No description provided for @familyInviteTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter un membre'**
   String get familyInviteTitle;
 
   /// Localized user-facing copy.
@@ -1656,7 +1660,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Copier le code'**
+  /// **'Inviter'**
   String get familyInviteCopy;
 
   /// Localized user-facing copy.
@@ -1680,7 +1684,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Rejoindre'**
+  /// **'Rejoindre une famille'**
   String get familyJoinButton;
 
   /// Localized user-facing copy.
@@ -1818,7 +1822,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Sauvegarde et compte'**
+  /// **'Créer un compte'**
   String get accountTitle;
 
   /// Localized user-facing copy.
@@ -2750,6 +2754,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l\'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.'**
   String get syncUploadSuspendedBody;
+
+  /// Pill under a long-pressed artwork while its voice story plays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix de {childName}'**
+  String galleryPeekVoiceOf(String childName);
+
+  /// Same pill when the artwork's child is unknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écoute de l’anecdote…'**
+  String get galleryPeekListening;
+
+  /// Sync toast before the first progress step arrives.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de la synchronisation…'**
+  String get syncProgressPreparing;
+
+  /// Sync toast while the family's drawings are being received; n counts drawings received so far.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n, plural, =0{Réception des dessins de la famille…} =1{Réception… 1 dessin reçu} other{Réception… {n} dessins reçus}}'**
+  String syncProgressReceiving(int n);
+
+  /// Sync toast outcome when the run succeeded and there is no earlier backup date to show.
+  ///
+  /// In fr, this message translates to:
+  /// **'Galerie à jour'**
+  String get syncProgressUpToDate;
+
+  /// Tooltip of the sync toast close button.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get syncProgressDismiss;
 }
 
 class _AppLocalizationsDelegate
