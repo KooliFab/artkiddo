@@ -187,59 +187,60 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                       if (widget.joinMode) ...[
                         _buildOutcomeBlock(l10n, state, controller),
                         Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _codeController,
-                              autofocus: true,
-                              textCapitalization: TextCapitalization.characters,
-                              maxLength: 8,
-                              enabled:
-                                  !state.redeem.isBusy &&
-                                  !state.convergence.isBusy,
-                              decoration: InputDecoration(
-                                hintText: l10n.familyJoinCodeHint,
-                                counterText: '',
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _codeController,
+                                autofocus: true,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                maxLength: 8,
+                                enabled:
+                                    !state.redeem.isBusy &&
+                                    !state.convergence.isBusy,
+                                decoration: InputDecoration(
+                                  hintText: l10n.familyJoinCodeHint,
+                                  counterText: '',
+                                ),
+                                onChanged: (_) => setState(() {}),
                               ),
-                              onChanged: (_) => setState(() {}),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: _pasteFromClipboard,
-                            child: Text(l10n.accountCodePaste),
-                          ),
-                        ],
+                            TextButton(
+                              onPressed: _pasteFromClipboard,
+                              child: Text(l10n.accountCodePaste),
+                            ),
+                          ],
                         ),
                         if (canScanQr) ...[
-                        const SizedBox(height: AppSpacing.s2),
-                        AppButton(
-                          label: l10n.familyScanButton,
-                          variant: AppButtonVariant.secondary,
-                          fullWidth: true,
-                          icon: Icons.qr_code_scanner,
-                          onPressed:
-                              state.redeem.isBusy || state.convergence.isBusy
-                              ? null
-                              : _scanCode,
-                        ),
+                          const SizedBox(height: AppSpacing.s2),
+                          AppButton(
+                            label: l10n.familyScanButton,
+                            variant: AppButtonVariant.secondary,
+                            fullWidth: true,
+                            icon: Icons.qr_code_scanner,
+                            onPressed:
+                                state.redeem.isBusy || state.convergence.isBusy
+                                ? null
+                                : _scanCode,
+                          ),
                         ],
                         const SizedBox(height: AppSpacing.s4),
                         AsyncActionButton(
-                        action: state.joinReset.isBusy
-                            ? state.joinReset
-                            : state.convergence.isBusy
-                            ? state.convergence
-                            : state.redeem,
-                        idleLabel: l10n.familyJoinButton,
-                        busyLabel: state.joinReset.isBusy
-                            ? l10n.familyJoinDiscarding
-                            : state.convergence.isBusy
-                            ? l10n.familyJoinConverging
-                            : l10n.familyJoinChecking,
-                        fullWidth: true,
-                        enabled: canSubmitCode,
-                        onPressed: () =>
-                            _confirmAndJoin(_codeController.text.trim()),
+                          action: state.joinReset.isBusy
+                              ? state.joinReset
+                              : state.convergence.isBusy
+                              ? state.convergence
+                              : state.redeem,
+                          idleLabel: l10n.familyJoinButton,
+                          busyLabel: state.joinReset.isBusy
+                              ? l10n.familyJoinDiscarding
+                              : state.convergence.isBusy
+                              ? l10n.familyJoinConverging
+                              : l10n.familyJoinChecking,
+                          fullWidth: true,
+                          enabled: canSubmitCode,
+                          onPressed: () =>
+                              _confirmAndJoin(_codeController.text.trim()),
                         ),
                       ],
                     ],

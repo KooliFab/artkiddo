@@ -140,7 +140,7 @@ void main() {
         locale: const Locale('fr'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const FamilyInviteScreen(),
+        home: const FamilyInviteScreen(joinMode: true),
       ),
     );
   }
@@ -155,7 +155,7 @@ void main() {
     // FamilyInviteScreen renders a single TextField: the join-code input.
     await tester.enterText(find.byType(TextField).first, 'ABCD2345');
     await tester.pump();
-    final joinButton = find.text('Rejoindre');
+    final joinButton = find.byType(AsyncActionButton);
     await tester.ensureVisible(joinButton);
     await tester.pumpAndSettle();
     await tester.tap(joinButton);
