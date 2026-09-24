@@ -467,6 +467,10 @@ class SyncEngine {
         final audioFile = await vault.resolveFile(current.relativeAudioPath!);
         if (await audioFile.exists()) {
           final audioBytes = await audioFile.readAsBytes();
+          Log.i(
+            'Upload audio pour œuvre ${current.id} : ${audioBytes.length} octets (${(audioBytes.length / 1024).toStringAsFixed(1)} Ko)',
+            'Sync',
+          );
           audioKey = await uploader.uploadDerivative(
             bytes: audioBytes,
             artworkId: current.id,

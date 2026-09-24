@@ -130,6 +130,20 @@ class _ArtworkAudioPlayerCardState
     if (_isPlaying) {
       await _player!.pause();
     } else {
+      final m = widget.artwork;
+      if (m.relativeAudioPath != null) {
+        try {
+          final vault = ref.read(localVaultProvider);
+          final file = await vault.resolveFile(m.relativeAudioPath!);
+          if (await file.exists()) {
+            final len = await file.length();
+            Log.i(
+              'Lecture audio pour œuvre ${m.id} : $len octets (${(len / 1024).toStringAsFixed(1)} Ko)',
+              'ArtworkScreen',
+            );
+          }
+        } catch (_) {}
+      }
       await _player!.play();
     }
   }

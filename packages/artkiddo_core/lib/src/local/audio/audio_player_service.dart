@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 import '../logging/log.dart';
@@ -40,15 +41,44 @@ class JustAudioPlayerService implements AudioPlayerService {
     }
   }
 
+  String? _currentFilePath;
+
   @override
   Future<void> setFilePath(String filePath) async {
     await _ensureSession();
+    _currentFilePath = filePath;
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        final bytes = await file.length();
+        Log.i(
+          'Chargement audio pour lecture : $filePath - Poids : $bytes octets (${(bytes / 1024).toStringAsFixed(1)} Ko)',
+          'AudioPlayer',
+        );
+      } else {
+        Log.w('Fichier audio introuvable à la lecture : $filePath', 'AudioPlayer');
+      }
+    } catch (e) {
+      Log.w('Impossible de lire la taille du fichier audio ($filePath): $e', 'AudioPlayer');
+    }
     await _player.setFilePath(filePath);
   }
 
   @override
   Future<void> play() async {
     await _ensureSession();
+    if (_currentFilePath != null) {
+      try {
+        final file = File(_currentFilePath!);
+        if (await file.exists()) {
+          final bytes = await file.length();
+          Log.i(
+            'Lecture audio démarrée : $_currentFilePath - Poids : $bytes octets (${(bytes / 1024).toStringAsFixed(1)} Ko)',
+            'AudioPlayer',
+          );
+        }
+      } catch (_) {}
+    }
     await _player.play();
   }
 
