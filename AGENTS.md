@@ -5,12 +5,13 @@
 | Task | Read first |
 |---|---|
 | Local fix, UI tweak, test, single-file change | nothing more; open the files involved |
-| Domain wording or invariant | `CONTEXT.md` and the one related ADR in `docs/adr/` |
+| Domain wording or invariant | `CONTEXT.md` and the one related ADR, chosen from `docs/adr/README.md` |
 | Feature, refactor, contract, schema, provider or repository change | `docs/agents/feature-workflow.md` and `docs/architecture/current-state.md` |
 | Adding a dependency or public API | `docs/agents/public-code-rules.md` |
 
-`docs/agents/public-code-rules.md` applies to all public code even when you do
-not reread it; the rules below are its non-negotiable core.
+The paragraphs below are the non-negotiable core of
+`docs/agents/public-code-rules.md`; they bind every change. Read the full file
+when the table above sends you there.
 
 The account-free local path is non-negotiable: it must remain persistent,
 functional, and testable without configuration or network access. Classify
