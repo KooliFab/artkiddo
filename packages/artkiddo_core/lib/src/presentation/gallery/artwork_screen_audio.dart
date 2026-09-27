@@ -98,16 +98,22 @@ class _ArtworkAudioPlayerCardState
         final vault = ref.read(localVaultProvider);
         if (updated.relativeAudioPath != null) {
           final file = await vault.resolveFile(updated.relativeAudioPath!);
-          _player = ref.read(audioPlayerServiceProvider);
-          await _player!.setFilePath(file.path);
-          _posSub?.cancel();
-          _posSub = _player!.positionStream.listen((pos) {
-            if (mounted) setState(() => _positionMs = pos.inMilliseconds);
-          });
-          _playSub?.cancel();
-          _playSub = _player!.isPlayingStream.listen((playing) {
-            if (mounted) setState(() => _isPlaying = playing);
-          });
+          if (await file.exists()) {
+            _player = ref.read(audioPlayerServiceProvider);
+            await _player!.setFilePath(file.path);
+            _posSub?.cancel();
+            _posSub = _player!.positionStream.listen((pos) {
+              if (mounted) setState(() => _positionMs = pos.inMilliseconds);
+            });
+            _playSub?.cancel();
+            _playSub = _player!.isPlayingStream.listen((playing) {
+              if (mounted) setState(() => _isPlaying = playing);
+            });
+          } else {
+            if (mounted) {
+              setState(() => _downloadFailed = true);
+            }
+          }
         }
       }
     } else {
@@ -212,14 +218,13 @@ class _ArtworkAudioPlayerCardState
               ],
             ),
           ] else if (_downloadFailed) ...[
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    l10n.artworkAudioDownloadError,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.danger,
-                    ),
+                Text(
+                  l10n.artworkAudioDownloadError,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.danger,
                   ),
                 ),
                 TextButton(
@@ -269,44 +274,44 @@ class _ArtworkAudioPlayerCardState
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.s2),
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: AppSpacing.s2,
-              runSpacing: AppSpacing.s1,
-              children: [
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                    ),
-                  ),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(l10n.captureAudioReRecord),
-                  onPressed: widget.onReRecord,
-                ),
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: AppColors.danger,
-                  ),
-                  label: Text(
-                    l10n.captureAudioDelete,
-                    style: const TextStyle(color: AppColors.danger),
-                  ),
-                  onPressed: widget.onDelete,
-                ),
-              ],
-            ),
           ],
+          const SizedBox(height: AppSpacing.s2),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: AppSpacing.s2,
+            runSpacing: AppSpacing.s1,
+            children: [
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s2,
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(l10n.captureAudioReRecord),
+                onPressed: widget.onReRecord,
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s2,
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: AppColors.danger,
+                ),
+                label: Text(
+                  l10n.captureAudioDelete,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+                onPressed: widget.onDelete,
+              ),
+            ],
+          ),
         ],
       ),
     );

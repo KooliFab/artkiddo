@@ -772,13 +772,13 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Remplacer l\'enregistrement ?'**
+  /// **'Enregistrer une nouvelle voix ?'**
   String get captureAudioReRecordConfirmTitle;
 
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'L\'enregistrement actuel sera remplacé par un nouveau.'**
+  /// **'La voix actuelle sera remplacée lorsque vous enregistrerez la nouvelle. Si vous annulez, elle sera conservée.'**
   String get captureAudioReRecordConfirmBody;
 
   /// Localized user-facing copy.
@@ -2790,6 +2790,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Fermer'**
   String get syncProgressDismiss;
+
+  /// No description provided for @artworkAudioSavedLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle voix enregistrée sur cet appareil.'**
+  String get artworkAudioSavedLocal;
+
+  /// No description provided for @artworkAudioDeletedLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix supprimée sur cet appareil.'**
+  String get artworkAudioDeletedLocal;
+
+  /// No description provided for @artworkAudioBackupPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix en attente de sauvegarde.'**
+  String get artworkAudioBackupPending;
+
+  /// No description provided for @artworkAudioBackedUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix sauvegardée.'**
+  String get artworkAudioBackedUp;
+
+  /// No description provided for @artworkAudioBackupFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.'**
+  String get artworkAudioBackupFailed;
+
+  /// No description provided for @artworkAudioConflict.
+  ///
+  /// In fr, this message translates to:
+  /// **'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.'**
+  String get artworkAudioConflict;
+
+  /// No description provided for @artworkAudioKeepRemote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conserver la voix partagée'**
+  String get artworkAudioKeepRemote;
+
+  /// No description provided for @artworkAudioUseLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser ma nouvelle version'**
+  String get artworkAudioUseLocal;
 }
 
 class _AppLocalizationsDelegate

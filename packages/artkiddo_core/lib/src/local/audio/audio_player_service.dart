@@ -47,17 +47,17 @@ class JustAudioPlayerService implements AudioPlayerService {
   Future<void> setFilePath(String filePath) async {
     await _ensureSession();
     _currentFilePath = filePath;
+    final file = File(filePath);
+    if (!await file.exists()) {
+      Log.w('Fichier audio introuvable à la lecture : $filePath', 'AudioPlayer');
+      throw FileSystemException('Fichier audio introuvable', filePath);
+    }
     try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        final bytes = await file.length();
-        Log.i(
-          'Chargement audio pour lecture : $filePath - Poids : $bytes octets (${(bytes / 1024).toStringAsFixed(1)} Ko)',
-          'AudioPlayer',
-        );
-      } else {
-        Log.w('Fichier audio introuvable à la lecture : $filePath', 'AudioPlayer');
-      }
+      final bytes = await file.length();
+      Log.i(
+        'Chargement audio pour lecture : $filePath - Poids : $bytes octets (${(bytes / 1024).toStringAsFixed(1)} Ko)',
+        'AudioPlayer',
+      );
     } catch (e) {
       Log.w('Impossible de lire la taille du fichier audio ($filePath): $e', 'AudioPlayer');
     }

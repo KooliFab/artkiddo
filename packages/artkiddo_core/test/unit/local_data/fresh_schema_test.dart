@@ -33,11 +33,11 @@ void main() {
     return rows.map((row) => row.data['name'] as String).toSet();
   }
 
-  test('a fresh vault is created at schema version 3', () async {
+  test('a fresh vault is created at schema version 4', () async {
     await db.customStatement('SELECT 1');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(db.schemaVersion, 3);
-    expect(version.data['user_version'], 3);
+    expect(db.schemaVersion, 4);
+    expect(version.data['user_version'], 4);
   });
 
   test('a fresh vault exposes exactly the baseline tables', () async {
@@ -75,6 +75,9 @@ void main() {
       'audio_byte_size',
       'deleted_at',
       'added_by',
+      'audio_revision',
+      'audio_sync_intent',
+      'audio_conflict',
     });
   });
 

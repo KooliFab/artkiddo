@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-09-24 (gallery and artwork screens split into `part` files).
+Verified on: 2026-09-27 (versioned audio writes and Drift v4).
 
 ## Repository shape
 
@@ -70,8 +70,8 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-- `AppDatabase` is Drift schema v3: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`. Each version
+- `AppDatabase` is Drift schema v4: v1 clean baseline (ADR 0007), v2 adds
+  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state. Each version
   has a snapshot in `drift_schemas/`, covered by
   `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
   vaults.
@@ -131,3 +131,7 @@ is computed, never estimated (ADR 0006).
   capability gating and by `_validateComposition` at boot.
 - A feature is not complete until its local behavior, optional capabilities,
   compatibility impact and rollback are stated.
+
+## Audio writes
+
+Audio saves remain local-first. A new recording replaces the previous local voice only after a durable save; cancellation preserves it. `AudioWrite` distinguishes keep, replace and delete. Optional backup checks the expected audio revision and keeps conflicting local files until the user chooses a version. Backup controls and statuses require `remoteBackup`. See ADR 0014 and `docs/sync-contract.md`.

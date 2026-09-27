@@ -46,6 +46,7 @@ class _FakeArtworkRow {
   final String? audioObjectKey;
   final int? audioDurationMs;
   final int audioByteSize;
+  final int audioRevision;
   final DateTime addedAt;
   final DateTime? drawnAt;
   final String? story;
@@ -63,6 +64,7 @@ class _FakeArtworkRow {
     this.audioObjectKey,
     this.audioDurationMs,
     this.audioByteSize = 0,
+    this.audioRevision = 0,
     required this.addedAt,
     required this.drawnAt,
     required this.story,
@@ -83,6 +85,7 @@ class _FakeArtworkRow {
         audioObjectKey: audioObjectKey,
         audioDurationMs: audioDurationMs,
         audioByteSize: audioByteSize,
+        audioRevision: audioRevision,
         addedAt: addedAt,
         drawnAt: drawnAt,
         story: story,
@@ -169,6 +172,7 @@ class FakeHomeCloudApi extends SyncBackend {
     String? audioObjectKey,
     int? audioDurationMs,
     int audioByteSize = 0,
+    AudioWrite? audioWrite,
     required DateTime addedAt,
     required DateTime? drawnAt,
     required String? story,
@@ -188,15 +192,30 @@ class FakeHomeCloudApi extends SyncBackend {
         'C06_DELETED_ROW_UPDATE_REJECTED: fake',
       );
     }
+    final intent = audioWrite?.intent;
+    if (intent != null &&
+        intent != AudioSyncIntent.keep &&
+        audioWrite!.expectedRevision != (existing?.audioRevision ?? 0)) {
+      throw const AudioConflictException();
+    }
     _artworks[id] = _FakeArtworkRow(
       id: id,
       familyId: familyId,
       childId: childId,
       displayObjectKey: displayObjectKey,
       thumbnailObjectKey: thumbnailObjectKey,
-      audioObjectKey: audioObjectKey,
-      audioDurationMs: audioDurationMs,
-      audioByteSize: audioByteSize,
+      audioObjectKey: intent == AudioSyncIntent.keep
+          ? existing?.audioObjectKey
+          : audioObjectKey,
+      audioDurationMs: intent == AudioSyncIntent.keep
+          ? existing?.audioDurationMs
+          : audioDurationMs,
+      audioByteSize: intent == AudioSyncIntent.keep
+          ? existing?.audioByteSize ?? 0
+          : audioByteSize,
+      audioRevision:
+          (existing?.audioRevision ?? 0) +
+          (intent == AudioSyncIntent.keep ? 0 : 1),
       addedAt: existing?.addedAt ?? addedAt,
       drawnAt: drawnAt,
       story: story,
@@ -268,6 +287,7 @@ class FakeHomeCloudApi extends SyncBackend {
             audioObjectKey: m.audioObjectKey,
             audioDurationMs: m.audioDurationMs,
             audioByteSize: m.audioByteSize,
+            audioRevision: m.audioRevision,
             addedAt: m.addedAt,
             drawnAt: m.drawnAt,
             story: m.story,
@@ -314,6 +334,7 @@ class FakeObjectUploader implements ObjectUploader {
   int uploadCount = 0;
 
   bool quotaExceeded = false;
+  Future<void> Function(ObjectVariant)? beforeUpload;
 
   @override
   Future<String> uploadDerivative({
@@ -326,8 +347,11 @@ class FakeObjectUploader implements ObjectUploader {
     if (quotaExceeded) {
       throw const QuotaExceededException();
     }
+    await beforeUpload?.call(variant);
     uploadCount++;
-    final key = 'fake/$artworkId/${variant.name}.jpg';
+    final key = variant == ObjectVariant.audio
+        ? 'fake/$artworkId/audio_$uploadCount.m4a'
+        : 'fake/$artworkId/${variant.name}.jpg';
     objects[key] = Uint8List.fromList(bytes);
     return key;
   }

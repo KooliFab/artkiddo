@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart';
 
 import '../contracts/object_storage.dart';
 import '../contracts/sync_backend.dart';
@@ -71,7 +71,8 @@ class SyncProgress {
 /// failure — never retried, exits the queue immediately (spec §5).
 class _TerminalOutboxFailure implements Exception {
   final AppFailure failure;
-  const _TerminalOutboxFailure(this.failure);
+  final bool preservePending;
+  const _TerminalOutboxFailure(this.failure, {this.preservePending = false});
 }
 
 /// A pull page is not acknowledged until every local write in that page has
@@ -278,7 +279,9 @@ class SyncEngine {
         if (entry.entity == SyncEntityKind.child.wireName) {
           await _pushChild(entry, familyId: familyId);
         } else {
-          await _pushArtwork(entry, familyId: familyId, userId: userId);
+          if (!await _pushArtwork(entry, familyId: familyId, userId: userId)) {
+            continue;
+          }
         }
         await outbox.markSucceeded(entry.seq);
         succeeded++;
@@ -292,13 +295,41 @@ class SyncEngine {
           'Sync',
         );
       } on _TerminalOutboxFailure catch (e) {
-        await outbox.markTerminal(entry.seq);
+        if (e.preservePending) {
+          await outbox.markFailed(
+            entry.seq,
+            error: 'audioFileMissing',
+            retryAfter: const Duration(hours: 1),
+          );
+        } else {
+          await outbox.markTerminal(entry.seq);
+        }
+        if (e.preservePending &&
+            entry.entity == SyncEntityKind.artwork.wireName) {
+          await (db.update(
+            db.artworksTable,
+          )..where((t) => t.id.equals(entry.entityId))).write(
+            const ArtworksTableCompanion(syncState: Value('syncError')),
+          );
+        }
         Log.w(
           'Entrée ${entry.seq} en échec terminal : ${e.failure.runtimeType}',
           'Sync',
         );
         failed++;
         lastError = e.failure;
+      } on AudioConflictException {
+        await (db.update(
+          db.artworksTable,
+        )..where((t) => t.id.equals(entry.entityId))).write(
+          const ArtworksTableCompanion(
+            audioConflict: Value(true),
+            syncState: Value('syncError'),
+          ),
+        );
+        await outbox.markFailed(entry.seq, error: 'audioConflict');
+        failed++;
+        lastError = const NetworkFailure();
       } on RateLimitedException catch (e) {
         await outbox.markFailed(
           entry.seq,
@@ -340,6 +371,13 @@ class SyncEngine {
       } catch (e, st) {
         Log.e('Échec de l’envoi de l’entrée ${entry.seq}', e, st, 'Sync');
         await outbox.markFailed(entry.seq, error: e.toString());
+        if (entry.entity == SyncEntityKind.artwork.wireName) {
+          await (db.update(
+            db.artworksTable,
+          )..where((t) => t.id.equals(entry.entityId))).write(
+            const ArtworksTableCompanion(syncState: Value('syncError')),
+          );
+        }
         failed++;
         lastError = NetworkFailure(cause: e, stack: st);
       }
@@ -385,26 +423,31 @@ class SyncEngine {
     await childrenRepo.markSynced(child.id);
   }
 
-  Future<void> _pushArtwork(
+  Future<bool> _pushArtwork(
     SyncOutboxEntryEntity entry, {
     required String familyId,
     required String userId,
   }) async {
     if (entry.op == SyncOutboxOp.delete.wireName) {
       await cloudApi.softDeleteArtwork(entry.entityId);
-      return;
+      return true;
     }
 
     final m = await artworksRepo.getById(entry.entityId);
     if (m == null) {
-      return; // already gone locally (e.g. cascaded away with its child)
+      return true; // already gone locally (e.g. cascaded away with its child)
     }
-    if (isDebugDemoId(m.childId)) return; // demo fixture, never uploaded
+    if (isDebugDemoId(m.childId)) return true; // demo fixture, never uploaded
 
     final row = await (db.select(
       db.artworksTable,
     )..where((t) => t.id.equals(m.id))).getSingleOrNull();
 
+    if (row?.audioConflict == true) return false;
+    final intent = AudioSyncIntent.values.byName(
+      row?.audioSyncIntent ?? 'keep',
+    );
+    final revision = row?.audioRevision ?? 0;
     String displayKey;
     String? thumbnailKey;
     int imageByteSize = row?.byteSize ?? 0;
@@ -458,34 +501,67 @@ class SyncEngine {
       imageByteSize = displayBytes.length;
     }
 
+    // Audio reservations require an existing remote artwork. Commit the
+    // confirmed photo first, keeping the pending audio edit in the outbox.
+    if (!hasExistingImages && intent == AudioSyncIntent.replace) {
+      await cloudApi.upsertArtwork(
+        id: current.id,
+        familyId: familyId,
+        childId: current.childId,
+        displayObjectKey: displayKey,
+        thumbnailObjectKey: thumbnailKey,
+        addedAt: current.addedAt,
+        drawnAt: current.drawnAt,
+        story: current.story,
+        addedBy: userId,
+        byteSize: imageByteSize,
+        imageWidth: current.imageWidth,
+        imageHeight: current.imageHeight,
+        audioWrite: AudioWrite(
+          intent: AudioSyncIntent.keep,
+          expectedRevision: revision,
+        ),
+      );
+      await (db.update(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).write(
+        ArtworksTableCompanion(
+          displayObjectKey: Value(displayKey),
+          byteSize: Value(imageByteSize),
+        ),
+      );
+    }
+
     // Audio track handling
     String? audioKey = row?.audioObjectKey;
     int audioByteSize = row?.audioByteSize ?? 0;
 
-    if (current.relativeAudioPath != null) {
-      if (audioKey == null) {
-        final audioFile = await vault.resolveFile(current.relativeAudioPath!);
-        if (await audioFile.exists()) {
-          final audioBytes = await audioFile.readAsBytes();
-          Log.i(
-            'Upload audio pour œuvre ${current.id} : ${audioBytes.length} octets (${(audioBytes.length / 1024).toStringAsFixed(1)} Ko)',
-            'Sync',
-          );
-          audioKey = await uploader.uploadDerivative(
-            bytes: audioBytes,
-            artworkId: current.id,
-            variant: ObjectVariant.audio,
-            fileName: audioFile.path,
-          );
-          audioByteSize = audioBytes.length;
-        }
+    if (intent == AudioSyncIntent.replace) {
+      if (current.relativeAudioPath == null) {
+        throw const _TerminalOutboxFailure(
+          FileMissingFailure(),
+          preservePending: true,
+        );
       }
-    } else {
-      // If audio was explicitly cleared, null out the key
-      if (current.audioDurationMs == null) {
-        audioKey = null;
-        audioByteSize = 0;
+      final audioFile = await vault.resolveFile(current.relativeAudioPath!);
+      if (!await audioFile.exists()) {
+        throw const _TerminalOutboxFailure(
+          FileMissingFailure(),
+          preservePending: true,
+        );
       }
+      final audioBytes = await audioFile.readAsBytes();
+      audioKey = await uploader.uploadDerivative(
+        bytes: audioBytes,
+        artworkId: current.id,
+        variant: ObjectVariant.audio,
+        childId: current.childId,
+        fileName: audioFile.path,
+      );
+      audioByteSize = audioBytes.length;
+    } else if (intent == AudioSyncIntent.delete) {
+      audioKey = null;
+      audioByteSize = 0;
     }
 
     await cloudApi.upsertArtwork(
@@ -497,6 +573,7 @@ class SyncEngine {
       audioObjectKey: audioKey,
       audioDurationMs: current.audioDurationMs,
       audioByteSize: audioByteSize,
+      audioWrite: AudioWrite(intent: intent, expectedRevision: revision),
       addedAt: current.addedAt,
       drawnAt: current.drawnAt,
       story: current.story,
@@ -506,19 +583,39 @@ class SyncEngine {
       addedBy: userId,
     );
 
-    // Save confirmed storage keys locally
-    await (db.update(
-      db.artworksTable,
-    )..where((t) => t.id.equals(current.id))).write(
-      ArtworksTableCompanion(
-        displayObjectKey: Value(displayKey),
-        thumbnailObjectKey: Value(thumbnailKey),
-        audioObjectKey: Value(audioKey),
-        byteSize: Value(imageByteSize),
-        audioByteSize: Value(audioByteSize),
-        syncState: const Value('synced'),
-      ),
-    );
+    // A user can edit again while bytes are in flight. Advance the baseline
+    // but only acknowledge the exact content that was sent.
+    return db.transaction(() async {
+      final latest = await (db.select(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).getSingleOrNull();
+      if (latest == null || latest.deletedAt != null) return false;
+      final matches =
+          latest.relativeAudioPath == current.relativeAudioPath &&
+          latest.audioDurationMs == current.audioDurationMs &&
+          latest.story == current.story &&
+          latest.drawnAt == current.drawnAt &&
+          latest.audioRevision == revision &&
+          latest.audioSyncIntent == intent.name;
+      await (db.update(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).write(
+        ArtworksTableCompanion(
+          displayObjectKey: Value(displayKey),
+          thumbnailObjectKey: Value(thumbnailKey),
+          audioObjectKey: Value(audioKey),
+          byteSize: Value(imageByteSize),
+          audioByteSize: matches ? Value(audioByteSize) : const Value.absent(),
+          audioRevision: Value(
+            intent == AudioSyncIntent.keep ? revision : revision + 1,
+          ),
+          audioSyncIntent: matches ? const Value('keep') : const Value.absent(),
+          syncState: Value(matches ? 'synced' : 'localOnly'),
+        ),
+      );
+      if (matches) await outbox.markSucceeded(entry.seq);
+      return matches;
+    });
   }
 
   // =====================================================================
@@ -613,6 +710,7 @@ class SyncEngine {
           audioObjectKey: row.audioObjectKey,
           audioDurationMs: row.audioDurationMs,
           audioByteSize: row.audioByteSize,
+          audioRevision: row.audioRevision,
           byteSize: row.byteSize,
           imageWidth: row.imageWidth,
           imageHeight: row.imageHeight,
@@ -818,15 +916,86 @@ class SyncEngine {
     }
   }
 
+  /// Resolve only the audio field; independent local text edits remain queued.
+  Future<bool> resolveAudioConflict(
+    String artworkId, {
+    required bool keepLocal,
+  }) async {
+    try {
+      final familyId = await ensureFamily();
+      final remote = await cloudApi.readArtwork(
+        id: artworkId,
+        familyId: familyId,
+      );
+      if (remote == null || remote.deletedAt != null) return false;
+      final old = await artworksRepo.getById(artworkId);
+      if (old == null) return false;
+      await db.transaction(() async {
+        await (db.update(
+          db.artworksTable,
+        )..where((t) => t.id.equals(artworkId))).write(
+          ArtworksTableCompanion(
+            audioRevision: Value(remote.audioRevision),
+            audioObjectKey: Value(remote.audioObjectKey),
+            audioConflict: const Value(false),
+            syncState: const Value('localOnly'),
+            audioSyncIntent: keepLocal
+                ? const Value.absent()
+                : const Value('keep'),
+            relativeAudioPath: keepLocal
+                ? const Value.absent()
+                : const Value(null),
+            audioDurationMs: keepLocal
+                ? const Value.absent()
+                : Value(remote.audioDurationMs),
+            audioByteSize: keepLocal
+                ? const Value.absent()
+                : Value(remote.audioByteSize),
+          ),
+        );
+        await (db.update(db.syncOutboxTable)..where(
+              (t) => t.entityId.equals(artworkId) & t.entity.equals('artwork'),
+            ))
+            .write(
+              const SyncOutboxTableCompanion(
+                attempts: Value(0),
+                nextAttemptAt: Value(null),
+                lastError: Value(null),
+              ),
+            );
+      });
+      if (!keepLocal && old.relativeAudioPath != null) {
+        await vault.deleteAudioFileOrEnqueueCleanup(
+          relativeAudioPath: old.relativeAudioPath,
+          db: db,
+        );
+      }
+      return true;
+    } catch (e, st) {
+      Log.e('Audio conflict resolution failed', e, st, 'Sync');
+      return false;
+    }
+  }
+
   /// Downloads the audio track on-demand if not already present locally.
   Future<ActionResultLike> ensureAudioDownloaded(String artworkId) async {
     final local = await artworksRepo.getById(artworkId);
     if (local == null) return ActionResultLike.notFound;
-    if (local.relativeAudioPath != null) return ActionResultLike.alreadyHave;
+    if (local.relativeAudioPath != null) {
+      final file = await vault.resolveFile(local.relativeAudioPath!);
+      if (await file.exists()) {
+        return ActionResultLike.alreadyHave;
+      }
+      Log.w(
+        'Fichier audio introuvable sur le disque pour $artworkId (${local.relativeAudioPath}), relance du téléchargement distant',
+        'Sync',
+      );
+    }
 
     final row = await (db.select(
       db.artworksTable,
     )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
+    if (row?.audioSyncIntent != 'keep') return ActionResultLike.failed;
     final key = row?.audioObjectKey;
     if (key == null) return ActionResultLike.noKeyAvailable;
 
@@ -835,11 +1004,20 @@ class SyncEngine {
       final path = await vault.storeDownloadedAudio(
         bytes: bytes,
         artworkId: artworkId,
+        version: DateTime.now().microsecondsSinceEpoch,
       );
-      await artworksRepo.markAudioDownloaded(
+      final stored = await artworksRepo.markAudioDownloaded(
         id: artworkId,
         audioRelativePath: path,
+        expectedAudioRevision: row!.audioRevision,
       );
+      if (stored is ActionFailed) {
+        await vault.deleteAudioFileOrEnqueueCleanup(
+          relativeAudioPath: path,
+          db: db,
+        );
+        return ActionResultLike.failed;
+      }
       return ActionResultLike.downloaded;
     } catch (e, st) {
       Log.e('Téléchargement audio impossible ($artworkId)', e, st, 'Sync');

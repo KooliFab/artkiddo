@@ -14,6 +14,19 @@ class DeletedRowUpdateRejectedException implements Exception {
   String toString() => 'DeletedRowUpdateRejectedException: $message';
 }
 
+/// A durable audio edit that must not overwrite a newer remote recording.
+enum AudioSyncIntent { keep, replace, delete }
+
+class AudioWrite {
+  final AudioSyncIntent intent;
+  final int expectedRevision;
+  const AudioWrite({required this.intent, required this.expectedRevision});
+}
+
+class AudioConflictException implements Exception {
+  const AudioConflictException();
+}
+
 /// A remote service asks the caller to slow down.
 class RateLimitedException implements Exception {
   final Duration? retryAfter;
@@ -51,6 +64,7 @@ class RemoteArtworkRow {
   final String? audioObjectKey;
   final int? audioDurationMs;
   final int audioByteSize;
+  final int audioRevision;
   final DateTime addedAt;
   final DateTime? drawnAt;
   final String? story;
@@ -71,6 +85,7 @@ class RemoteArtworkRow {
     this.audioObjectKey,
     this.audioDurationMs,
     this.audioByteSize = 0,
+    this.audioRevision = 0,
     required this.addedAt,
     required this.drawnAt,
     required this.story,
@@ -183,6 +198,7 @@ abstract class SyncBackend {
     String? audioObjectKey,
     int? audioDurationMs,
     int audioByteSize = 0,
+    AudioWrite? audioWrite,
     required DateTime addedAt,
     required DateTime? drawnAt,
     required String? story,
@@ -191,6 +207,18 @@ abstract class SyncBackend {
     int? imageWidth,
     int? imageHeight,
   });
+
+  /// Compatibility bridge; private adapters override with an indexed read.
+  Future<RemoteArtworkRow?> readArtwork({
+    required String id,
+    required String familyId,
+  }) async {
+    final rows = await pullArtworks(familyId: familyId);
+    for (final row in rows) {
+      if (row.id == id) return row;
+    }
+    return null;
+  }
 
   Future<void> softDeleteArtwork(String id);
   Future<void> softDeleteArtworksForChild(String childId);

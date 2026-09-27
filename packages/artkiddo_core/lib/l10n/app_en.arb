@@ -571,11 +571,11 @@
   "@captureAudioReRecord": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmTitle": "Replace recording?",
+  "captureAudioReRecordConfirmTitle": "Record a new voice story?",
   "@captureAudioReRecordConfirmTitle": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmBody": "The current recording will be replaced with a new one.",
+  "captureAudioReRecordConfirmBody": "The current voice story will be replaced when you save the new one. If you cancel, it will be kept.",
   "@captureAudioReRecordConfirmBody": {
     "description": "Localized user-facing copy."
   },
@@ -1925,7 +1925,6 @@
   "@errorUnknownBody": {
     "description": "Localized user-facing copy."
   },
-
   "familyHubTitle": "Family Space",
   "@familyHubTitle": {
     "description": "Localized user-facing copy."
@@ -2093,5 +2092,13 @@
   "syncProgressDismiss": "Close",
   "@syncProgressDismiss": {
     "description": "Sync progress toast."
-  }
+  },
+  "artworkAudioSavedLocal": "New voice story saved on this device.",
+  "artworkAudioDeletedLocal": "Voice story removed from this device.",
+  "artworkAudioBackupPending": "Voice story waiting to be backed up.",
+  "artworkAudioBackedUp": "Voice story backed up.",
+  "artworkAudioBackupFailed": "Unable to back up the voice story. Your recording remains on this device.",
+  "artworkAudioConflict": "The voice story changed on another device. Choose which version to keep.",
+  "artworkAudioKeepRemote": "Keep the shared voice story",
+  "artworkAudioUseLocal": "Use my new version"
 }

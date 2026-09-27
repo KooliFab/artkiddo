@@ -70,6 +70,7 @@ abstract class ArtworksRepository {
   Future<ActionResult<void>> markAudioDownloaded({
     required String id,
     required String audioRelativePath,
+    int? expectedAudioRevision,
   });
 
   Future<ActionResult<void>> delete(String id);
@@ -124,6 +125,7 @@ abstract class ArtworksRepository {
     String? audioObjectKey,
     int? audioDurationMs,
     int audioByteSize = 0,
+    int audioRevision = 0,
     required int byteSize,
     int? imageWidth,
     int? imageHeight,
@@ -209,6 +211,8 @@ class DriftArtworksRepository implements ArtworksRepository {
       relativeAudioPath: entity.relativeAudioPath,
       audioDurationMs: entity.audioDurationMs,
       audioByteSize: entity.audioByteSize,
+      audioConflict: entity.audioConflict,
+      audioSyncPending: entity.audioSyncIntent != 'keep',
       addedBy: entity.addedBy,
       syncState: SyncState.values.firstWhere(
         (s) => s.name == entity.syncState,
@@ -365,6 +369,9 @@ class DriftArtworksRepository implements ArtworksRepository {
                 imageWidth: Value(dimensions.$1),
                 imageHeight: Value(dimensions.$2),
                 relativeAudioPath: Value(relativeAudioPath),
+                audioSyncIntent: Value(
+                  relativeAudioPath == null ? 'keep' : 'replace',
+                ),
                 audioDurationMs: Value(audioDurationMs),
                 audioByteSize: Value(audioByteSize),
                 syncState: const Value('localOnly'),
@@ -567,7 +574,8 @@ class DriftArtworksRepository implements ArtworksRepository {
                 relativeAudioPath: Value(audioPath),
                 audioDurationMs: Value(durationMs),
                 audioByteSize: Value(fileSize),
-                audioObjectKey: const Value(null),
+                audioSyncIntent: const Value('replace'),
+                audioConflict: const Value(false),
                 syncState: const Value('localOnly'),
               ),
             );
@@ -629,7 +637,8 @@ class DriftArtworksRepository implements ArtworksRepository {
                 relativeAudioPath: Value(null),
                 audioDurationMs: Value(null),
                 audioByteSize: Value(0),
-                audioObjectKey: Value(null),
+                audioSyncIntent: Value('delete'),
+                audioConflict: Value(false),
                 syncState: Value('localOnly'),
               ),
             );
@@ -666,14 +675,24 @@ class DriftArtworksRepository implements ArtworksRepository {
   Future<ActionResult<void>> markAudioDownloaded({
     required String id,
     required String audioRelativePath,
+    int? expectedAudioRevision,
   }) async {
     try {
       final rows =
-          await (_db.update(
-            _db.artworksTable,
-          )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
-            ArtworksTableCompanion(relativeAudioPath: Value(audioRelativePath)),
-          );
+          await (_db.update(_db.artworksTable)..where(
+                (t) =>
+                    t.id.equals(id) &
+                    t.deletedAt.isNull() &
+                    (expectedAudioRevision == null
+                        ? const Constant(true)
+                        : t.audioRevision.equals(expectedAudioRevision) &
+                              t.audioSyncIntent.equals('keep')),
+              ))
+              .write(
+                ArtworksTableCompanion(
+                  relativeAudioPath: Value(audioRelativePath),
+                ),
+              );
       if (rows == 0) return const ActionFailed(NotFoundFailure());
     } catch (e, st) {
       Log.e(
@@ -902,6 +921,7 @@ class DriftArtworksRepository implements ArtworksRepository {
     String? audioObjectKey,
     int? audioDurationMs,
     int audioByteSize = 0,
+    int audioRevision = 0,
     required int byteSize,
     int? imageWidth,
     int? imageHeight,
@@ -949,6 +969,9 @@ class DriftArtworksRepository implements ArtworksRepository {
               displayObjectKey: Value(displayObjectKey),
               thumbnailObjectKey: Value(thumbnailObjectKey),
               audioObjectKey: Value(audioObjectKey),
+              audioRevision: Value(audioRevision),
+              audioSyncIntent: const Value('keep'),
+              audioConflict: const Value(false),
               relativeAudioPath: Value(preservedAudioPath),
               audioDurationMs: Value(audioDurationMs),
               audioByteSize: Value(audioByteSize),

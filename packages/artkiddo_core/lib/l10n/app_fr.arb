@@ -571,11 +571,11 @@
   "@captureAudioReRecord": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmTitle": "Remplacer l'enregistrement ?",
+  "captureAudioReRecordConfirmTitle": "Enregistrer une nouvelle voix ?",
   "@captureAudioReRecordConfirmTitle": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmBody": "L'enregistrement actuel sera remplacé par un nouveau.",
+  "captureAudioReRecordConfirmBody": "La voix actuelle sera remplacée lorsque vous enregistrerez la nouvelle. Si vous annulez, elle sera conservée.",
   "@captureAudioReRecordConfirmBody": {
     "description": "Localized user-facing copy."
   },
@@ -1925,7 +1925,6 @@
   "@errorUnknownBody": {
     "description": "Localized user-facing copy."
   },
-
   "familyHubTitle": "Espace famille",
   "@familyHubTitle": {
     "description": "Localized user-facing copy."
@@ -2093,5 +2092,13 @@
   "syncProgressDismiss": "Fermer",
   "@syncProgressDismiss": {
     "description": "Tooltip of the sync toast close button."
-  }
+  },
+  "artworkAudioSavedLocal": "Nouvelle voix enregistrée sur cet appareil.",
+  "artworkAudioDeletedLocal": "Voix supprimée sur cet appareil.",
+  "artworkAudioBackupPending": "Voix en attente de sauvegarde.",
+  "artworkAudioBackedUp": "Voix sauvegardée.",
+  "artworkAudioBackupFailed": "Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.",
+  "artworkAudioConflict": "La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.",
+  "artworkAudioKeepRemote": "Conserver la voix partagée",
+  "artworkAudioUseLocal": "Utiliser ma nouvelle version"
 }

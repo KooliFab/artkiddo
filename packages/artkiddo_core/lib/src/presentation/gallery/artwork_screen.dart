@@ -54,6 +54,8 @@ class ArtworkScreen extends ConsumerStatefulWidget {
 class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   Artwork? _artwork;
   bool _loading = true;
+  bool _resolvingAudio = false;
+  StreamSubscription<List<Artwork>>? _artworkSubscription;
 
   @override
   void initState() {
@@ -76,10 +78,73 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _artworkSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleAudioBackup() {
+    if (!ref.read(appCapabilitiesProvider).remoteBackup) return;
+    final callback = ref.read(compositionActionsProvider).onArtworkSaved;
+    if (callback != null) {
+      unawaited(
+        callback(widget.artworkId).catchError((Object error, StackTrace stack) {
+          Log.e(
+            'Audio backup scheduling failed',
+            error,
+            stack,
+            'ArtworkScreen',
+          );
+        }),
+      );
+    }
+  }
+
+  Future<void> _resolveAudio(bool keepLocal) async {
+    if (_resolvingAudio) return;
+    final callback = ref.read(compositionActionsProvider).resolveAudioConflict;
+    if (callback == null) return;
+    setState(() => _resolvingAudio = true);
+    final resolved = await callback(widget.artworkId, keepLocal);
+    if (!mounted) return;
+    setState(() => _resolvingAudio = false);
+    if (resolved) {
+      _scheduleAudioBackup();
+      await _load();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).artworkAudioBackupFailed),
+        ),
+      );
+    }
+  }
+
   Future<void> _load() async {
     final repo = ref.read(artworksRepositoryProvider);
     final m = await repo.getById(widget.artworkId);
     if (!mounted) return;
+    if (m != null && _artworkSubscription == null) {
+      _artworkSubscription = ref
+          .read(artworksRepositoryProvider)
+          .watch()
+          .listen((artworks) {
+            Artwork? current;
+            for (final artwork in artworks) {
+              if (artwork.id == widget.artworkId) {
+                current = artwork;
+                break;
+              }
+            }
+            if (mounted) {
+              setState(() {
+                _artwork = current;
+                _loading = false;
+              });
+            }
+          });
+    }
     setState(() {
       _artwork = m;
       _loading = false;
@@ -153,11 +218,12 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final result = await repo.clearAudio(m.id);
     if (!mounted) return;
     if (result is ActionSuccess) {
+      _scheduleAudioBackup();
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.captureAudioDelete)));
+      ).showSnackBar(SnackBar(content: Text(l10n.artworkAudioDeletedLocal)));
     }
   }
 
@@ -170,6 +236,10 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       builder: (ctx) => _AudioRecorderSheet(artworkId: m.id),
     );
     if (recorded == true && mounted) {
+      _scheduleAudioBackup();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.artworkAudioSavedLocal)));
       await _load();
     }
   }
@@ -821,10 +891,47 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         ),
       ],
       const SizedBox(height: AppSpacing.s5),
+      if (ref.watch(appCapabilitiesProvider).remoteBackup &&
+          (m.hasAudio || m.audioSyncPending)) ...[
+        if (m.audioConflict) ...[
+          Text(l10n.artworkAudioConflict, style: AppTypography.body),
+          Wrap(
+            spacing: AppSpacing.s2,
+            children: [
+              TextButton(
+                onPressed: _resolvingAudio ? null : () => _resolveAudio(false),
+                child: Text(l10n.artworkAudioKeepRemote),
+              ),
+              TextButton(
+                onPressed: _resolvingAudio ? null : () => _resolveAudio(true),
+                child: Text(l10n.artworkAudioUseLocal),
+              ),
+            ],
+          ),
+        ] else ...[
+          Text(
+            m.syncState == SyncState.syncError
+                ? l10n.artworkAudioBackupFailed
+                : m.audioSyncPending
+                ? l10n.artworkAudioBackupPending
+                : l10n.artworkAudioBackedUp,
+            style: AppTypography.caption,
+          ),
+          if (m.syncState == SyncState.syncError)
+            TextButton(
+              onPressed: () {
+                _scheduleAudioBackup();
+                ref.read(compositionActionsProvider).syncPhotos?.call(context);
+              },
+              child: Text(l10n.artworkAudioRetry),
+            ),
+        ],
+        const SizedBox(height: AppSpacing.s2),
+      ],
       if (m.hasAudio) ...[
         _ArtworkAudioPlayerCard(
           artwork: m,
-          onReRecord: () => _recordAudio(l10n),
+          onReRecord: () => _handleAudioTap(l10n),
           onDelete: () => _clearAudio(l10n),
         ),
         const SizedBox(height: AppSpacing.s4),

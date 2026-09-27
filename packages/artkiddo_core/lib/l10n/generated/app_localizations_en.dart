@@ -450,11 +450,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureAudioReRecord => 'Re-record';
 
   @override
-  String get captureAudioReRecordConfirmTitle => 'Replace recording?';
+  String get captureAudioReRecordConfirmTitle => 'Record a new voice story?';
 
   @override
   String get captureAudioReRecordConfirmBody =>
-      'The current recording will be replaced with a new one.';
+      'The current voice story will be replaced when you save the new one. If you cancel, it will be kept.';
 
   @override
   String get captureAudioDelete => 'Delete voice note';
@@ -1649,4 +1649,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncProgressDismiss => 'Close';
+
+  @override
+  String get artworkAudioSavedLocal => 'New voice story saved on this device.';
+
+  @override
+  String get artworkAudioDeletedLocal =>
+      'Voice story removed from this device.';
+
+  @override
+  String get artworkAudioBackupPending =>
+      'Voice story waiting to be backed up.';
+
+  @override
+  String get artworkAudioBackedUp => 'Voice story backed up.';
+
+  @override
+  String get artworkAudioBackupFailed =>
+      'Unable to back up the voice story. Your recording remains on this device.';
+
+  @override
+  String get artworkAudioConflict =>
+      'The voice story changed on another device. Choose which version to keep.';
+
+  @override
+  String get artworkAudioKeepRemote => 'Keep the shared voice story';
+
+  @override
+  String get artworkAudioUseLocal => 'Use my new version';
 }

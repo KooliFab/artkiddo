@@ -453,11 +453,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get captureAudioReRecordConfirmTitle =>
-      'Remplacer l\'enregistrement ?';
+      'Enregistrer une nouvelle voix ?';
 
   @override
   String get captureAudioReRecordConfirmBody =>
-      'L\'enregistrement actuel sera remplacé par un nouveau.';
+      'La voix actuelle sera remplacée lorsque vous enregistrerez la nouvelle. Si vous annulez, elle sera conservée.';
 
   @override
   String get captureAudioDelete => 'Supprimer la voix';
@@ -1678,4 +1678,31 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncProgressDismiss => 'Fermer';
+
+  @override
+  String get artworkAudioSavedLocal =>
+      'Nouvelle voix enregistrée sur cet appareil.';
+
+  @override
+  String get artworkAudioDeletedLocal => 'Voix supprimée sur cet appareil.';
+
+  @override
+  String get artworkAudioBackupPending => 'Voix en attente de sauvegarde.';
+
+  @override
+  String get artworkAudioBackedUp => 'Voix sauvegardée.';
+
+  @override
+  String get artworkAudioBackupFailed =>
+      'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.';
+
+  @override
+  String get artworkAudioConflict =>
+      'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.';
+
+  @override
+  String get artworkAudioKeepRemote => 'Conserver la voix partagée';
+
+  @override
+  String get artworkAudioUseLocal => 'Utiliser ma nouvelle version';
 }
