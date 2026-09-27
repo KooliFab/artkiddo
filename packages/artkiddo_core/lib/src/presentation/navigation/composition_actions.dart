@@ -19,6 +19,9 @@ final class CompositionActions {
   /// the local composition leaves it null.
   final Future<void> Function(String artworkId)? onArtworkSaved;
 
+  /// Best-effort propagation after the local deletion/outbox transaction.
+  final Future<void> Function(String artworkId)? onArtworkDeleted;
+
   final Future<bool> Function(String artworkId, bool keepLocal)?
   resolveAudioConflict;
 
@@ -46,6 +49,7 @@ final class CompositionActions {
 
   const CompositionActions({
     this.onArtworkSaved,
+    this.onArtworkDeleted,
     this.resolveAudioConflict,
     this.openFamilyHub,
     this.openGalleryShare,

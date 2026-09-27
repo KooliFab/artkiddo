@@ -29,6 +29,26 @@ class _DeleteArtworkDialogState extends ConsumerState<_DeleteArtworkDialog> {
     if (!mounted) return;
     switch (result) {
       case ActionSuccess():
+        if (ref.read(appCapabilitiesProvider).remoteBackup) {
+          final callback = ref
+              .read(compositionActionsProvider)
+              .onArtworkDeleted;
+          if (callback != null) {
+            unawaited(
+              callback(widget.artworkId).catchError((
+                Object error,
+                StackTrace stack,
+              ) {
+                Log.e(
+                  'Delete backup scheduling failed',
+                  error,
+                  stack,
+                  'ArtworkScreen',
+                );
+              }),
+            );
+          }
+        }
         Navigator.of(context).pop(true);
       case ActionFailed(failure: final f):
         setState(() => _state = ActionError(f));

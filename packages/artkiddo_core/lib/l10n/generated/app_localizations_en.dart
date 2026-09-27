@@ -1677,4 +1677,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get artworkAudioUseLocal => 'Use my new version';
+
+  @override
+  String get trashPreviewOpen => 'View deleted photo';
+
+  @override
+  String get trashPreviewUnavailable => 'Preview unavailable';
 }

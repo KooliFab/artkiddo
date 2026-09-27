@@ -154,7 +154,23 @@ class SyncEngine {
   /// *different* family than the authenticated account (§1's isolation
   /// rule) — the caller (`AccountController`) is responsible for turning
   /// that into a `blocked` status rather than a retryable `failed` one.
+  Future<SyncRunSummary>? _activeSync;
+
+  /// Concurrent lifecycle, trash and manual triggers share one drain. A
+  /// caller with a newly queued mutation may request another run afterwards.
   Future<SyncRunSummary> syncAll({
+    void Function(SyncProgress progress)? onProgress,
+  }) {
+    final active = _activeSync;
+    if (active != null) return active;
+    final run = _runSync(
+      onProgress: onProgress,
+    ).whenComplete(() => _activeSync = null);
+    _activeSync = run;
+    return run;
+  }
+
+  Future<SyncRunSummary> _runSync({
     void Function(SyncProgress progress)? onProgress,
   }) async {
     final userId = currentUserId();

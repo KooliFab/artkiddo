@@ -2100,5 +2100,7 @@
   "artworkAudioBackupFailed": "Unable to back up the voice story. Your recording remains on this device.",
   "artworkAudioConflict": "The voice story changed on another device. Choose which version to keep.",
   "artworkAudioKeepRemote": "Keep the shared voice story",
-  "artworkAudioUseLocal": "Use my new version"
+  "artworkAudioUseLocal": "Use my new version",
+  "trashPreviewOpen": "View deleted photo",
+  "trashPreviewUnavailable": "Preview unavailable"
 }

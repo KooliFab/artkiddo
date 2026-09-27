@@ -135,3 +135,7 @@ is computed, never estimated (ADR 0006).
 ## Audio writes
 
 Audio saves remain local-first. A new recording replaces the previous local voice only after a durable save; cancellation preserves it. `AudioWrite` distinguishes keep, replace and delete. Optional backup checks the expected audio revision and keeps conflicting local files until the user chooses a version. Backup controls and statuses require `remoteBackup`. See ADR 0014 and `docs/sync-contract.md`.
+
+## Trash convergence and previews (2026-09-27)
+
+Artwork deletion emits the capability-gated `CompositionActions.onArtworkDeleted` hook only after its local transaction succeeds. The sync engine coalesces simultaneous lifecycle/manual/trash runs so they cannot drain the same entry twice. Shared trash refreshes on entry and resume, supports pull-to-refresh, and refreshes every 20 seconds only while its route is visible and the app is active. Local trash reads only local rows and files. `TrashedArtwork` exposes an optional vault path or authorized temporary preview URI; the UI shows a tappable, zoomable preview or an explicit unavailable state. See ADR 0003.

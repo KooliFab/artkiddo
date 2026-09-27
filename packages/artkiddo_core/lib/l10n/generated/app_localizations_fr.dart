@@ -1705,4 +1705,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get artworkAudioUseLocal => 'Utiliser ma nouvelle version';
+
+  @override
+  String get trashPreviewOpen => 'Voir la photo supprimée';
+
+  @override
+  String get trashPreviewUnavailable => 'Aperçu indisponible';
 }

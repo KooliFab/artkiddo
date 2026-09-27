@@ -2100,5 +2100,7 @@
   "artworkAudioBackupFailed": "Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.",
   "artworkAudioConflict": "La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.",
   "artworkAudioKeepRemote": "Conserver la voix partagée",
-  "artworkAudioUseLocal": "Utiliser ma nouvelle version"
+  "artworkAudioUseLocal": "Utiliser ma nouvelle version",
+  "trashPreviewOpen": "Voir la photo supprimée",
+  "trashPreviewUnavailable": "Aperçu indisponible"
 }

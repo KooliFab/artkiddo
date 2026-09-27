@@ -54,6 +54,10 @@ class LocalTrashRepository implements TrashRepository {
             deletedAt: row.deletedAt!,
             purgeAt: row.deletedAt!.add(retention),
             story: row.story,
+            previewPath:
+                row.thumbnailImagePath ??
+                row.displayImagePath ??
+                row.relativeImagePath,
           ),
       ]);
     } catch (e, st) {

@@ -8,6 +8,10 @@ class TrashedArtwork {
   final DateTime purgeAt;
   final String? story;
 
+  /// Local vault path or temporary authorized remote preview.
+  final String? previewPath;
+  final Uri? previewUri;
+
   const TrashedArtwork({
     required this.id,
     required this.childId,
@@ -15,6 +19,8 @@ class TrashedArtwork {
     required this.deletedAt,
     required this.purgeAt,
     this.story,
+    this.previewPath,
+    this.previewUri,
   });
 }
 

@@ -2838,6 +2838,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Utiliser ma nouvelle version'**
   String get artworkAudioUseLocal;
+
+  /// No description provided for @trashPreviewOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir la photo supprimée'**
+  String get trashPreviewOpen;
+
+  /// No description provided for @trashPreviewUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu indisponible'**
+  String get trashPreviewUnavailable;
 }
 
 class _AppLocalizationsDelegate

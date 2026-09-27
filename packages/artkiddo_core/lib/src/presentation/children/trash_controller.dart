@@ -68,13 +68,14 @@ class TrashState {
 /// Loads and acts on the trash. Supports both [TrashCapability.local]
 /// and [TrashCapability.sharedRemote].
 class TrashController extends Notifier<TrashState> {
+  Future<void>? _refreshing;
   @override
   TrashState build() {
-    Future.microtask(_load);
+    Future.microtask(refresh);
     return const TrashState();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool quiet = false}) async {
     final capabilities = ref.read(appCapabilitiesProvider);
     final repository = ref.read(trashRepositoryProvider);
 
@@ -90,14 +91,19 @@ class TrashController extends Notifier<TrashState> {
       return;
     }
 
+    if (ref.read(appCapabilitiesProvider).remoteBackup) {
+      // Flush pending deletions before reading the shared trash. The list
+      // remains a remote query even when convergence cannot complete.
+      await ref.read(familyConvergenceProvider)();
+    }
     final membership = await ref.read(familyApiProvider).currentMembership();
     if (membership == null) {
-      state = state.copyWith(loading: false, items: const []);
+      state = const TrashState(loading: false);
       return;
     }
 
     state = state.copyWith(
-      loading: true,
+      loading: quiet ? state.loading : true,
       familyId: membership.familyId,
       isParent: membership.role == FamilyMemberRole.parent,
     );
@@ -122,11 +128,35 @@ class TrashController extends Notifier<TrashState> {
     }
   }
 
-  Future<void> refresh() => _load();
+  Future<void> refresh({bool quiet = false}) {
+    if (state.restore.isBusy || state.purge.isBusy || state.purgeAll.isBusy) {
+      return Future.value();
+    }
+    final active = _refreshing;
+    if (active != null) return active;
+    final work = _refreshSafely(quiet: quiet);
+    _refreshing = work;
+    return work.whenComplete(() {
+      if (identical(_refreshing, work)) _refreshing = null;
+    });
+  }
+
+  Future<void> _refreshSafely({required bool quiet}) async {
+    try {
+      await _load(quiet: quiet);
+    } catch (error, stack) {
+      Log.e('Trash refresh failed', error, stack, 'Trash');
+      state = state.copyWith(
+        loading: false,
+        loadError: NetworkFailure(cause: error, stack: stack),
+      );
+    }
+  }
 
   Future<void> restore(String artworkId) async {
     if (state.restore.isBusy) return;
     state = state.copyWith(restore: const ActionBusy(), busyItemId: artworkId);
+    await _refreshing;
     final result = await ref.read(trashRepositoryProvider).restore(artworkId);
     switch (result) {
       case ActionSuccess():
@@ -155,6 +185,7 @@ class TrashController extends Notifier<TrashState> {
   Future<void> purge(String artworkId) async {
     if (state.purge.isBusy) return;
     state = state.copyWith(purge: const ActionBusy(), busyItemId: artworkId);
+    await _refreshing;
     final result = await ref.read(trashRepositoryProvider).purge(artworkId);
     switch (result) {
       case ActionSuccess():
@@ -180,6 +211,7 @@ class TrashController extends Notifier<TrashState> {
         ref.read(appCapabilitiesProvider).trash == TrashCapability.local;
     if ((!local && familyId == null) || state.purgeAll.isBusy) return;
     state = state.copyWith(purgeAll: const ActionBusy());
+    await _refreshing;
     final result = await ref
         .read(trashRepositoryProvider)
         .purgeAll(scopeId: local ? null : familyId);

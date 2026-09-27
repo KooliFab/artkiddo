@@ -1,3 +1,4 @@
+import 'dart:async';
 // C-06 convergence engine tests.
 //
 // Each "device" is a fully independent local vault (its own temp-file
@@ -994,7 +995,11 @@ void main() {
         final initialUploads = uploader.uploadCount;
         uploader.beforeUpload = (variant) async {
           if (variant == ObjectVariant.audio) {
-            expect(cloudApi.artworksInFamily(familyId), 1, reason: 'audio reservation needs the photo metadata first');
+            expect(
+              cloudApi.artworksInFamily(familyId),
+              1,
+              reason: 'audio reservation needs the photo metadata first',
+            );
           }
         };
         await a.sync();
@@ -1047,6 +1052,29 @@ void main() {
       },
     );
   });
+  test('concurrent sync triggers share one upload and drain', () async {
+    final deviceA = await newDevice('user-a');
+    cloudApi.currentUserId = 'user-a';
+    final childId =
+        (await deviceA.children.create(name: 'C', birthDate: DateTime(2020))
+                as ActionSuccess<String>)
+            .value;
+    await createSyncedArtwork(deviceA, childId: childId);
+    final gate = Completer<void>();
+    final entered = Completer<void>();
+    uploader.beforeUpload = (_) async {
+      if (!entered.isCompleted) entered.complete();
+      await gate.future;
+    };
+    final first = deviceA.engine.syncAll();
+    await entered.future;
+    final second = deviceA.engine.syncAll();
+    expect(identical(first, second), true);
+    gate.complete();
+    await Future.wait([first, second]);
+    expect(await deviceA.engine.outbox.countPending(), 0);
+  });
+
   group('Audio replacement safety', () {
     Future<(Device, Device, String)> pair() async {
       final a = await newDevice('audio-a');
@@ -1135,30 +1163,42 @@ void main() {
       },
     );
 
-    test('an edit made during upload remains queued with an advanced baseline', () async {
-      final (a, _, id) = await pair();
-      final one = File('${a.tempRoot.path}/inflight-one.m4a');
-      final two = File('${a.tempRoot.path}/inflight-two.m4a');
-      await one.writeAsBytes([1, 2]); await two.writeAsBytes([3, 4]);
-      await a.artworks.updateAudio(id: id, sourceAudioFile: one, durationMs: 1000);
-      uploader.beforeUpload = (variant) async {
-        if (variant == ObjectVariant.audio) {
-          uploader.beforeUpload = null;
-          await a.artworks.updateAudio(id: id, sourceAudioFile: two, durationMs: 2000);
-        }
-      };
-      await a.sync();
-      var row = (await a.db.select(a.db.artworksTable).get()).single;
-      expect(row.audioRevision, 2);
-      expect(row.audioSyncIntent, 'replace');
-      expect(row.audioDurationMs, 2000);
-      expect(await a.engine.outbox.countPending(), 1);
-      await a.sync();
-      row = (await a.db.select(a.db.artworksTable).get()).single;
-      expect(row.audioRevision, 3);
-      expect(row.audioSyncIntent, 'keep');
-      expect(await a.engine.outbox.countPending(), 0);
-    });
+    test(
+      'an edit made during upload remains queued with an advanced baseline',
+      () async {
+        final (a, _, id) = await pair();
+        final one = File('${a.tempRoot.path}/inflight-one.m4a');
+        final two = File('${a.tempRoot.path}/inflight-two.m4a');
+        await one.writeAsBytes([1, 2]);
+        await two.writeAsBytes([3, 4]);
+        await a.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: one,
+          durationMs: 1000,
+        );
+        uploader.beforeUpload = (variant) async {
+          if (variant == ObjectVariant.audio) {
+            uploader.beforeUpload = null;
+            await a.artworks.updateAudio(
+              id: id,
+              sourceAudioFile: two,
+              durationMs: 2000,
+            );
+          }
+        };
+        await a.sync();
+        var row = (await a.db.select(a.db.artworksTable).get()).single;
+        expect(row.audioRevision, 2);
+        expect(row.audioSyncIntent, 'replace');
+        expect(row.audioDurationMs, 2000);
+        expect(await a.engine.outbox.countPending(), 1);
+        await a.sync();
+        row = (await a.db.select(a.db.artworksTable).get()).single;
+        expect(row.audioRevision, 3);
+        expect(row.audioSyncIntent, 'keep');
+        expect(await a.engine.outbox.countPending(), 0);
+      },
+    );
 
     test(
       'concurrent recordings require a decision and preserve both local files',
