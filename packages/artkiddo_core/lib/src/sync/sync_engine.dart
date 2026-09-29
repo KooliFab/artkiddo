@@ -1,7 +1,8 @@
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart';
 
 import '../contracts/object_storage.dart';
 import '../contracts/sync_backend.dart';
+import '../debug/demo_seed.dart';
 import '../domain/action_result.dart';
 import '../domain/app_failure.dart';
 import '../local/database/app_database.dart';
@@ -33,11 +34,45 @@ class SyncRunSummary {
   });
 }
 
+/// Which half of a [SyncEngine.syncAll] run a [SyncProgress] describes.
+enum SyncPhase {
+  /// Sending this device's pending outbox entries.
+  sending,
+
+  /// Receiving and applying the family's remote changes.
+  receiving,
+}
+
+/// A step of a running [SyncEngine.syncAll], for a composition to render
+/// progress. Sending has a known [total] (the ready outbox entries);
+/// receiving does not, because pages arrive until the remote says there are
+/// no more, so its [total] is null and [done] counts the artworks applied.
+class SyncProgress {
+  final SyncPhase phase;
+  final int done;
+  final int? total;
+  const SyncProgress({required this.phase, required this.done, this.total});
+
+  @override
+  bool operator ==(Object other) =>
+      other is SyncProgress &&
+      other.phase == phase &&
+      other.done == done &&
+      other.total == total;
+
+  @override
+  int get hashCode => Object.hash(phase, done, total);
+
+  @override
+  String toString() => 'SyncProgress($phase, $done/${total ?? '?'})';
+}
+
 /// Thrown internally to short-circuit one outbox entry as a *terminal*
 /// failure — never retried, exits the queue immediately (spec §5).
 class _TerminalOutboxFailure implements Exception {
   final AppFailure failure;
-  const _TerminalOutboxFailure(this.failure);
+  final bool preservePending;
+  const _TerminalOutboxFailure(this.failure, {this.preservePending = false});
 }
 
 /// A pull page is not acknowledged until every local write in that page has
@@ -119,7 +154,25 @@ class SyncEngine {
   /// *different* family than the authenticated account (§1's isolation
   /// rule) — the caller (`AccountController`) is responsible for turning
   /// that into a `blocked` status rather than a retryable `failed` one.
-  Future<SyncRunSummary> syncAll() async {
+  Future<SyncRunSummary>? _activeSync;
+
+  /// Concurrent lifecycle, trash and manual triggers share one drain. A
+  /// caller with a newly queued mutation may request another run afterwards.
+  Future<SyncRunSummary> syncAll({
+    void Function(SyncProgress progress)? onProgress,
+  }) {
+    final active = _activeSync;
+    if (active != null) return active;
+    final run = _runSync(
+      onProgress: onProgress,
+    ).whenComplete(() => _activeSync = null);
+    _activeSync = run;
+    return run;
+  }
+
+  Future<SyncRunSummary> _runSync({
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
     final userId = currentUserId();
     if (userId == null) {
       Log.w('Synchronisation ignorée : session absente', 'Sync');
@@ -134,11 +187,15 @@ class SyncEngine {
     Log.i('Synchronisation démarrée', 'Sync');
     final familyId = await ensureFamily();
 
-    final pushResult = await _push(userId: userId, familyId: familyId);
+    final pushResult = await _push(
+      userId: userId,
+      familyId: familyId,
+      onProgress: onProgress,
+    );
     (int, int) pullResult;
     AppFailure? pullError;
     try {
-      pullResult = await _pull(familyId: familyId);
+      pullResult = await _pull(familyId: familyId, onProgress: onProgress);
     } on _PullApplyFailure catch (error, stack) {
       pullResult = (0, 0);
       pullError = error.failure;
@@ -206,6 +263,7 @@ class SyncEngine {
   Future<(int, int, AppFailure?)> _push({
     required String userId,
     required String familyId,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final ready = await outbox.listReady();
     Log.i('${ready.length} entrée(s) prêtes à envoyer', 'Sync');
@@ -213,16 +271,33 @@ class SyncEngine {
     var failed = 0;
     AppFailure? lastError;
 
-    for (final entry in ready) {
+    for (var index = 0; index < ready.length; index++) {
+      final entry = ready[index];
+      // Reported before each entry, so deferred and skipped entries (which
+      // `continue`) still advance the count.
+      onProgress?.call(
+        SyncProgress(
+          phase: SyncPhase.sending,
+          done: index,
+          total: ready.length,
+        ),
+      );
       if (isEntryDeferred != null && await isEntryDeferred!(entry)) {
         Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
+        continue;
+      }
+      if (entry.entity == SyncEntityKind.child.wireName &&
+          isDebugDemoId(entry.entityId)) {
+        await outbox.markSucceeded(entry.seq);
         continue;
       }
       try {
         if (entry.entity == SyncEntityKind.child.wireName) {
           await _pushChild(entry, familyId: familyId);
         } else {
-          await _pushArtwork(entry, familyId: familyId, userId: userId);
+          if (!await _pushArtwork(entry, familyId: familyId, userId: userId)) {
+            continue;
+          }
         }
         await outbox.markSucceeded(entry.seq);
         succeeded++;
@@ -236,13 +311,41 @@ class SyncEngine {
           'Sync',
         );
       } on _TerminalOutboxFailure catch (e) {
-        await outbox.markTerminal(entry.seq);
+        if (e.preservePending) {
+          await outbox.markFailed(
+            entry.seq,
+            error: 'audioFileMissing',
+            retryAfter: const Duration(hours: 1),
+          );
+        } else {
+          await outbox.markTerminal(entry.seq);
+        }
+        if (e.preservePending &&
+            entry.entity == SyncEntityKind.artwork.wireName) {
+          await (db.update(
+            db.artworksTable,
+          )..where((t) => t.id.equals(entry.entityId))).write(
+            const ArtworksTableCompanion(syncState: Value('syncError')),
+          );
+        }
         Log.w(
           'Entrée ${entry.seq} en échec terminal : ${e.failure.runtimeType}',
           'Sync',
         );
         failed++;
         lastError = e.failure;
+      } on AudioConflictException {
+        await (db.update(
+          db.artworksTable,
+        )..where((t) => t.id.equals(entry.entityId))).write(
+          const ArtworksTableCompanion(
+            audioConflict: Value(true),
+            syncState: Value('syncError'),
+          ),
+        );
+        await outbox.markFailed(entry.seq, error: 'audioConflict');
+        failed++;
+        lastError = const NetworkFailure();
       } on RateLimitedException catch (e) {
         await outbox.markFailed(
           entry.seq,
@@ -284,12 +387,26 @@ class SyncEngine {
       } catch (e, st) {
         Log.e('Échec de l’envoi de l’entrée ${entry.seq}', e, st, 'Sync');
         await outbox.markFailed(entry.seq, error: e.toString());
+        if (entry.entity == SyncEntityKind.artwork.wireName) {
+          await (db.update(
+            db.artworksTable,
+          )..where((t) => t.id.equals(entry.entityId))).write(
+            const ArtworksTableCompanion(syncState: Value('syncError')),
+          );
+        }
         failed++;
         lastError = NetworkFailure(cause: e, stack: st);
       }
       // Isolation: one entry's exception never stops the loop (spec §5 —
       // "échecs isolés par entrée").
     }
+    onProgress?.call(
+      SyncProgress(
+        phase: SyncPhase.sending,
+        done: ready.length,
+        total: ready.length,
+      ),
+    );
 
     return (succeeded, failed, lastError);
   }
@@ -322,25 +439,31 @@ class SyncEngine {
     await childrenRepo.markSynced(child.id);
   }
 
-  Future<void> _pushArtwork(
+  Future<bool> _pushArtwork(
     SyncOutboxEntryEntity entry, {
     required String familyId,
     required String userId,
   }) async {
     if (entry.op == SyncOutboxOp.delete.wireName) {
       await cloudApi.softDeleteArtwork(entry.entityId);
-      return;
+      return true;
     }
 
     final m = await artworksRepo.getById(entry.entityId);
     if (m == null) {
-      return; // already gone locally (e.g. cascaded away with its child)
+      return true; // already gone locally (e.g. cascaded away with its child)
     }
+    if (isDebugDemoId(m.childId)) return true; // demo fixture, never uploaded
 
     final row = await (db.select(
       db.artworksTable,
     )..where((t) => t.id.equals(m.id))).getSingleOrNull();
 
+    if (row?.audioConflict == true) return false;
+    final intent = AudioSyncIntent.values.byName(
+      row?.audioSyncIntent ?? 'keep',
+    );
+    final revision = row?.audioRevision ?? 0;
     String displayKey;
     String? thumbnailKey;
     int imageByteSize = row?.byteSize ?? 0;
@@ -394,30 +517,67 @@ class SyncEngine {
       imageByteSize = displayBytes.length;
     }
 
+    // Audio reservations require an existing remote artwork. Commit the
+    // confirmed photo first, keeping the pending audio edit in the outbox.
+    if (!hasExistingImages && intent == AudioSyncIntent.replace) {
+      await cloudApi.upsertArtwork(
+        id: current.id,
+        familyId: familyId,
+        childId: current.childId,
+        displayObjectKey: displayKey,
+        thumbnailObjectKey: thumbnailKey,
+        addedAt: current.addedAt,
+        drawnAt: current.drawnAt,
+        story: current.story,
+        addedBy: userId,
+        byteSize: imageByteSize,
+        imageWidth: current.imageWidth,
+        imageHeight: current.imageHeight,
+        audioWrite: AudioWrite(
+          intent: AudioSyncIntent.keep,
+          expectedRevision: revision,
+        ),
+      );
+      await (db.update(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).write(
+        ArtworksTableCompanion(
+          displayObjectKey: Value(displayKey),
+          byteSize: Value(imageByteSize),
+        ),
+      );
+    }
+
     // Audio track handling
     String? audioKey = row?.audioObjectKey;
     int audioByteSize = row?.audioByteSize ?? 0;
 
-    if (current.relativeAudioPath != null) {
-      if (audioKey == null) {
-        final audioFile = await vault.resolveFile(current.relativeAudioPath!);
-        if (await audioFile.exists()) {
-          final audioBytes = await audioFile.readAsBytes();
-          audioKey = await uploader.uploadDerivative(
-            bytes: audioBytes,
-            artworkId: current.id,
-            variant: ObjectVariant.audio,
-            fileName: audioFile.path,
-          );
-          audioByteSize = audioBytes.length;
-        }
+    if (intent == AudioSyncIntent.replace) {
+      if (current.relativeAudioPath == null) {
+        throw const _TerminalOutboxFailure(
+          FileMissingFailure(),
+          preservePending: true,
+        );
       }
-    } else {
-      // If audio was explicitly cleared, null out the key
-      if (current.audioDurationMs == null) {
-        audioKey = null;
-        audioByteSize = 0;
+      final audioFile = await vault.resolveFile(current.relativeAudioPath!);
+      if (!await audioFile.exists()) {
+        throw const _TerminalOutboxFailure(
+          FileMissingFailure(),
+          preservePending: true,
+        );
       }
+      final audioBytes = await audioFile.readAsBytes();
+      audioKey = await uploader.uploadDerivative(
+        bytes: audioBytes,
+        artworkId: current.id,
+        variant: ObjectVariant.audio,
+        childId: current.childId,
+        fileName: audioFile.path,
+      );
+      audioByteSize = audioBytes.length;
+    } else if (intent == AudioSyncIntent.delete) {
+      audioKey = null;
+      audioByteSize = 0;
     }
 
     await cloudApi.upsertArtwork(
@@ -429,6 +589,7 @@ class SyncEngine {
       audioObjectKey: audioKey,
       audioDurationMs: current.audioDurationMs,
       audioByteSize: audioByteSize,
+      audioWrite: AudioWrite(intent: intent, expectedRevision: revision),
       addedAt: current.addedAt,
       drawnAt: current.drawnAt,
       story: current.story,
@@ -438,19 +599,39 @@ class SyncEngine {
       addedBy: userId,
     );
 
-    // Save confirmed storage keys locally
-    await (db.update(
-      db.artworksTable,
-    )..where((t) => t.id.equals(current.id))).write(
-      ArtworksTableCompanion(
-        displayObjectKey: Value(displayKey),
-        thumbnailObjectKey: Value(thumbnailKey),
-        audioObjectKey: Value(audioKey),
-        byteSize: Value(imageByteSize),
-        audioByteSize: Value(audioByteSize),
-        syncState: const Value('synced'),
-      ),
-    );
+    // A user can edit again while bytes are in flight. Advance the baseline
+    // but only acknowledge the exact content that was sent.
+    return db.transaction(() async {
+      final latest = await (db.select(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).getSingleOrNull();
+      if (latest == null || latest.deletedAt != null) return false;
+      final matches =
+          latest.relativeAudioPath == current.relativeAudioPath &&
+          latest.audioDurationMs == current.audioDurationMs &&
+          latest.story == current.story &&
+          latest.drawnAt == current.drawnAt &&
+          latest.audioRevision == revision &&
+          latest.audioSyncIntent == intent.name;
+      await (db.update(
+        db.artworksTable,
+      )..where((t) => t.id.equals(current.id))).write(
+        ArtworksTableCompanion(
+          displayObjectKey: Value(displayKey),
+          thumbnailObjectKey: Value(thumbnailKey),
+          audioObjectKey: Value(audioKey),
+          byteSize: Value(imageByteSize),
+          audioByteSize: matches ? Value(audioByteSize) : const Value.absent(),
+          audioRevision: Value(
+            intent == AudioSyncIntent.keep ? revision : revision + 1,
+          ),
+          audioSyncIntent: matches ? const Value('keep') : const Value.absent(),
+          syncState: Value(matches ? 'synced' : 'localOnly'),
+        ),
+      );
+      if (matches) await outbox.markSucceeded(entry.seq);
+      return matches;
+    });
   }
 
   // =====================================================================
@@ -458,7 +639,11 @@ class SyncEngine {
   // =====================================================================
 
   /// Returns (children applied, artworks applied).
-  Future<(int, int)> _pull({required String familyId}) async {
+  Future<(int, int)> _pull({
+    required String familyId,
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
+    onProgress?.call(const SyncProgress(phase: SyncPhase.receiving, done: 0));
     final cursors = await vaultMeta.getPullCursors();
     Log.d(
       'Récupération distante : enfants=${cursors.children?.toIso8601String() ?? 'epoch'}, '
@@ -523,6 +708,7 @@ class SyncEngine {
         updatedAtOf: (r) => r.updatedAt,
         pendingLocalIds: pendingIds,
       );
+      var receivedInPage = 0;
       for (final row in plan.toApply) {
         if (row.deletedAt != null) {
           final result = await artworksRepo.applyRemoteTombstone(row.id);
@@ -540,14 +726,22 @@ class SyncEngine {
           audioObjectKey: row.audioObjectKey,
           audioDurationMs: row.audioDurationMs,
           audioByteSize: row.audioByteSize,
+          audioRevision: row.audioRevision,
           byteSize: row.byteSize,
           imageWidth: row.imageWidth,
           imageHeight: row.imageHeight,
+          addedBy: row.addedBy,
         );
         _throwOnPullFailure(result);
         // D10: thumbnails first — eager for a row new to this device, the
         // display derivative stays deferred to [ensureDisplayImageDownloaded].
         await _downloadThumbnailIfNeeded(row);
+        onProgress?.call(
+          SyncProgress(
+            phase: SyncPhase.receiving,
+            done: artworksApplied + ++receivedInPage,
+          ),
+        );
       }
       artworksApplied += plan.toApply.length;
       artworkCursor = _nextPageCursor(
@@ -738,15 +932,86 @@ class SyncEngine {
     }
   }
 
+  /// Resolve only the audio field; independent local text edits remain queued.
+  Future<bool> resolveAudioConflict(
+    String artworkId, {
+    required bool keepLocal,
+  }) async {
+    try {
+      final familyId = await ensureFamily();
+      final remote = await cloudApi.readArtwork(
+        id: artworkId,
+        familyId: familyId,
+      );
+      if (remote == null || remote.deletedAt != null) return false;
+      final old = await artworksRepo.getById(artworkId);
+      if (old == null) return false;
+      await db.transaction(() async {
+        await (db.update(
+          db.artworksTable,
+        )..where((t) => t.id.equals(artworkId))).write(
+          ArtworksTableCompanion(
+            audioRevision: Value(remote.audioRevision),
+            audioObjectKey: Value(remote.audioObjectKey),
+            audioConflict: const Value(false),
+            syncState: const Value('localOnly'),
+            audioSyncIntent: keepLocal
+                ? const Value.absent()
+                : const Value('keep'),
+            relativeAudioPath: keepLocal
+                ? const Value.absent()
+                : const Value(null),
+            audioDurationMs: keepLocal
+                ? const Value.absent()
+                : Value(remote.audioDurationMs),
+            audioByteSize: keepLocal
+                ? const Value.absent()
+                : Value(remote.audioByteSize),
+          ),
+        );
+        await (db.update(db.syncOutboxTable)..where(
+              (t) => t.entityId.equals(artworkId) & t.entity.equals('artwork'),
+            ))
+            .write(
+              const SyncOutboxTableCompanion(
+                attempts: Value(0),
+                nextAttemptAt: Value(null),
+                lastError: Value(null),
+              ),
+            );
+      });
+      if (!keepLocal && old.relativeAudioPath != null) {
+        await vault.deleteAudioFileOrEnqueueCleanup(
+          relativeAudioPath: old.relativeAudioPath,
+          db: db,
+        );
+      }
+      return true;
+    } catch (e, st) {
+      Log.e('Audio conflict resolution failed', e, st, 'Sync');
+      return false;
+    }
+  }
+
   /// Downloads the audio track on-demand if not already present locally.
   Future<ActionResultLike> ensureAudioDownloaded(String artworkId) async {
     final local = await artworksRepo.getById(artworkId);
     if (local == null) return ActionResultLike.notFound;
-    if (local.relativeAudioPath != null) return ActionResultLike.alreadyHave;
+    if (local.relativeAudioPath != null) {
+      final file = await vault.resolveFile(local.relativeAudioPath!);
+      if (await file.exists()) {
+        return ActionResultLike.alreadyHave;
+      }
+      Log.w(
+        'Fichier audio introuvable sur le disque pour $artworkId (${local.relativeAudioPath}), relance du téléchargement distant',
+        'Sync',
+      );
+    }
 
     final row = await (db.select(
       db.artworksTable,
     )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
+    if (row?.audioSyncIntent != 'keep') return ActionResultLike.failed;
     final key = row?.audioObjectKey;
     if (key == null) return ActionResultLike.noKeyAvailable;
 
@@ -755,11 +1020,20 @@ class SyncEngine {
       final path = await vault.storeDownloadedAudio(
         bytes: bytes,
         artworkId: artworkId,
+        version: DateTime.now().microsecondsSinceEpoch,
       );
-      await artworksRepo.markAudioDownloaded(
+      final stored = await artworksRepo.markAudioDownloaded(
         id: artworkId,
         audioRelativePath: path,
+        expectedAudioRevision: row!.audioRevision,
       );
+      if (stored is ActionFailed) {
+        await vault.deleteAudioFileOrEnqueueCleanup(
+          relativeAudioPath: path,
+          db: db,
+        );
+        return ActionResultLike.failed;
+      }
       return ActionResultLike.downloaded;
     } catch (e, st) {
       Log.e('Téléchargement audio impossible ($artworkId)', e, st, 'Sync');

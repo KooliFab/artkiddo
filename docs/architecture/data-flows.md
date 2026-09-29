@@ -5,7 +5,7 @@
 ```mermaid
 flowchart LR
   Capture["Capture / editing"] --> Local["Local repository"]
-  Local --> SQLite["Drift v1"]
+  Local --> SQLite["Drift"]
   Local --> Files["LocalVault"]
   SQLite --> Outbox["SyncOutbox"]
   Outbox -. "optional capability" .-> Sync["SyncEngine"]
@@ -17,7 +17,7 @@ flowchart LR
 ## Local creation
 
 ```text
-capture or edit → local repository → Drift v1 + LocalVault
+capture or edit → local repository → Drift + LocalVault
                                      └─ success after durable write
 ```
 

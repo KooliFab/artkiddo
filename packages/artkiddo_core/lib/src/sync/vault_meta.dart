@@ -67,21 +67,25 @@ class VaultMetaRepository {
       (await _readOrCreate()).joinResetPending;
 
   Future<void> markJoinResetPending() async {
-    await _db.into(_db.vaultMetaTable).insertOnConflictUpdate(
-      const VaultMetaTableCompanion(
-        id: Value(_singletonId),
-        joinResetPending: Value(true),
-      ),
-    );
+    await _db
+        .into(_db.vaultMetaTable)
+        .insertOnConflictUpdate(
+          const VaultMetaTableCompanion(
+            id: Value(_singletonId),
+            joinResetPending: Value(true),
+          ),
+        );
   }
 
   Future<void> clearJoinResetPending() async {
-    await _db.into(_db.vaultMetaTable).insertOnConflictUpdate(
-      const VaultMetaTableCompanion(
-        id: Value(_singletonId),
-        joinResetPending: Value(false),
-      ),
-    );
+    await _db
+        .into(_db.vaultMetaTable)
+        .insertOnConflictUpdate(
+          const VaultMetaTableCompanion(
+            id: Value(_singletonId),
+            joinResetPending: Value(false),
+          ),
+        );
   }
 
   Future<PullCursorSet> getPullCursors() async {

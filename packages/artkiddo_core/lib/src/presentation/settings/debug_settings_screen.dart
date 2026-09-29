@@ -11,7 +11,9 @@ import '../theme/app_tokens.dart';
 /// Screen accessible only in debug mode to perform debug/QA operations,
 /// such as seeding test demo data or deleting all stored photos.
 class DebugSettingsScreen extends ConsumerStatefulWidget {
-  const DebugSettingsScreen({super.key});
+  final bool presentedAsSheet;
+
+  const DebugSettingsScreen({super.key, this.presentedAsSheet = false});
 
   @override
   ConsumerState<DebugSettingsScreen> createState() =>
@@ -154,7 +156,18 @@ class _DebugSettingsScreenState extends ConsumerState<DebugSettingsScreen> {
     final isBusy = _isDeleting || _isSeeding;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Debug / Réglages')),
+      appBar: AppBar(
+        title: const Text('Debug / Réglages'),
+        automaticallyImplyLeading: !widget.presentedAsSheet,
+        actions: [
+          if (widget.presentedAsSheet)
+            IconButton(
+              tooltip: 'Fermer',
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(

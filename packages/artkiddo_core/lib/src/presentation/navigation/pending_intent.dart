@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// A typed intent the user asked for but that required a prerequisite
 /// (an account, mostly). Stored in a single global slot: posing a new
 /// intent replaces the previous one.
+///
+/// Only the composition that owns the prerequisite consumes this slot — the
+/// core poses an intent and never replays it, because replaying means
+/// reopening a destination the core does not have.
 sealed class PendingIntent {
   const PendingIntent();
 }
@@ -14,10 +18,6 @@ class NoPendingIntent extends PendingIntent {
 class ShareChildGalleryIntent extends PendingIntent {
   final String childId;
   const ShareChildGalleryIntent(this.childId);
-}
-
-class SyncNowIntent extends PendingIntent {
-  const SyncNowIntent();
 }
 
 class PendingIntentNotifier extends Notifier<PendingIntent> {

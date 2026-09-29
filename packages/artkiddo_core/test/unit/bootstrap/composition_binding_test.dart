@@ -40,7 +40,9 @@ void main() {
           isA<BootstrapConfigurationException>().having(
             (error) => error.failures,
             'failures',
-            allOf(
+            // A list, not positional args: `allOf` caps at 7 of those and
+            // this composition is missing 8 bindings.
+            allOf([
               contains(
                 'remoteAccount requires a CompositionActions.openAccount',
               ),
@@ -49,10 +51,11 @@ void main() {
                 'webGalleryLinks requires a CompositionActions.openGalleryShare',
               ),
               contains('remoteBackup requires a RemoteMediaFetcher binding'),
+              contains('remoteBackup requires a CompositionActions.syncPhotos'),
               contains('household requires a FamilyApi binding'),
               contains('webGalleryLinks requires a SharingService binding'),
               contains('webGalleryLinks requires a ShareBackup binding'),
-            ),
+            ]),
           ),
         ),
       );
@@ -77,6 +80,7 @@ void main() {
                     openAccount: (context) {},
                     openFamilyHub: (context) {},
                     openGalleryShare: (context, childId, childName) {},
+                    syncPhotos: (context) {},
                   ),
                 ),
               ],
@@ -110,6 +114,7 @@ void main() {
                 CompositionActions(
                   openAccount: (context) {},
                   openFamilyHub: (context) {},
+                  syncPhotos: (context) {},
                 ),
               ),
             ],
@@ -122,6 +127,42 @@ void main() {
             equals([
               'webGalleryLinks requires a CompositionActions.openGalleryShare',
             ]),
+          ),
+        ),
+      );
+    });
+
+    test('a cloud composition missing only the sync action is rejected', () {
+      // remoteBackup drives the gallery's manual-sync control. Enabling the
+      // capability without binding the action used to start normally and
+      // ship background backup with no user-visible trigger.
+      expect(
+        () => ArtKiddoBootstrap.createContainer(
+          cloudConfig(
+            overrides: [
+              remoteMediaFetcherProvider.overrideWithValue(
+                _StubRemoteMediaFetcher(),
+              ),
+              familyApiProvider.overrideWithValue(_StubFamilyApi()),
+              sharingServiceProvider.overrideWithValue(_StubSharingService()),
+              shareBackupProvider.overrideWithValue(
+                (childId) async => const ActionSuccess(null),
+              ),
+              compositionActionsProvider.overrideWithValue(
+                CompositionActions(
+                  openAccount: (context) {},
+                  openFamilyHub: (context) {},
+                  openGalleryShare: (context, childId, childName) {},
+                ),
+              ),
+            ],
+          ),
+        ),
+        throwsA(
+          isA<BootstrapConfigurationException>().having(
+            (error) => error.failures,
+            'failures',
+            equals(['remoteBackup requires a CompositionActions.syncPhotos']),
           ),
         ),
       );
@@ -144,6 +185,7 @@ void main() {
                 openAccount: (context) {},
                 openFamilyHub: (context) {},
                 openGalleryShare: (context, childId, childName) {},
+                syncPhotos: (context) {},
               ),
             ),
           ],
@@ -192,6 +234,53 @@ final class _StubFamilyApi implements FamilyApi {
 
   @override
   Future<int> activeMemberCount(String familyId) async => 1;
+
+  @override
+  Future<UserProfile> getMyProfile() async =>
+      const UserProfile(userId: 'stub', email: 'stub@example.com');
+
+  @override
+  Future<UserProfile> updateMyProfile({
+    String? firstName,
+    String? lastName,
+  }) async => UserProfile(
+    userId: 'stub',
+    email: 'stub@example.com',
+    firstName: firstName,
+    lastName: lastName,
+  );
+
+  @override
+  Future<List<FamilyMember>> listFamilyMembers() async => const [];
+
+  @override
+  Future<void> removeFamilyMember(String userId) async {}
+
+  @override
+  Future<void> leaveFamily() async {}
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRole(
+    String userId,
+    FamilyMemberRole role,
+  ) async => FamilyMember(
+    userId: userId,
+    role: role,
+    email: 'stub@example.com',
+    joinedAt: DateTime(2026),
+  );
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRelationLabel(
+    String userId,
+    String? relationLabel,
+  ) async => FamilyMember(
+    userId: userId,
+    role: FamilyMemberRole.contributor,
+    email: 'stub@example.com',
+    relationLabel: relationLabel,
+    joinedAt: DateTime(2026),
+  );
 }
 
 final class _StubSharingService implements SharingService {

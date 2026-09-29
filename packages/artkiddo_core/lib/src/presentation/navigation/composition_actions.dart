@@ -4,16 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Optional destinations and platform services a composition plugs into the
 /// presentation layer.
 ///
-/// A null entry means the composition offers no such destination, and the
-/// corresponding affordance is not rendered. A composition that enables a
-/// capability must supply the matching entry; `ArtKiddoBootstrap` rejects a
-/// container whose capabilities and actions disagree, so an enabled capability
-/// can never degrade into a silently hidden control.
+/// Capability-gated entries (`openAccount`, `openGalleryShare`, `syncPhotos`)
+/// render only when both their capability and their binding are present. A
+/// composition that enables one must supply its matching entry;
+/// `ArtKiddoBootstrap` rejects a container where those two disagree.
+///
+/// Local-default entries (`openFamilyHub`, `openSettings`) are substitutions:
+/// when null, their controls still render and open the core's local
+/// `ChildrenScreen` or `SettingsScreen`. A composition may replace either
+/// destination, but it must keep the replaced local-only behaviour reachable.
 final class CompositionActions {
   /// Called after an artwork and its durable local sync outbox entry have
   /// been committed. Cloud compositions may use this to schedule remote work;
   /// the local composition leaves it null.
   final Future<void> Function(String artworkId)? onArtworkSaved;
+
+  /// Best-effort propagation after the local deletion/outbox transaction.
+  final Future<void> Function(String artworkId)? onArtworkDeleted;
+
+  final Future<bool> Function(String artworkId, bool keepLocal)?
+  resolveAudioConflict;
 
   final void Function(BuildContext context)? openFamilyHub;
 
@@ -24,13 +34,28 @@ final class CompositionActions {
   openGalleryShare;
 
   final void Function(BuildContext context)? openAccount;
+
+  /// Opens the global settings surface (language, about, notifications,
+  /// documents, account) independent of the family hub or household state.
+  final void Function(BuildContext context)? openSettings;
+
+  /// Triggers a manual photo/backup sync. A callback rather than anything
+  /// status-bearing: this package owns no sync-status abstraction, so the
+  /// composition that binds it runs the sync and reports progress and
+  /// outcome to the user itself.
+  final void Function(BuildContext context)? syncPhotos;
+
   final Future<String?> Function(BuildContext context)? openQrScanner;
 
   const CompositionActions({
     this.onArtworkSaved,
+    this.onArtworkDeleted,
+    this.resolveAudioConflict,
     this.openFamilyHub,
     this.openGalleryShare,
     this.openAccount,
+    this.openSettings,
+    this.syncPhotos,
     this.openQrScanner,
   });
 

@@ -379,6 +379,15 @@
       }
     }
   },
+  "artworkAddedBy": "Added by {author}",
+  "@artworkAddedBy": {
+    "description": "Artwork author attribution.",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
   "artworkAgeAtAddition": "Age when added: {age}",
   "@artworkAgeAtAddition": {
     "description": "Localized user-facing copy.",
@@ -562,11 +571,11 @@
   "@captureAudioReRecord": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmTitle": "Replace recording?",
+  "captureAudioReRecordConfirmTitle": "Record a new voice story?",
   "@captureAudioReRecordConfirmTitle": {
     "description": "Localized user-facing copy."
   },
-  "captureAudioReRecordConfirmBody": "The current recording will be replaced with a new one.",
+  "captureAudioReRecordConfirmBody": "The current voice story will be replaced when you save the new one. If you cancel, it will be kept.",
   "@captureAudioReRecordConfirmBody": {
     "description": "Localized user-facing copy."
   },
@@ -997,6 +1006,10 @@
   "@childEditorTitleEdit": {
     "description": "Localized user-facing copy."
   },
+  "childEditorTitleArtist": "Artist",
+  "@childEditorTitleArtist": {
+    "description": "Title shown while editing an artist profile."
+  },
   "childEditorFromDraft": "Your drawing is kept in the meantime.",
   "@childEditorFromDraft": {
     "description": "Localized user-facing copy."
@@ -1118,10 +1131,6 @@
   "@settingsGroupDocuments": {
     "description": "Localized user-facing copy."
   },
-  "settingsAccountRow": "Backup and account",
-  "@settingsAccountRow": {
-    "description": "Localized user-facing copy."
-  },
   "settingsAccountOff": "Not turned on",
   "@settingsAccountOff": {
     "description": "Localized user-facing copy."
@@ -1144,10 +1153,6 @@
         "isCustomDateFormat": "true"
       }
     }
-  },
-  "settingsBackupRun": "Back up now",
-  "@settingsBackupRun": {
-    "description": "Localized user-facing copy."
   },
   "settingsBackupRunning": "Backup in progress… {n} of {total}",
   "@settingsBackupRunning": {
@@ -1209,6 +1214,10 @@
   "@settingsAboutRow": {
     "description": "Localized user-facing copy."
   },
+  "settingsDebugRow": "Debug tools",
+  "@settingsDebugRow": {
+    "description": "Localized user-facing copy."
+  },
   "settingsPrivacyRow": "Privacy policy",
   "@settingsPrivacyRow": {
     "description": "Localized user-facing copy."
@@ -1226,15 +1235,8 @@
       }
     }
   },
-  "settingsGroupFamily": "Family",
-  "@settingsGroupFamily": {
-    "description": "Localized user-facing copy."
-  },
-  "familyRow": "Invite a member",
-  "@familyRow": {
-    "description": "Localized user-facing copy."
-  },
   "familyTitle": "Family",
+  "familyInviteTitle": "Invite a member",
   "@familyTitle": {
     "description": "Localized user-facing copy."
   },
@@ -1258,7 +1260,7 @@
   "@familyInviteCodeLabel": {
     "description": "Localized user-facing copy."
   },
-  "familyInviteCopy": "Copy code",
+  "familyInviteCopy": "Invite",
   "@familyInviteCopy": {
     "description": "Localized user-facing copy."
   },
@@ -1274,7 +1276,7 @@
   "@familyJoinCodeHint": {
     "description": "Localized user-facing copy."
   },
-  "familyJoinButton": "Join",
+  "familyJoinButton": "Join a family",
   "@familyJoinButton": {
     "description": "Localized user-facing copy."
   },
@@ -1376,7 +1378,7 @@
   "@settingsOffline": {
     "description": "Localized user-facing copy."
   },
-  "accountTitle": "Backup and account",
+  "accountTitle": "Create an account",
   "@accountTitle": {
     "description": "Localized user-facing copy."
   },
@@ -1505,6 +1507,38 @@
         "type": "String"
       }
     }
+  },
+  "accountMyProfile": "My profile",
+  "@accountMyProfile": {
+    "description": "Localized user-facing copy."
+  },
+  "accountFirstNameLabel": "First name",
+  "@accountFirstNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountFirstNameHint": "Your first name",
+  "@accountFirstNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "accountLastNameLabel": "Last name",
+  "@accountLastNameLabel": {
+    "description": "Localized user-facing copy."
+  },
+  "accountLastNameHint": "Your last name",
+  "@accountLastNameHint": {
+    "description": "Localized user-facing copy."
+  },
+  "accountProfileSaved": "Profile updated.",
+  "@accountProfileSaved": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRoleParent": "Parent",
+  "@accountRoleParent": {
+    "description": "Localized user-facing copy."
+  },
+  "accountRoleContributor": "Contributor",
+  "@accountRoleContributor": {
+    "description": "Localized user-facing copy."
   },
   "accountSignOut": "Sign out",
   "@accountSignOut": {
@@ -1891,10 +1925,19 @@
   "@errorUnknownBody": {
     "description": "Localized user-facing copy."
   },
-
   "familyHubTitle": "Family Space",
   "@familyHubTitle": {
     "description": "Localized user-facing copy."
+  },
+  "familyHubNamedTitle": "Family {name}",
+  "@familyHubNamedTitle": {
+    "description": "Family hub title when a family is named.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Smith"
+      }
+    }
   },
   "familyHubSectionArtists": "Artists",
   "@familyHubSectionArtists": {
@@ -1904,24 +1947,92 @@
   "@familyHubAddArtist": {
     "description": "Localized user-facing copy."
   },
-  "familyHubSectionFamilyBackup": "Family & backup",
-  "@familyHubSectionFamilyBackup": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubAccountLocalOnly": "Backup on this device",
-  "@familyHubAccountLocalOnly": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubAccountLocalSubtitle": "Activate a private backup whenever you want.",
-  "@familyHubAccountLocalSubtitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubFamilySubtitle": "Invite, join or manage the household.",
-  "@familyHubFamilySubtitle": {
-    "description": "Localized user-facing copy."
-  },
   "familyHubFamilyAndSettings": "Family & settings",
   "@familyHubFamilyAndSettings": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionParents": "Parents",
+  "@familyHubSectionParents": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionContributors": "Contributors",
+  "@familyHubSectionContributors": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSectionOtherMembers": "Other members",
+  "@familyHubSectionOtherMembers": {
+    "description": "Heading for family members other than parents."
+  },
+  "familyHubLeaveFamily": "Leave family",
+  "@familyHubLeaveFamily": {
+    "description": "Action allowing the signed-in member to leave their family."
+  },
+  "familyHubLeaveFamilyTitle": "Leave this family?",
+  "@familyHubLeaveFamilyTitle": {
+    "description": "Family-leave confirmation title."
+  },
+  "familyHubLeaveFamilyBody": "You will lose access to this family and its shared content. Your local data will not be deleted.",
+  "@familyHubLeaveFamilyBody": {
+    "description": "Family-leave consequence."
+  },
+  "familyHubLeaveFamilyConfirm": "Leave family",
+  "@familyHubLeaveFamilyConfirm": {
+    "description": "Destructive confirmation for leaving a family."
+  },
+  "familyMemberRelationLabel": "Family relationship",
+  "@familyMemberRelationLabel": {
+    "description": "Parent-managed label such as Uncle or Grandpa."
+  },
+  "familyMemberRelationHint": "E.g. Uncle, Grandpa, Auntie",
+  "@familyMemberRelationHint": {
+    "description": "Hint for entering a family relationship label."
+  },
+  "familyHubAddMember": "Add a member",
+  "@familyHubAddMember": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubCreateAccount": "Create an account or sign in",
+  "@familyHubCreateAccount": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubTrashRow": "View deleted photos",
+  "@familyHubTrashRow": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubSyncPhotos": "Sync photos",
+  "@familyHubSyncPhotos": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsTitle": "Family settings",
+  "@familySettingsTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberTitle": "Remove this member?",
+  "@familySettingsRemoveMemberTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberBody": "This person will lose access to the family and its shared content. Nothing is deleted from their device.",
+  "@familySettingsRemoveMemberBody": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsRemoveMemberAction": "Remove",
+  "@familySettingsRemoveMemberAction": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsMakeParent": "Make parent",
+  "@familySettingsMakeParent": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsMakeContributor": "Make contributor",
+  "@familySettingsMakeContributor": {
+    "description": "Localized user-facing copy."
+  },
+  "familySettingsLastParentError": "The household must keep at least one active parent.",
+  "@familySettingsLastParentError": {
+    "description": "Localized user-facing copy."
+  },
+  "settingsAccountRowNeutral": "Sign-in and account",
+  "@settingsAccountRowNeutral": {
     "description": "Localized user-facing copy."
   },
   "captureAnecdoteTitle": "Add a note",
@@ -1947,5 +2058,49 @@
   "syncUploadSuspendedBody": "New cloud backups are temporarily suspended to keep the app free.\n\nYour existing galleries, restores, and deletions remain fully available.",
   "@syncUploadSuspendedBody": {
     "description": "Localized user-facing copy."
-  }
+  },
+  "galleryPeekVoiceOf": "{childName}'s voice",
+  "@galleryPeekVoiceOf": {
+    "description": "Pill under a long-pressed artwork while its voice story plays.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryPeekListening": "Playing the story…",
+  "@galleryPeekListening": {
+    "description": "Same pill when the artwork's child is unknown."
+  },
+  "syncProgressPreparing": "Preparing sync…",
+  "@syncProgressPreparing": {
+    "description": "Sync progress toast."
+  },
+  "syncProgressReceiving": "{n, plural, =0{Getting the family's drawings…} =1{Getting drawings… 1 received} other{Getting drawings… {n} received}}",
+  "@syncProgressReceiving": {
+    "description": "Sync progress toast.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncProgressUpToDate": "Gallery up to date",
+  "@syncProgressUpToDate": {
+    "description": "Sync progress toast."
+  },
+  "syncProgressDismiss": "Close",
+  "@syncProgressDismiss": {
+    "description": "Sync progress toast."
+  },
+  "artworkAudioSavedLocal": "New voice story saved on this device.",
+  "artworkAudioDeletedLocal": "Voice story removed from this device.",
+  "artworkAudioBackupPending": "Voice story waiting to be backed up.",
+  "artworkAudioBackedUp": "Voice story backed up.",
+  "artworkAudioBackupFailed": "Unable to back up the voice story. Your recording remains on this device.",
+  "artworkAudioConflict": "The voice story changed on another device. Choose which version to keep.",
+  "artworkAudioKeepRemote": "Keep the shared voice story",
+  "artworkAudioUseLocal": "Use my new version",
+  "trashPreviewOpen": "View deleted photo",
+  "trashPreviewUnavailable": "Preview unavailable"
 }

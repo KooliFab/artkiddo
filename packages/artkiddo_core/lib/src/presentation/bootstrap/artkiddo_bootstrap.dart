@@ -71,6 +71,14 @@ abstract final class ArtKiddoBootstrap {
         container.read(remoteMediaFetcherProvider) is NoRemoteMediaFetcher) {
       failures.add('remoteBackup requires a RemoteMediaFetcher binding');
     }
+    // The gallery renders its manual-sync control on `remoteBackup`. Without
+    // this rule a composition could enable the capability, omit the action,
+    // and ship a build that backs up in the background with no way for the
+    // user to trigger or observe it — the hidden-control degradation the
+    // rest of this method exists to prevent.
+    if (capabilities.remoteBackup && actions.syncPhotos == null) {
+      failures.add('remoteBackup requires a CompositionActions.syncPhotos');
+    }
     if (capabilities.household &&
         container.read(familyApiProvider) is NoFamilyApi) {
       failures.add('household requires a FamilyApi binding');

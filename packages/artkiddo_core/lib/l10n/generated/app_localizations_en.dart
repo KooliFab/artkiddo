@@ -292,6 +292,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String artworkAddedBy(String author) {
+    return 'Added by $author';
+  }
+
+  @override
   String artworkAgeAtAddition(String age) {
     return 'Age when added: $age';
   }
@@ -445,11 +450,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureAudioReRecord => 'Re-record';
 
   @override
-  String get captureAudioReRecordConfirmTitle => 'Replace recording?';
+  String get captureAudioReRecordConfirmTitle => 'Record a new voice story?';
 
   @override
   String get captureAudioReRecordConfirmBody =>
-      'The current recording will be replaced with a new one.';
+      'The current voice story will be replaced when you save the new one. If you cancel, it will be kept.';
 
   @override
   String get captureAudioDelete => 'Delete voice note';
@@ -786,6 +791,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childEditorTitleEdit => 'Edit profile';
 
   @override
+  String get childEditorTitleArtist => 'Artist';
+
+  @override
   String get childEditorFromDraft => 'Your drawing is kept in the meantime.';
 
   @override
@@ -883,9 +891,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGroupDocuments => 'Documents';
 
   @override
-  String get settingsAccountRow => 'Backup and account';
-
-  @override
   String get settingsAccountOff => 'Not turned on';
 
   @override
@@ -902,9 +907,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return 'Last backup: $dateString';
   }
-
-  @override
-  String get settingsBackupRun => 'Back up now';
 
   @override
   String settingsBackupRunning(int n, int total) {
@@ -947,6 +949,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAboutRow => 'About';
 
   @override
+  String get settingsDebugRow => 'Debug tools';
+
+  @override
   String get settingsPrivacyRow => 'Privacy policy';
 
   @override
@@ -958,13 +963,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsGroupFamily => 'Family';
-
-  @override
-  String get familyRow => 'Invite a member';
-
-  @override
   String get familyTitle => 'Family';
+
+  @override
+  String get familyInviteTitle => 'Invite a member';
 
   @override
   String get familyNameLabel => 'Family name';
@@ -983,7 +985,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteCodeLabel => 'Invitation code';
 
   @override
-  String get familyInviteCopy => 'Copy code';
+  String get familyInviteCopy => 'Invite';
 
   @override
   String get familyInviteCopied => 'Code copied.';
@@ -996,7 +998,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyJoinCodeHint => 'Ex.: 7K4RTQ2M';
 
   @override
-  String get familyJoinButton => 'Join';
+  String get familyJoinButton => 'Join a family';
 
   @override
   String get familyJoinChecking => 'Checking…';
@@ -1093,7 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'No connection. Backup and sharing features are unavailable.';
 
   @override
-  String get accountTitle => 'Backup and account';
+  String get accountTitle => 'Create an account';
 
   @override
   String get accountIntroTitle => 'What an account gives you';
@@ -1191,6 +1193,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String accountConnectedAs(String email) {
     return 'Account linked: $email';
   }
+
+  @override
+  String get accountMyProfile => 'My profile';
+
+  @override
+  String get accountFirstNameLabel => 'First name';
+
+  @override
+  String get accountFirstNameHint => 'Your first name';
+
+  @override
+  String get accountLastNameLabel => 'Last name';
+
+  @override
+  String get accountLastNameHint => 'Your last name';
+
+  @override
+  String get accountProfileSaved => 'Profile updated.';
+
+  @override
+  String get accountRoleParent => 'Parent';
+
+  @override
+  String get accountRoleContributor => 'Contributor';
 
   @override
   String get accountSignOut => 'Sign out';
@@ -1497,26 +1523,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyHubTitle => 'Family Space';
 
   @override
+  String familyHubNamedTitle(String name) {
+    return 'Family $name';
+  }
+
+  @override
   String get familyHubSectionArtists => 'Artists';
 
   @override
   String get familyHubAddArtist => 'Add an artist';
 
   @override
-  String get familyHubSectionFamilyBackup => 'Family & backup';
-
-  @override
-  String get familyHubAccountLocalOnly => 'Backup on this device';
-
-  @override
-  String get familyHubAccountLocalSubtitle =>
-      'Activate a private backup whenever you want.';
-
-  @override
-  String get familyHubFamilySubtitle => 'Invite, join or manage the household.';
-
-  @override
   String get familyHubFamilyAndSettings => 'Family & settings';
+
+  @override
+  String get familyHubSectionParents => 'Parents';
+
+  @override
+  String get familyHubSectionContributors => 'Contributors';
+
+  @override
+  String get familyHubSectionOtherMembers => 'Other members';
+
+  @override
+  String get familyHubLeaveFamily => 'Leave family';
+
+  @override
+  String get familyHubLeaveFamilyTitle => 'Leave this family?';
+
+  @override
+  String get familyHubLeaveFamilyBody =>
+      'You will lose access to this family and its shared content. Your local data will not be deleted.';
+
+  @override
+  String get familyHubLeaveFamilyConfirm => 'Leave family';
+
+  @override
+  String get familyMemberRelationLabel => 'Family relationship';
+
+  @override
+  String get familyMemberRelationHint => 'E.g. Uncle, Grandpa, Auntie';
+
+  @override
+  String get familyHubAddMember => 'Add a member';
+
+  @override
+  String get familyHubCreateAccount => 'Create an account or sign in';
+
+  @override
+  String get familyHubTrashRow => 'View deleted photos';
+
+  @override
+  String get familyHubSyncPhotos => 'Sync photos';
+
+  @override
+  String get familySettingsTitle => 'Family settings';
+
+  @override
+  String get familySettingsRemoveMemberTitle => 'Remove this member?';
+
+  @override
+  String get familySettingsRemoveMemberBody =>
+      'This person will lose access to the family and its shared content. Nothing is deleted from their device.';
+
+  @override
+  String get familySettingsRemoveMemberAction => 'Remove';
+
+  @override
+  String get familySettingsMakeParent => 'Make parent';
+
+  @override
+  String get familySettingsMakeContributor => 'Make contributor';
+
+  @override
+  String get familySettingsLastParentError =>
+      'The household must keep at least one active parent.';
+
+  @override
+  String get settingsAccountRowNeutral => 'Sign-in and account';
 
   @override
   String get captureAnecdoteTitle => 'Add a note';
@@ -1536,4 +1620,67 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncUploadSuspendedBody =>
       'New cloud backups are temporarily suspended to keep the app free.\n\nYour existing galleries, restores, and deletions remain fully available.';
+
+  @override
+  String galleryPeekVoiceOf(String childName) {
+    return '$childName\'s voice';
+  }
+
+  @override
+  String get galleryPeekListening => 'Playing the story…';
+
+  @override
+  String get syncProgressPreparing => 'Preparing sync…';
+
+  @override
+  String syncProgressReceiving(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Getting drawings… $n received',
+      one: 'Getting drawings… 1 received',
+      zero: 'Getting the family\'s drawings…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncProgressUpToDate => 'Gallery up to date';
+
+  @override
+  String get syncProgressDismiss => 'Close';
+
+  @override
+  String get artworkAudioSavedLocal => 'New voice story saved on this device.';
+
+  @override
+  String get artworkAudioDeletedLocal =>
+      'Voice story removed from this device.';
+
+  @override
+  String get artworkAudioBackupPending =>
+      'Voice story waiting to be backed up.';
+
+  @override
+  String get artworkAudioBackedUp => 'Voice story backed up.';
+
+  @override
+  String get artworkAudioBackupFailed =>
+      'Unable to back up the voice story. Your recording remains on this device.';
+
+  @override
+  String get artworkAudioConflict =>
+      'The voice story changed on another device. Choose which version to keep.';
+
+  @override
+  String get artworkAudioKeepRemote => 'Keep the shared voice story';
+
+  @override
+  String get artworkAudioUseLocal => 'Use my new version';
+
+  @override
+  String get trashPreviewOpen => 'View deleted photo';
+
+  @override
+  String get trashPreviewUnavailable => 'Preview unavailable';
 }

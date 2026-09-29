@@ -293,6 +293,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String artworkAddedBy(String author) {
+    return 'Ajouté par $author';
+  }
+
+  @override
   String artworkAgeAtAddition(String age) {
     return 'Âge lors de l\'ajout : $age';
   }
@@ -448,11 +453,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get captureAudioReRecordConfirmTitle =>
-      'Remplacer l\'enregistrement ?';
+      'Enregistrer une nouvelle voix ?';
 
   @override
   String get captureAudioReRecordConfirmBody =>
-      'L\'enregistrement actuel sera remplacé par un nouveau.';
+      'La voix actuelle sera remplacée lorsque vous enregistrerez la nouvelle. Si vous annulez, elle sera conservée.';
 
   @override
   String get captureAudioDelete => 'Supprimer la voix';
@@ -801,6 +806,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get childEditorTitleEdit => 'Modifier le profil';
 
   @override
+  String get childEditorTitleArtist => 'Artiste';
+
+  @override
   String get childEditorFromDraft =>
       'Votre dessin est conservé pendant ce temps.';
 
@@ -900,9 +908,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsGroupDocuments => 'Documents';
 
   @override
-  String get settingsAccountRow => 'Sauvegarde et compte';
-
-  @override
   String get settingsAccountOff => 'Non activée';
 
   @override
@@ -919,9 +924,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Dernière sauvegarde : $dateString';
   }
-
-  @override
-  String get settingsBackupRun => 'Sauvegarder maintenant';
 
   @override
   String settingsBackupRunning(int n, int total) {
@@ -964,6 +966,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsAboutRow => 'À propos';
 
   @override
+  String get settingsDebugRow => 'Outils de débogage';
+
+  @override
   String get settingsPrivacyRow => 'Politique de confidentialité';
 
   @override
@@ -975,13 +980,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get settingsGroupFamily => 'Famille';
-
-  @override
-  String get familyRow => 'Inviter un membre';
-
-  @override
   String get familyTitle => 'Famille';
+
+  @override
+  String get familyInviteTitle => 'Inviter un membre';
 
   @override
   String get familyNameLabel => 'Nom de la famille';
@@ -1000,7 +1002,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyInviteCodeLabel => 'Code d\'invitation';
 
   @override
-  String get familyInviteCopy => 'Copier le code';
+  String get familyInviteCopy => 'Inviter';
 
   @override
   String get familyInviteCopied => 'Code copié.';
@@ -1013,7 +1015,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyJoinCodeHint => 'Ex. : 7K4RTQ2M';
 
   @override
-  String get familyJoinButton => 'Rejoindre';
+  String get familyJoinButton => 'Rejoindre une famille';
 
   @override
   String get familyJoinChecking => 'Vérification…';
@@ -1111,7 +1113,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.';
 
   @override
-  String get accountTitle => 'Sauvegarde et compte';
+  String get accountTitle => 'Créer un compte';
 
   @override
   String get accountIntroTitle => 'Ce qu\'un compte apporte';
@@ -1211,6 +1213,30 @@ class AppLocalizationsFr extends AppLocalizations {
   String accountConnectedAs(String email) {
     return 'Compte lié : $email';
   }
+
+  @override
+  String get accountMyProfile => 'Mon profil';
+
+  @override
+  String get accountFirstNameLabel => 'Prénom';
+
+  @override
+  String get accountFirstNameHint => 'Votre prénom';
+
+  @override
+  String get accountLastNameLabel => 'Nom de famille';
+
+  @override
+  String get accountLastNameHint => 'Votre nom de famille';
+
+  @override
+  String get accountProfileSaved => 'Profil mis à jour.';
+
+  @override
+  String get accountRoleParent => 'Parent';
+
+  @override
+  String get accountRoleContributor => 'Contributeur';
 
   @override
   String get accountSignOut => 'Se déconnecter';
@@ -1525,26 +1551,84 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyHubTitle => 'Espace famille';
 
   @override
+  String familyHubNamedTitle(String name) {
+    return 'Famille $name';
+  }
+
+  @override
   String get familyHubSectionArtists => 'Artistes';
 
   @override
   String get familyHubAddArtist => 'Ajouter un artiste';
 
   @override
-  String get familyHubSectionFamilyBackup => 'Famille et sauvegarde';
-
-  @override
-  String get familyHubAccountLocalOnly => 'Sauvegarde sur cet appareil';
-
-  @override
-  String get familyHubAccountLocalSubtitle =>
-      'Activez une sauvegarde privée quand vous le souhaitez.';
-
-  @override
-  String get familyHubFamilySubtitle => 'Inviter, rejoindre ou gérer le foyer.';
-
-  @override
   String get familyHubFamilyAndSettings => 'Famille et réglages';
+
+  @override
+  String get familyHubSectionParents => 'Parents';
+
+  @override
+  String get familyHubSectionContributors => 'Contributeurs';
+
+  @override
+  String get familyHubSectionOtherMembers => 'Autres membres';
+
+  @override
+  String get familyHubLeaveFamily => 'Quitter la famille';
+
+  @override
+  String get familyHubLeaveFamilyTitle => 'Quitter cette famille ?';
+
+  @override
+  String get familyHubLeaveFamilyBody =>
+      'Vous perdrez l’accès à cette famille et à son contenu partagé. Vos données locales ne seront pas supprimées.';
+
+  @override
+  String get familyHubLeaveFamilyConfirm => 'Quitter la famille';
+
+  @override
+  String get familyMemberRelationLabel => 'Lien avec la famille';
+
+  @override
+  String get familyMemberRelationHint => 'Ex. : Oncle, Papy, Tata';
+
+  @override
+  String get familyHubAddMember => 'Ajouter un membre';
+
+  @override
+  String get familyHubCreateAccount => 'Créer un compte ou se connecter';
+
+  @override
+  String get familyHubTrashRow => 'Voir les photos supprimés';
+
+  @override
+  String get familyHubSyncPhotos => 'Synchroniser les photos';
+
+  @override
+  String get familySettingsTitle => 'Réglages famille';
+
+  @override
+  String get familySettingsRemoveMemberTitle => 'Retirer ce membre ?';
+
+  @override
+  String get familySettingsRemoveMemberBody =>
+      'Cette personne perdra l\'accès à la famille et à son contenu partagé. Rien n\'est supprimé sur son appareil.';
+
+  @override
+  String get familySettingsRemoveMemberAction => 'Retirer';
+
+  @override
+  String get familySettingsMakeParent => 'Nommer parent';
+
+  @override
+  String get familySettingsMakeContributor => 'Nommer contributeur';
+
+  @override
+  String get familySettingsLastParentError =>
+      'Le foyer doit garder au moins un parent actif.';
+
+  @override
+  String get settingsAccountRowNeutral => 'Connexion et compte';
 
   @override
   String get captureAnecdoteTitle => 'Ajouter une anecdote';
@@ -1565,4 +1649,66 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get syncUploadSuspendedBody =>
       'Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l\'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.';
+
+  @override
+  String galleryPeekVoiceOf(String childName) {
+    return 'Voix de $childName';
+  }
+
+  @override
+  String get galleryPeekListening => 'Écoute de l’anecdote…';
+
+  @override
+  String get syncProgressPreparing => 'Préparation de la synchronisation…';
+
+  @override
+  String syncProgressReceiving(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Réception… $n dessins reçus',
+      one: 'Réception… 1 dessin reçu',
+      zero: 'Réception des dessins de la famille…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncProgressUpToDate => 'Galerie à jour';
+
+  @override
+  String get syncProgressDismiss => 'Fermer';
+
+  @override
+  String get artworkAudioSavedLocal =>
+      'Nouvelle voix enregistrée sur cet appareil.';
+
+  @override
+  String get artworkAudioDeletedLocal => 'Voix supprimée sur cet appareil.';
+
+  @override
+  String get artworkAudioBackupPending => 'Voix en attente de sauvegarde.';
+
+  @override
+  String get artworkAudioBackedUp => 'Voix sauvegardée.';
+
+  @override
+  String get artworkAudioBackupFailed =>
+      'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.';
+
+  @override
+  String get artworkAudioConflict =>
+      'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.';
+
+  @override
+  String get artworkAudioKeepRemote => 'Conserver la voix partagée';
+
+  @override
+  String get artworkAudioUseLocal => 'Utiliser ma nouvelle version';
+
+  @override
+  String get trashPreviewOpen => 'Voir la photo supprimée';
+
+  @override
+  String get trashPreviewUnavailable => 'Aperçu indisponible';
 }

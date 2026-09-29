@@ -46,6 +46,53 @@ class _FakeFamilyApi implements FamilyApi {
     redeemCallCount++;
     return const RedeemOutcome(state: RedeemState.invalidCode);
   }
+
+  @override
+  Future<UserProfile> getMyProfile() async =>
+      const UserProfile(userId: 'family-1', email: 'test@example.com');
+
+  @override
+  Future<UserProfile> updateMyProfile({
+    String? firstName,
+    String? lastName,
+  }) async => UserProfile(
+    userId: 'family-1',
+    email: 'test@example.com',
+    firstName: firstName,
+    lastName: lastName,
+  );
+
+  @override
+  Future<List<FamilyMember>> listFamilyMembers() async => const [];
+
+  @override
+  Future<void> removeFamilyMember(String userId) async {}
+
+  @override
+  Future<void> leaveFamily() async {}
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRole(
+    String userId,
+    FamilyMemberRole role,
+  ) async => FamilyMember(
+    userId: userId,
+    role: role,
+    email: 'test@example.com',
+    joinedAt: DateTime(2026),
+  );
+
+  @override
+  Future<FamilyMember> updateFamilyMemberRelationLabel(
+    String userId,
+    String? relationLabel,
+  ) async => FamilyMember(
+    userId: userId,
+    role: FamilyMemberRole.contributor,
+    email: 'test@example.com',
+    relationLabel: relationLabel,
+    joinedAt: DateTime(2026),
+  );
 }
 
 /// `noSuchMethod` delegation, same trick `_FlakyArtworks` uses elsewhere in
@@ -93,7 +140,7 @@ void main() {
         locale: const Locale('fr'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const FamilyScreen(),
+        home: const FamilyInviteScreen(joinMode: true),
       ),
     );
   }
@@ -105,11 +152,10 @@ void main() {
   Future<void> enterCodeAndOpenDialog(WidgetTester tester) async {
     await tester.pumpWidget(appWith(api));
     await tester.pumpAndSettle();
-    // The name field is the first TextField on screen; the join-code field
-    // is the second.
-    await tester.enterText(find.byType(TextField).at(1), 'ABCD2345');
+    // FamilyInviteScreen renders a single TextField: the join-code input.
+    await tester.enterText(find.byType(TextField).first, 'ABCD2345');
     await tester.pump();
-    final joinButton = find.text('Rejoindre');
+    final joinButton = find.byType(AsyncActionButton);
     await tester.ensureVisible(joinButton);
     await tester.pumpAndSettle();
     await tester.tap(joinButton);
@@ -133,7 +179,12 @@ void main() {
       await enterCodeAndOpenDialog(tester);
       await tester.pumpAndSettle();
 
-      expect(find.text("Impossible de vérifier l'état de votre famille actuelle. Réessayez avant de continuer."), findsOneWidget);
+      expect(
+        find.text(
+          "Impossible de vérifier l'état de votre famille actuelle. Réessayez avant de continuer.",
+        ),
+        findsOneWidget,
+      );
       final next = tester.widget<TextButton>(
         find.widgetWithText(TextButton, 'Suivant'),
       );

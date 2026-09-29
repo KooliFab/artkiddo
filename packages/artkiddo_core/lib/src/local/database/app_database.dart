@@ -55,6 +55,15 @@ class ArtworksTable extends Table {
       text().nullable().named('audio_object_key')();
   IntColumn get audioByteSize => integer().withDefault(const Constant(0))();
 
+  /// Baseline acknowledged by the remote store, independent of local edits.
+  IntColumn get audioRevision => integer().withDefault(const Constant(0))();
+  TextColumn get audioSyncIntent =>
+      text().withDefault(const Constant('keep'))();
+  BoolColumn get audioConflict =>
+      boolean().withDefault(const Constant(false))();
+
+  TextColumn get addedBy => text().nullable().named('added_by')();
+
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
@@ -83,8 +92,9 @@ class SyncOutboxTable extends Table {
 class VaultMetaTable extends Table {
   TextColumn get id => text()();
   TextColumn get familyId => text().nullable().named('family_id')();
-  BoolColumn get joinResetPending =>
-      boolean().withDefault(const Constant(false)).named('join_reset_pending')();
+  BoolColumn get joinResetPending => boolean()
+      .withDefault(const Constant(false))
+      .named('join_reset_pending')();
 
   DateTimeColumn get lastPullCursor => dateTime().nullable()();
   DateTimeColumn get childrenPullCursor =>
@@ -142,9 +152,10 @@ class AppDatabase extends _$AppDatabase {
 
   /// Schema v1 is a deliberate clean baseline. Schema v2 adds the durable
   /// join-reset marker used to recover if the process dies after the server
-  /// commits a family switch but before the local vault is erased.
+  /// commits a family switch but before the local vault is erased. Schema v3
+  /// adds added_by attribution to artworks.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -154,6 +165,21 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
         await m.addColumn(vaultMetaTable, vaultMetaTable.joinResetPending);
+      }
+      if (from < 3) {
+        await m.addColumn(artworksTable, artworksTable.addedBy);
+      }
+      if (from < 4) {
+        await m.addColumn(artworksTable, artworksTable.audioRevision);
+        await m.addColumn(artworksTable, artworksTable.audioSyncIntent);
+        await m.addColumn(artworksTable, artworksTable.audioConflict);
+        // Recover edits queued by the previous schema without losing files.
+        await customStatement(
+          "UPDATE artworks SET audio_sync_intent = 'replace' WHERE relative_audio_path IS NOT NULL AND audio_object_key IS NULL",
+        );
+        await customStatement(
+          "UPDATE artworks SET audio_sync_intent = 'delete' WHERE audio_duration_ms IS NULL AND relative_audio_path IS NULL AND display_object_key IS NOT NULL AND sync_state = 'localOnly'",
+        );
       }
     },
     beforeOpen: (details) async {

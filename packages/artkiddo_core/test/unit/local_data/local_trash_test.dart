@@ -94,6 +94,8 @@ void main() {
       expect(listed, isA<ActionSuccess<List<TrashedArtwork>>>());
       final item = (listed as ActionSuccess<List<TrashedArtwork>>).value.single;
       expect(item.id, id);
+      expect(item.previewPath, before.relativeImagePath);
+      expect(item.previewUri, isNull);
       expect(
         item.purgeAt.isAtSameMomentAs(
           clock.add(LocalTrashRepository.retention),

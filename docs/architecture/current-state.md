@@ -1,18 +1,16 @@
 # Current public architecture
 
-Snapshot status: public, offline-first foundation, now hosting the full
-account-free gallery experience (feed, capture, sharing, and household UI
-behind capability gates). This document is the entry point for a fresh
-conversation; read it before scanning the source tree.
-
-Verified on: 2026-09-20 — HEAD `af37943a20775fa314872205d4cf6d36105c8e58`
-(parent of the clean-name-baseline documentation commit)
+Status: public, offline-first foundation hosting the full account-free gallery
+experience (feed, capture, sharing and household UI behind capability gates).
+Read this before scanning the source tree.
+Verified on: 2026-09-27 (versioned audio writes and Drift v4).
 
 ## Repository shape
 
 ```text
 app/                              local Flutter composition and native shells
 packages/artkiddo_core/
+  lib/artkiddo_core.dart          the only supported import surface
   lib/src/domain/                 domain values, failures, typed results
   lib/src/contracts/              vendor-neutral optional remote interfaces
   lib/src/local/                  Drift, local vault, audio, repositories
@@ -21,178 +19,123 @@ packages/artkiddo_core/
     bootstrap/                    ArtKiddoBootstrap, composition validation
     config/                       AppCapabilities, CloudServices, environment
     navigation/                   AppShell, CompositionActions seam
-    gallery/                      feed, capture, artwork detail
-    sharing/                      web gallery-link screens and controller
-    family/                       household screens and controller
-    children/, settings/, ui/, theme/, locale/, utils/
-  test/                           local persistence, sync, and presentation tests
+    gallery/                      feed (gallery_screen*.dart), capture, artwork detail (artwork_screen*.dart)
+    sharing/, family/, settings/, children/, ui/, theme/, locale/, utils/
+  lib/l10n/                       edit the .arb files; generated/ is output
+  test/                           local persistence, sync and presentation tests
 docs/                             ADRs, operating rules, generated inventory
 ```
 
-`app/lib/main.dart` creates only `AppCapabilities.local`. It does not require
-an account, environment values, network, database server, or object storage.
-
-## Visual overview — local application
+`app/lib/main.dart` creates only `AppCapabilities.local` and overrides no
+provider. That empty override list is load-bearing: every destination the
+account-free build needs is a local default inside the core (ADR 0016).
 
 ```mermaid
 flowchart TD
-  App["app/lib/main.dart\nlocal composition"] --> Bootstrap["ArtKiddoBootstrap\ncapabilities + providers"]
-  Bootstrap --> UI["Core presentation\ngallery · capture · trash · local sharing"]
-  UI --> Repos["Local repositories\nchildren + artworks"]
-  Repos --> DB["AppDatabase\nDrift schema v1"]
-  Repos --> Vault["LocalVault\noriginals · derivatives · audio"]
-  DB --> Outbox["SyncOutbox + cursors\npresent but inactive locally"]
-  Vault --> Rescue["VaultRescueExport\nfile-only ZIP, no database"]
-  Bootstrap -. "optional capabilities disabled" .-> NoRemote["NoFamilyApi / NoSharingService\nno fabricated external state"]
+  App["app/lib/main.dart"] --> Bootstrap["ArtKiddoBootstrap\ncapabilities + providers"]
+  Bootstrap --> UI["core presentation"]
+  UI --> Repos["children + artworks repositories"]
+  Repos --> DB["AppDatabase (Drift)"]
+  Repos --> Vault["LocalVault\noriginals, derivatives, audio"]
+  DB --> Outbox["SyncOutbox + cursors\ninactive locally"]
+  Bootstrap -. "capabilities disabled" .-> NoRemote["NoFamilyApi / NoSharingService"]
 ```
-
-This separation keeps the application usable and testable without an account,
-configuration, or network. Optional contracts remain abstract and contain no
-provider or protocol details.
 
 ## Composition seam
 
-`ArtKiddoBootstrap.createContainer` builds the provider graph from an
+`ArtKiddoBootstrap.createContainer` builds the graph from
 `ArtKiddoBootstrapConfig` (`capabilities`, `cloudServices`, `environment`,
-`overrides`), then validates it twice:
+`overrides`) and validates it twice:
 
-1. `config.validate()` checks the *declared* configuration — a capability
-   cannot be enabled without its required `CloudService`.
-2. `_validateComposition` checks what the `overrides` *actually produced* —
-   reading `compositionActionsProvider`, `remoteMediaFetcherProvider`,
-   `familyApiProvider`, and `sharingServiceProvider` after construction, and
-   rejecting the container if an enabled capability has no real binding
-   behind it.
+1. `config.validate()`: a capability cannot be enabled without its required
+   `CloudService`.
+2. `_validateComposition`: after construction, an enabled capability must have
+   a real binding. `remoteAccount` needs `openAccount`; `household` needs
+   `openFamilyHub` and a `FamilyApi`; `webGalleryLinks` needs
+   `openGalleryShare`, a `SharingService` and a `ShareBackup`; `remoteBackup`
+   needs a `RemoteMediaFetcher` and `syncPhotos`. This blocks the silent
+   local/remote fallback forbidden by ADR 0003.
 
-This second check exists because the first cannot see a composition that
-enables a capability and then forgets to override its provider — that
-combination used to start normally and degrade into a hidden control or a
-no-op service, which is the silent local/remote fallback the architecture
-forbids (ADR 0003).
+Optional providers default to honest local implementations
+(`NoRemoteMediaFetcher`, `NoFamilyApi`, `NoSharingService`,
+`CompositionActions.none`) that return typed failures, never fabricated remote
+state. `CompositionActions` entries are either capability-gated (`openGalleryShare`,
+`syncPhotos`, `openAccount`: control hidden without the pair) or local defaults
+(`openSettings`, `openFamilyHub`: they substitute a core destination, so the
+control always renders). See ADR 0016.
 
-Every optional provider the core declares (`remoteMediaFetcherProvider`,
-`familyApiProvider`, `sharingServiceProvider`, `compositionActionsProvider`)
-defaults to an honest local implementation — `NoRemoteMediaFetcher`,
-`NoFamilyApi`, `NoSharingService`, `CompositionActions.none` — none of which
-fabricate remote state. `NoFamilyApi`/`NoSharingService` throw or return a
-typed `ActionFailed` failure rather than a fake success; `CompositionActions`
-simply renders nothing when an action is null. An application composition
-overrides exactly the providers its enabled capabilities need.
-
-## Dependency direction
-
-```text
-presentation → domain / contracts → local repositories → database + local vault
-
-application composition → public contracts and core
-external implementation → public contracts only
-```
-
-The core has no dependency on an external repository. Optional behavior is
-explicit: an application composition supplies compatible implementations and
-enables the matching capability before a provider is read.
-
-The rescue export is local-only: it reads vault files and never opens or
-reconstructs the database.
+Dependency direction: `presentation -> domain/contracts -> local repositories ->
+database + vault`; compositions depend on the core, external implementations on
+public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-`AppDatabase` is Drift schema v1, a deliberate clean baseline. Its physical
-tables are `children`, `artworks`, `sync_outbox`, `vault_meta`,
-`pending_file_cleanups`, and `share_link_url_cache`. `ChildrenTable` and
-`ArtworksTable` persist the account-free experience. The artwork table stores
-neutral opaque object keys only (`display_object_key`, `thumbnail_object_key`,
-`audio_object_key`); their meaning and lifecycle belong to an external
-implementation. There is no upgrade path from an earlier local vault: those
-databases are unsupported and must be cleared before running this build.
-
-`LocalVault` owns local image and audio files. Local deletion is recoverable for
-30 days and cleanup is journaled. Local success is reported only after a durable
-write.
-
-`VaultRescueExport` walks `artworks/`, `artworks_derivatives/` and `audio/`,
-optionally adds in-flight capture files, splits ZIPs around 3.5 GB, and shares
-the archives through the native share sheet. It can recover originals even when
-`AppDatabase` is unreadable; in return, the archive contains no child, date, or
-story metadata because that information lives in SQLite. The single schema
-snapshot `drift_schemas/drift_schema_v1.json` pins the baseline shape.
-
-## Key local flows
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant C as Capture / editing
-  participant R as Repository
-  participant D as Drift v1
-  participant V as LocalVault
-
-  U->>C: photo, cropping, audio, story
-  C->>V: write original + derivatives
-  C->>R: persist relative paths
-  R->>D: transaction metadata + outbox
-  D-->>U: success after durable write
-  U->>V: request rescue export
-  V-->>U: file-only ZIP(s), without opening D
-```
-
-After the durable transaction, `CompositionActions.onArtworkSaved` is an
-optional neutral callback. The core invokes it best-effort and never waits for
-it, so a cloud composition can schedule remote work without making local save
-success depend on a provider or network.
+- `AppDatabase` is Drift schema v4: v1 clean baseline (ADR 0007), v2 adds
+  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state. Each version
+  has a snapshot in `drift_schemas/`, covered by
+  `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
+  vaults.
+- Tables: `children`, `artworks`, `sync_outbox`, `vault_meta`,
+  `pending_file_cleanups`, `share_link_url_cache`. Artworks store neutral
+  opaque object keys only.
+- `LocalVault` owns image and audio files. Local deletion is recoverable for 30
+  days, cleanup is journaled, success is reported only after a durable write.
+- `VaultRescueExport` zips vault files (≈3.5 GB parts) without opening the
+  database, so it has no child/date/story metadata.
+- After a durable save, `CompositionActions.onArtworkSaved` runs best-effort
+  and is never awaited. Flow diagrams: `data-flows.md`.
 
 ## Public contracts
 
-- `SyncBackend` models remote metadata synchronization with typed values.
-- `ObjectUploader` / `ObjectDownloader` move bytes through opaque object keys.
-- `RemoteMediaFetcher` fetches media that exists remotely but not yet locally;
-  the local default never fetches anything.
-- `FamilyApi` models household membership and invites. `redeemInvite`'s
-  `discardPrevious` and `RedeemOutcome.sameFamily`/`vaultReset` (ADR 0015)
-  let a composition leave, and if orphaned purge, a previous family in the
-  same server call as joining a new one — the local vault can only ever be
-  bound to one family at a time, so `familyVaultResetProvider` (no-op by
-  default, alongside `familyConvergenceProvider`) is where a composition
-  plugs in how to erase it first. `FamilyScreen`'s `_JoinFamilyDialog` is
-  the only path into `FamilyController.redeem`: a read-only local bilan,
-  then an explicit checkbox-gated confirmation, before either code path
-  touches anything.
-- `SharingService` models web gallery-link creation, listing, and revocation.
-- `ShareBackup` is an optional presentation action supplied by an application
-  composition when gallery links are enabled. The share controller invokes
-  it for one child, then checks that child's persisted artwork sync state before
-  allowing link creation. The bootstrap rejects a web-link composition without
-  this action. Link visibility is evaluated against an injectable clock and
-  excludes revoked and expired links.
-- `CompositionActions.onArtworkSaved` is the corresponding post-commit seam for
-  provider-specific upload scheduling; it has no effect in the local
-  composition and does not change the local save result.
+- `SyncBackend`, `ObjectUploader`/`ObjectDownloader` (opaque object keys),
+  `RemoteMediaFetcher` (local default fetches nothing).
+- `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress`
+  (`sending` with a known count, then `receiving` with no total).
+- `FamilyApi`: membership and invites. `redeemInvite(discardPrevious:)` and
+  `RedeemOutcome.sameFamily`/`vaultReset` (ADR 0015) let a composition leave a
+  previous family in the same call; `familyVaultResetProvider` (no-op by
+  default) erases the vault first. `FamilyInviteScreen`'s `_JoinFamilyDialog`
+  is the only path into `FamilyController.redeem` (read-only summary, then a
+  checkbox-gated confirmation). Member administration lives in the
+  composition's own UI.
+- `SharingService`: web gallery links. `ShareBackup` is invoked for one child
+  before link creation; revoked and expired links are hidden using an
+  injectable clock.
+- `CompositionActions.syncPhotos` is the only trigger for `remoteBackup`; the
+  gallery binds it to pull-to-refresh only when the capability is enabled and
+  the action is bound.
+- Contracts never name a database, object store, endpoint, auth system,
+  transport or payload format.
 
-Contracts intentionally do not name a database, object store, endpoint,
-authentication system, transport, or remote payload format.
+The gallery feed is one masonry wall, newest first, placed exactly by
+`SliverGridDelegateWithMasonryPlan` from known aspect ratios; its scroll extent
+is computed, never estimated (ADR 0006).
 
 ## Freshness protocol
 
-1. Run `git status --short` and `git rev-parse HEAD`.
-2. If the verified date is recent and architecture-sensitive files are clean,
-   trust this map and inspect only files relevant to the task.
-3. If a change affects composition, contracts, schema, provider boundaries, or
-   top-level layout, update this file and relevant ADRs in the same change.
-4. Run `dart run tool/generate_inventory.dart`; never hand-edit its output.
+1. Run `git status --short` and `git log --oneline -10`.
+2. If nothing since the verified date touches composition, contracts, schema,
+   provider boundaries or top-level layout, trust this map and open only the
+   files the task needs.
+3. Otherwise update this file and the relevant ADRs in the same change, then
+   run `dart run tool/generate_inventory.dart` (never hand-edit its output).
 
 ## Rules that must remain true
 
-- The local application works without account, configuration, or network.
+- The local app works without account, configuration, network, or any provider
+  override. Every `local-only` row of `feature-matrix.md` is reachable from
+  `AppCapabilities.local` alone.
 - Public code contains no provider SDK, credentials, remote identifier, wire
-  parser, or monetization.
-- There is no implicit fallback between remote and local authority — enforced
-  both by capability gating in the UI and by `_validateComposition` at boot.
+  parser or monetization.
+- No implicit fallback between remote and local authority: enforced by UI
+  capability gating and by `_validateComposition` at boot.
 - A feature is not complete until its local behavior, optional capabilities,
-  compatibility impact, and rollback are stated.
+  compatibility impact and rollback are stated.
 
-## Publication note
+## Audio writes
 
-Package distribution is independent from the internal architecture.
-This documentation describes only the code in this repository; integrating
-applications must provide their own compositions and implementations of the
-optional contracts.
+Audio saves remain local-first. A new recording replaces the previous local voice only after a durable save; cancellation preserves it. `AudioWrite` distinguishes keep, replace and delete. Optional backup checks the expected audio revision and keeps conflicting local files until the user chooses a version. Backup controls and statuses require `remoteBackup`. See ADR 0014 and `docs/sync-contract.md`.
+
+## Trash convergence and previews (2026-09-27)
+
+Artwork deletion emits the capability-gated `CompositionActions.onArtworkDeleted` hook only after its local transaction succeeds. The sync engine coalesces simultaneous lifecycle/manual/trash runs so they cannot drain the same entry twice. Shared trash refreshes on entry and resume, supports pull-to-refresh, and refreshes every 20 seconds only while its route is visible and the app is active. Local trash reads only local rows and files. `TrashedArtwork` exposes an optional vault path or authorized temporary preview URI; the UI shows a tappable, zoomable preview or an explicit unavailable state. See ADR 0003.

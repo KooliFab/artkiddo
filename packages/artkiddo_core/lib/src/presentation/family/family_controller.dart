@@ -15,6 +15,8 @@ export '../../contracts/household.dart'
         FamilyApi,
         FamilyMemberRole,
         FamilyMembership,
+        FamilyMember,
+        UserProfile,
         RedeemOutcome,
         RedeemState;
 
@@ -39,9 +41,7 @@ class FamilyJoinResetStore {
 
   const FamilyJoinResetStore({required this.mark, required this.clear});
 
-  const FamilyJoinResetStore.noop()
-    : mark = _noop,
-      clear = _noop;
+  const FamilyJoinResetStore.noop() : mark = _noop, clear = _noop;
 
   static Future<void> _noop() async {}
 }
@@ -94,6 +94,9 @@ class FamilyState {
   final AsyncAction redeem;
   final RedeemOutcome? redeemOutcome;
 
+  final AsyncAction membersAction;
+  final List<FamilyMember> members;
+
   /// Runs right after a confirmed redemption. Tracked separately from
   /// [redeem] so the screen can show "code accepted, now converging
   /// your family" as a distinct step rather than folding it into the
@@ -106,19 +109,43 @@ class FamilyState {
   /// implying the join itself, or convergence, failed.
   final AsyncAction joinReset;
 
+  /// Tracks [FamilyController.removeFamilyMember]. Removal is a logical,
+  /// server-owned state change (`leftAt`); on success the controller
+  /// re-fetches [members] rather than fabricating that timestamp locally.
+  final AsyncAction removeMember;
+
+  /// Tracks [FamilyController.updateFamilyMemberRole]. On success the
+  /// controller splices the adapter-returned [FamilyMember] back into
+  /// [members] in place, since the round trip already returned the
+  /// authoritative updated member.
+  final AsyncAction updateRole;
+
+  /// Tracks a parent-managed relationship-label edit.
+  final AsyncAction updateRelationLabel;
+
+  /// Tracks the signed-in member leaving their family.
+  final AsyncAction leaveFamily;
+
   const FamilyState({
     this.family = const ActionIdle(),
     this.familyInfo,
     this.rename = const ActionIdle(),
     this.redeem = const ActionIdle(),
     this.redeemOutcome,
+    this.membersAction = const ActionIdle(),
+    this.members = const [],
     this.convergence = const ActionIdle(),
     this.joinReset = const ActionIdle(),
+    this.removeMember = const ActionIdle(),
+    this.updateRole = const ActionIdle(),
+    this.updateRelationLabel = const ActionIdle(),
+    this.leaveFamily = const ActionIdle(),
   });
 
   FamilyState copyWith({
     AsyncAction? family,
     FamilyInfo? familyInfo,
+    bool clearFamilyInfo = false,
     AsyncAction? rename,
     AsyncAction? redeem,
     RedeemOutcome? redeemOutcome,
@@ -127,30 +154,50 @@ class FamilyState {
     // for null. This flag is the escape hatch: a fresh redeem attempt must
     // be able to clear a stale outcome banner from a previous attempt.
     bool clearRedeemOutcome = false,
+    AsyncAction? membersAction,
+    List<FamilyMember>? members,
     AsyncAction? convergence,
     AsyncAction? joinReset,
+    AsyncAction? removeMember,
+    AsyncAction? updateRole,
+    AsyncAction? updateRelationLabel,
+    AsyncAction? leaveFamily,
   }) {
     return FamilyState(
       family: family ?? this.family,
-      familyInfo: familyInfo ?? this.familyInfo,
+      familyInfo: clearFamilyInfo ? null : (familyInfo ?? this.familyInfo),
       rename: rename ?? this.rename,
       redeem: redeem ?? this.redeem,
       redeemOutcome: clearRedeemOutcome
           ? null
           : (redeemOutcome ?? this.redeemOutcome),
+      membersAction: membersAction ?? this.membersAction,
+      members: members ?? this.members,
       convergence: convergence ?? this.convergence,
       joinReset: joinReset ?? this.joinReset,
+      removeMember: removeMember ?? this.removeMember,
+      updateRole: updateRole ?? this.updateRole,
+      updateRelationLabel: updateRelationLabel ?? this.updateRelationLabel,
+      leaveFamily: leaveFamily ?? this.leaveFamily,
     );
   }
 }
 
-/// Client-side controller for the unified household screen:
-/// loading/naming the family, sharing its fixed invite code, redeeming
-/// someone else's code, and the join-or-restore handoff to the sync
-/// engine. Deliberately does not decide whether to merge local
-/// artworks into the joined household itself — this controller only
-/// ever calls the convergence hook after a confirmed redemption, and
-/// lets whatever that hook already does happen as-is.
+/// Client-side controller for every household operation the public core
+/// models: loading and naming the family, sharing its fixed invite code,
+/// redeeming someone else's, administering members, and the join-or-restore
+/// handoff to the sync engine.
+///
+/// It is deliberately wider than the one screen this package ships.
+/// [FamilyInviteScreen] renders only the invite/join surface; naming, the
+/// member roster, role and relation-label edits, removal and leaving are
+/// rendered by a household-enabled composition's own family-settings screen,
+/// which drives them through this same controller so both surfaces share one
+/// state machine instead of forking it.
+///
+/// Deliberately does not decide whether to merge local artworks into the
+/// joined household itself — it only ever calls the convergence hook after a
+/// confirmed redemption, and lets whatever that hook already does happen.
 class FamilyController extends Notifier<FamilyState> {
   @override
   FamilyState build() => const FamilyState();
@@ -162,10 +209,44 @@ class FamilyController extends Notifier<FamilyState> {
       final info = await ref.read(familyApiProvider).getFamilyInfo();
       Log.i('Family loaded: ${info.familyId}', 'Family');
       state = state.copyWith(family: const ActionDone(), familyInfo: info);
+      // Deliberately does not chain loadFamilyMembers(). The two are read by
+      // different surfaces now — the invite screen shows the code and never
+      // the roster, while attribution loads the roster without ever needing
+      // the code — so chaining them made each surface pay for the other's
+      // round trip. Callers that need both ask for both.
     } catch (e, st) {
       Log.e('Failed to load family info', e, st, 'Family');
       state = state.copyWith(
         family: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Loads the family roster.
+  ///
+  /// Attribution asks for this every time an artwork is opened, so a roster
+  /// already loaded in this session is reused rather than re-fetched: the
+  /// alternative was one network round trip per artwork tap. [force] is for
+  /// callers that just mutated membership and need the server's view again.
+  Future<void> loadFamilyMembers({bool force = false}) async {
+    if (state.membersAction.isBusy) return;
+    if (!force &&
+        state.membersAction is ActionDone &&
+        state.members.isNotEmpty) {
+      return;
+    }
+    state = state.copyWith(membersAction: const ActionBusy());
+    try {
+      final members = await ref.read(familyApiProvider).listFamilyMembers();
+      Log.i('Family members loaded: ${members.length}', 'Family');
+      state = state.copyWith(
+        membersAction: const ActionDone(),
+        members: members,
+      );
+    } catch (e, st) {
+      Log.e('Failed to load family members', e, st, 'Family');
+      state = state.copyWith(
+        membersAction: ActionError(NetworkFailure(cause: e, stack: st)),
       );
     }
   }
@@ -192,6 +273,105 @@ class FamilyController extends Notifier<FamilyState> {
       Log.e('Failed to rename family', e, st, 'Family');
       state = state.copyWith(
         rename: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Removes [userId] from the caller's own family. Removal itself is a
+  /// server-owned state change ([FamilyApi.removeFamilyMember] sets
+  /// `leftAt`, never inferred client-side), so on success this reloads
+  /// [FamilyState.members] from the server rather than fabricating that
+  /// timestamp locally.
+  Future<void> removeFamilyMember(String userId) async {
+    if (state.removeMember.isBusy) return;
+    state = state.copyWith(removeMember: const ActionBusy());
+    try {
+      await ref.read(familyApiProvider).removeFamilyMember(userId);
+      Log.i('Family member removed', 'Family');
+      state = state.copyWith(removeMember: const ActionDone());
+      await loadFamilyMembers(force: true);
+    } catch (e, st) {
+      Log.e('Failed to remove family member', e, st, 'Family');
+      state = state.copyWith(
+        removeMember: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Changes [userId]'s role within the caller's own family. The adapter
+  /// call already returns the updated member, so this splices it back into
+  /// [FamilyState.members] in place instead of triggering a second fetch.
+  Future<void> updateFamilyMemberRole(
+    String userId,
+    FamilyMemberRole role,
+  ) async {
+    if (state.updateRole.isBusy) return;
+    state = state.copyWith(updateRole: const ActionBusy());
+    try {
+      final updated = await ref
+          .read(familyApiProvider)
+          .updateFamilyMemberRole(userId, role);
+      Log.i('Family member role updated', 'Family');
+      state = state.copyWith(
+        updateRole: const ActionDone(),
+        members: [
+          for (final member in state.members)
+            if (member.userId == userId) updated else member,
+        ],
+      );
+    } catch (e, st) {
+      Log.e('Failed to update family member role', e, st, 'Family');
+      state = state.copyWith(
+        updateRole: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Updates the human-friendly family label independently from the member's
+  /// access role. The returned server row remains authoritative, so it is
+  /// replaced in place just like [updateFamilyMemberRole].
+  Future<void> updateFamilyMemberRelationLabel(
+    String userId,
+    String? relationLabel,
+  ) async {
+    if (state.updateRelationLabel.isBusy) return;
+    state = state.copyWith(updateRelationLabel: const ActionBusy());
+    try {
+      final updated = await ref
+          .read(familyApiProvider)
+          .updateFamilyMemberRelationLabel(userId, relationLabel);
+      state = state.copyWith(
+        updateRelationLabel: const ActionDone(),
+        members: [
+          for (final member in state.members)
+            if (member.userId == userId) updated else member,
+        ],
+      );
+    } catch (e, st) {
+      Log.e('Failed to update family member relation label', e, st, 'Family');
+      state = state.copyWith(
+        updateRelationLabel: ActionError(NetworkFailure(cause: e, stack: st)),
+      );
+    }
+  }
+
+  /// Leaves the caller's current family. The server owns the membership
+  /// mutation; locally we clear the loaded family state so the hub cannot
+  /// continue presenting stale members after the sheet closes.
+  Future<void> leaveFamily() async {
+    if (state.leaveFamily.isBusy) return;
+    state = state.copyWith(leaveFamily: const ActionBusy());
+    try {
+      await ref.read(familyApiProvider).leaveFamily();
+      state = state.copyWith(
+        leaveFamily: const ActionDone(),
+        members: const [],
+        clearFamilyInfo: true,
+      );
+    } catch (e, st) {
+      Log.e('Failed to leave family', e, st, 'Family');
+      state = state.copyWith(
+        leaveFamily: ActionError(NetworkFailure(cause: e, stack: st)),
       );
     }
   }
@@ -345,3 +525,9 @@ class FamilyController extends Notifier<FamilyState> {
 
 final familyControllerProvider =
     NotifierProvider<FamilyController, FamilyState>(FamilyController.new);
+
+/// Map of userId -> FamilyMember for resolving attributions and member names.
+final familyMembersMapProvider = Provider<Map<String, FamilyMember>>((ref) {
+  final members = ref.watch(familyControllerProvider.select((s) => s.members));
+  return {for (final m in members) m.userId: m};
+});

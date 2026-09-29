@@ -541,6 +541,12 @@ abstract class AppLocalizations {
   /// **'Ajouté le {date}'**
   String artworkAddedOn(DateTime date);
 
+  /// Attribution de l'auteur du dessin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouté par {author}'**
+  String artworkAddedBy(String author);
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
@@ -766,13 +772,13 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Remplacer l\'enregistrement ?'**
+  /// **'Enregistrer une nouvelle voix ?'**
   String get captureAudioReRecordConfirmTitle;
 
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'L\'enregistrement actuel sera remplacé par un nouveau.'**
+  /// **'La voix actuelle sera remplacée lorsque vous enregistrerez la nouvelle. Si vous annulez, elle sera conservée.'**
   String get captureAudioReRecordConfirmBody;
 
   /// Localized user-facing copy.
@@ -1315,6 +1321,12 @@ abstract class AppLocalizations {
   /// **'Modifier le profil'**
   String get childEditorTitleEdit;
 
+  /// Title shown while editing an artist profile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Artiste'**
+  String get childEditorTitleArtist;
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
@@ -1492,12 +1504,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Sauvegarde et compte'**
-  String get settingsAccountRow;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Non activée'**
   String get settingsAccountOff;
 
@@ -1518,12 +1524,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Dernière sauvegarde : {date}'**
   String settingsBackupLast(DateTime date);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sauvegarder maintenant'**
-  String get settingsBackupRun;
 
   /// Localized user-facing copy.
   ///
@@ -1594,6 +1594,12 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Outils de débogage'**
+  String get settingsDebugRow;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Politique de confidentialité'**
   String get settingsPrivacyRow;
 
@@ -1613,19 +1619,13 @@ abstract class AppLocalizations {
   ///
   /// In fr, this message translates to:
   /// **'Famille'**
-  String get settingsGroupFamily;
+  String get familyTitle;
 
-  /// Localized user-facing copy.
+  /// No description provided for @familyInviteTitle.
   ///
   /// In fr, this message translates to:
   /// **'Inviter un membre'**
-  String get familyRow;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Famille'**
-  String get familyTitle;
+  String get familyInviteTitle;
 
   /// Localized user-facing copy.
   ///
@@ -1660,7 +1660,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Copier le code'**
+  /// **'Inviter'**
   String get familyInviteCopy;
 
   /// Localized user-facing copy.
@@ -1684,7 +1684,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Rejoindre'**
+  /// **'Rejoindre une famille'**
   String get familyJoinButton;
 
   /// Localized user-facing copy.
@@ -1822,7 +1822,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Sauvegarde et compte'**
+  /// **'Créer un compte'**
   String get accountTitle;
 
   /// Localized user-facing copy.
@@ -1998,6 +1998,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Compte lié : {email}'**
   String accountConnectedAs(String email);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon profil'**
+  String get accountMyProfile;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
+  String get accountFirstNameLabel;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre prénom'**
+  String get accountFirstNameHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom de famille'**
+  String get accountLastNameLabel;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre nom de famille'**
+  String get accountLastNameHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil mis à jour.'**
+  String get accountProfileSaved;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parent'**
+  String get accountRoleParent;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contributeur'**
+  String get accountRoleContributor;
 
   /// Localized user-facing copy.
   ///
@@ -2521,6 +2569,12 @@ abstract class AppLocalizations {
   /// **'Espace famille'**
   String get familyHubTitle;
 
+  /// Titre du hub famille lorsqu'une famille est nommée.
+  ///
+  /// In fr, this message translates to:
+  /// **'Famille {name}'**
+  String familyHubNamedTitle(String name);
+
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
@@ -2536,32 +2590,134 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Famille et sauvegarde'**
-  String get familyHubSectionFamilyBackup;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sauvegarde sur cet appareil'**
-  String get familyHubAccountLocalOnly;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Activez une sauvegarde privée quand vous le souhaitez.'**
-  String get familyHubAccountLocalSubtitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Inviter, rejoindre ou gérer le foyer.'**
-  String get familyHubFamilySubtitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Famille et réglages'**
   String get familyHubFamilyAndSettings;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parents'**
+  String get familyHubSectionParents;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contributeurs'**
+  String get familyHubSectionContributors;
+
+  /// Titre de la section des membres de la famille autres que les parents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres membres'**
+  String get familyHubSectionOtherMembers;
+
+  /// Action permettant au membre connecté de quitter sa famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter la famille'**
+  String get familyHubLeaveFamily;
+
+  /// Titre de confirmation de sortie de la famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter cette famille ?'**
+  String get familyHubLeaveFamilyTitle;
+
+  /// Conséquence de la sortie de famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous perdrez l’accès à cette famille et à son contenu partagé. Vos données locales ne seront pas supprimées.'**
+  String get familyHubLeaveFamilyBody;
+
+  /// Confirmation destructive de sortie de famille.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter la famille'**
+  String get familyHubLeaveFamilyConfirm;
+
+  /// Libellé administré par un parent, par exemple Oncle ou Papy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien avec la famille'**
+  String get familyMemberRelationLabel;
+
+  /// Exemple pour la saisie du libellé de relation familiale.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex. : Oncle, Papy, Tata'**
+  String get familyMemberRelationHint;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un membre'**
+  String get familyHubAddMember;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer un compte ou se connecter'**
+  String get familyHubCreateAccount;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir les photos supprimés'**
+  String get familyHubTrashRow;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchroniser les photos'**
+  String get familyHubSyncPhotos;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages famille'**
+  String get familySettingsTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer ce membre ?'**
+  String get familySettingsRemoveMemberTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette personne perdra l\'accès à la famille et à son contenu partagé. Rien n\'est supprimé sur son appareil.'**
+  String get familySettingsRemoveMemberBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer'**
+  String get familySettingsRemoveMemberAction;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nommer parent'**
+  String get familySettingsMakeParent;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nommer contributeur'**
+  String get familySettingsMakeContributor;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le foyer doit garder au moins un parent actif.'**
+  String get familySettingsLastParentError;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion et compte'**
+  String get settingsAccountRowNeutral;
 
   /// Localized user-facing copy.
   ///
@@ -2598,6 +2754,102 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l\'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.'**
   String get syncUploadSuspendedBody;
+
+  /// Pill under a long-pressed artwork while its voice story plays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix de {childName}'**
+  String galleryPeekVoiceOf(String childName);
+
+  /// Same pill when the artwork's child is unknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écoute de l’anecdote…'**
+  String get galleryPeekListening;
+
+  /// Sync toast before the first progress step arrives.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de la synchronisation…'**
+  String get syncProgressPreparing;
+
+  /// Sync toast while the family's drawings are being received; n counts drawings received so far.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n, plural, =0{Réception des dessins de la famille…} =1{Réception… 1 dessin reçu} other{Réception… {n} dessins reçus}}'**
+  String syncProgressReceiving(int n);
+
+  /// Sync toast outcome when the run succeeded and there is no earlier backup date to show.
+  ///
+  /// In fr, this message translates to:
+  /// **'Galerie à jour'**
+  String get syncProgressUpToDate;
+
+  /// Tooltip of the sync toast close button.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get syncProgressDismiss;
+
+  /// No description provided for @artworkAudioSavedLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle voix enregistrée sur cet appareil.'**
+  String get artworkAudioSavedLocal;
+
+  /// No description provided for @artworkAudioDeletedLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix supprimée sur cet appareil.'**
+  String get artworkAudioDeletedLocal;
+
+  /// No description provided for @artworkAudioBackupPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix en attente de sauvegarde.'**
+  String get artworkAudioBackupPending;
+
+  /// No description provided for @artworkAudioBackedUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voix sauvegardée.'**
+  String get artworkAudioBackedUp;
+
+  /// No description provided for @artworkAudioBackupFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.'**
+  String get artworkAudioBackupFailed;
+
+  /// No description provided for @artworkAudioConflict.
+  ///
+  /// In fr, this message translates to:
+  /// **'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.'**
+  String get artworkAudioConflict;
+
+  /// No description provided for @artworkAudioKeepRemote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conserver la voix partagée'**
+  String get artworkAudioKeepRemote;
+
+  /// No description provided for @artworkAudioUseLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser ma nouvelle version'**
+  String get artworkAudioUseLocal;
+
+  /// No description provided for @trashPreviewOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir la photo supprimée'**
+  String get trashPreviewOpen;
+
+  /// No description provided for @trashPreviewUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu indisponible'**
+  String get trashPreviewUnavailable;
 }
 
 class _AppLocalizationsDelegate

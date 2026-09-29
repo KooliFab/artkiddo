@@ -116,21 +116,6 @@ final galleryFilterResetBannerProvider =
       GalleryFilterResetBannerNotifier.new,
     );
 
-/// Gallery tap-on-active-tab scroll-to-top request — mirrors
-/// [ShellTabRequestNotifier]'s one-shot pattern so the shell can
-/// signal the gallery branch without owning its `ScrollController`.
-class GalleryScrollToTopRequestNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void request() => state++;
-}
-
-final galleryScrollToTopRequestProvider =
-    NotifierProvider<GalleryScrollToTopRequestNotifier, int>(
-      GalleryScrollToTopRequestNotifier.new,
-    );
-
 /// In-memory per-filter scroll offsets, reset at launch.
 class GalleryScrollOffsets {
   final Map<String, double> _offsets = {};

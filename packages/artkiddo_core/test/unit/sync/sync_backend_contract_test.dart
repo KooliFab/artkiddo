@@ -32,6 +32,7 @@ class _ContractBackend extends SyncBackend {
     String? audioObjectKey,
     int? audioDurationMs,
     int audioByteSize = 0,
+    AudioWrite? audioWrite,
     required DateTime addedAt,
     required DateTime? drawnAt,
     required String? story,

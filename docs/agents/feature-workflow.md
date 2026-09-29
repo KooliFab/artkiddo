@@ -84,13 +84,12 @@ depends on those implementations.
 
 ## 5. Design compatibility
 
-- The local database is a clean-break baseline (`schemaVersion = 1`, ADR 0007):
-  there is no migration history and no upgrade path from a prior schema.
-  Existing local databases are unsupported and must be cleared, not migrated.
-- Add or update the exported schema snapshot for every Drift schema change so
-  it accurately reflects the current baseline. A migration test does not apply
-  while there is a single schema version; add one only once a second version
-  exists and an upgrade path must be exercised.
+- The local database began with a clean-break v1 baseline (ADR 0007): schemas
+  that predate v1 remain unsupported and must be cleared, not migrated. Every
+  version from v1 onward is a supported forward-upgrade source.
+- Add an exported schema snapshot for every Drift schema version and test each
+  supported upgrade path against the current schema. Include a realistic
+  preservation fixture whenever the migration can affect stored rows.
 - Use opaque identifiers and typed contracts when an optional capability needs
   to cross the composition boundary.
 - Never introduce an implicit fallback between local authority and an optional

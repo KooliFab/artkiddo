@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../local/logging/log.dart';
@@ -14,25 +15,33 @@ import '../ui/app_button.dart';
 import '../ui/state_block.dart';
 import 'family_controller.dart';
 
-/// Single « Famille » screen: family name, fixed invite code (to share, in text or QR),
-/// and section to join another family (manual input or QR scan).
-class FamilyScreen extends ConsumerStatefulWidget {
-  const FamilyScreen({super.key});
+/// Invite-only « Famille » screen: the fixed invite code (to share, in text
+/// or QR), and the section to join another family (manual input or QR
+/// scan). Family naming and the active-members list live in the cloud
+/// composition's family-settings surface, not here — this screen is
+/// deliberately the smallest, fully account-free-safe surface: invite out,
+/// or join in.
+class FamilyInviteScreen extends ConsumerStatefulWidget {
+  final bool presentedAsSheet;
+  final bool joinMode;
+
+  const FamilyInviteScreen({
+    super.key,
+    this.presentedAsSheet = false,
+    this.joinMode = false,
+  });
 
   @override
-  ConsumerState<FamilyScreen> createState() => _FamilyScreenState();
+  ConsumerState<FamilyInviteScreen> createState() => _FamilyInviteScreenState();
 }
 
-class _FamilyScreenState extends ConsumerState<FamilyScreen> {
-  late final TextEditingController _nameController;
+class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
   late final TextEditingController _codeController;
-  String? _lastLoadedName;
 
   @override
   void initState() {
     super.initState();
-    Log.d('📱 [FamilyScreen] Opening', 'Navigation');
-    _nameController = TextEditingController();
+    Log.d('📱 [FamilyInviteScreen] Opening', 'Navigation');
     _codeController = TextEditingController();
     if (!ref.read(appCapabilitiesProvider).household) return;
     Future.microtask(
@@ -42,15 +51,8 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _codeController.dispose();
     super.dispose();
-  }
-
-  void _syncNameField(FamilyInfo info) {
-    if (_lastLoadedName == info.name) return;
-    _lastLoadedName = info.name;
-    _nameController.text = info.name ?? '';
   }
 
   Future<void> _pasteFromClipboard() async {
@@ -85,13 +87,21 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
         .redeem(code, discardPrevious: true);
   }
 
+  Future<void> _shareInvite(String code) async {
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'Rejoins ma famille dans ArtKiddo avec ce code : $code',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final capabilities = ref.watch(appCapabilitiesProvider);
     if (!capabilities.household) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.familyTitle)),
+        appBar: _buildAppBar(l10n),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -106,7 +116,6 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
     final state = ref.watch(familyControllerProvider);
     final controller = ref.read(familyControllerProvider.notifier);
     final info = state.familyInfo;
-    if (info != null) _syncNameField(info);
     final loading = state.family.isBusy && info == null;
     final canSubmitCode =
         _codeController.text.trim().length >= 6 && !state.redeem.isBusy;
@@ -114,7 +123,7 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
         ref.watch(compositionActionsProvider).openQrScanner != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.familyTitle)),
+      appBar: _buildAppBar(l10n),
       body: SafeArea(
         child: loading
             ? const Center(child: CircularProgressIndicator())
@@ -126,43 +135,15 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        l10n.familyNameLabel,
-                        style: AppTypography.label.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      TextField(
-                        controller: _nameController,
-                        textCapitalization: TextCapitalization.words,
-                        enabled: !state.rename.isBusy,
-                        decoration: InputDecoration(
-                          hintText: l10n.familyNameHint,
-                        ),
-                        onSubmitted: (value) =>
-                            controller.renameFamily(value.trim()),
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      AsyncActionButton(
-                        action: state.rename,
-                        idleLabel: l10n.commonSave,
-                        busyLabel: l10n.commonSaving,
-                        variant: AppButtonVariant.tertiary,
-                        onPressed: () => controller.renameFamily(
-                          _nameController.text.trim(),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s6),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        l10n.familyInviteExplain,
+                        widget.joinMode
+                            ? l10n.familyJoinExplain
+                            : l10n.familyInviteExplain,
                         style: AppTypography.body.copyWith(
                           color: AppColors.inkMuted,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.s4),
-                      if (info != null) ...[
+                      if (!widget.joinMode && info != null) ...[
                         Center(
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -200,82 +181,68 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
                           label: l10n.familyInviteCopy,
                           variant: AppButtonVariant.secondary,
                           fullWidth: true,
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: info.code),
-                            );
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.familyInviteCopied)),
-                            );
-                          },
+                          onPressed: () => _shareInvite(info.code),
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.s6),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        l10n.familyJoinExplain,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s4),
-                      _buildOutcomeBlock(l10n, state, controller),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _codeController,
-                              textCapitalization: TextCapitalization.characters,
-                              maxLength: 8,
-                              enabled:
-                                  !state.redeem.isBusy &&
-                                  !state.convergence.isBusy,
-                              decoration: InputDecoration(
-                                hintText: l10n.familyJoinCodeHint,
-                                counterText: '',
+                      if (widget.joinMode) ...[
+                        _buildOutcomeBlock(l10n, state, controller),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _codeController,
+                                autofocus: true,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                maxLength: 8,
+                                enabled:
+                                    !state.redeem.isBusy &&
+                                    !state.convergence.isBusy,
+                                decoration: InputDecoration(
+                                  hintText: l10n.familyJoinCodeHint,
+                                  counterText: '',
+                                ),
+                                onChanged: (_) => setState(() {}),
                               ),
-                              onChanged: (_) => setState(() {}),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: _pasteFromClipboard,
-                            child: Text(l10n.accountCodePaste),
+                            TextButton(
+                              onPressed: _pasteFromClipboard,
+                              child: Text(l10n.accountCodePaste),
+                            ),
+                          ],
+                        ),
+                        if (canScanQr) ...[
+                          const SizedBox(height: AppSpacing.s2),
+                          AppButton(
+                            label: l10n.familyScanButton,
+                            variant: AppButtonVariant.secondary,
+                            fullWidth: true,
+                            icon: Icons.qr_code_scanner,
+                            onPressed:
+                                state.redeem.isBusy || state.convergence.isBusy
+                                ? null
+                                : _scanCode,
                           ),
                         ],
-                      ),
-                      if (canScanQr) ...[
-                        const SizedBox(height: AppSpacing.s2),
-                        AppButton(
-                          label: l10n.familyScanButton,
-                          variant: AppButtonVariant.secondary,
+                        const SizedBox(height: AppSpacing.s4),
+                        AsyncActionButton(
+                          action: state.joinReset.isBusy
+                              ? state.joinReset
+                              : state.convergence.isBusy
+                              ? state.convergence
+                              : state.redeem,
+                          idleLabel: l10n.familyJoinButton,
+                          busyLabel: state.joinReset.isBusy
+                              ? l10n.familyJoinDiscarding
+                              : state.convergence.isBusy
+                              ? l10n.familyJoinConverging
+                              : l10n.familyJoinChecking,
                           fullWidth: true,
-                          icon: Icons.qr_code_scanner,
-                          onPressed:
-                              state.redeem.isBusy || state.convergence.isBusy
-                              ? null
-                              : _scanCode,
+                          enabled: canSubmitCode,
+                          onPressed: () =>
+                              _confirmAndJoin(_codeController.text.trim()),
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.s4),
-                      AsyncActionButton(
-                        action: state.joinReset.isBusy
-                            ? state.joinReset
-                            : state.convergence.isBusy
-                            ? state.convergence
-                            : state.redeem,
-                        idleLabel: l10n.familyJoinButton,
-                        busyLabel: state.joinReset.isBusy
-                            ? l10n.familyJoinDiscarding
-                            : state.convergence.isBusy
-                            ? l10n.familyJoinConverging
-                            : l10n.familyJoinChecking,
-                        fullWidth: true,
-                        enabled: canSubmitCode,
-                        onPressed: () =>
-                            _confirmAndJoin(_codeController.text.trim()),
-                      ),
                     ],
                   ),
                 ),
@@ -341,13 +308,28 @@ class _FamilyScreenState extends ConsumerState<FamilyScreen> {
       ),
     };
   }
+
+  AppBar _buildAppBar(AppLocalizations l10n) => AppBar(
+    title: Text(
+      widget.joinMode ? l10n.familyJoinButton : l10n.familyInviteTitle,
+    ),
+    automaticallyImplyLeading: !widget.presentedAsSheet,
+    actions: [
+      if (widget.presentedAsSheet)
+        IconButton(
+          tooltip: l10n.commonClose,
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+    ],
+  );
 }
 
 enum _JoinStep { summary, confirm }
 
 /// Two-step destructive confirmation shown before every join — both entry
-/// points ([_FamilyScreenState._confirmAndJoin]) go through this, never
-/// straight into [FamilyController.redeem]. Pops `true` only once the
+/// points ([_FamilyInviteScreenState._confirmAndJoin]) go through this,
+/// never straight into [FamilyController.redeem]. Pops `true` only once the
 /// user has seen the local-content bilan (step 1) and explicitly
 /// acknowledged the loss (step 2, gated by a checkbox); `false` or a
 /// dismissed dialog means "do nothing".
@@ -386,19 +368,23 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
         _impact = null;
       });
     }
-    ref.read(familyControllerProvider.notifier).joinImpact().then((impact) {
-      if (!mounted) return;
-      setState(() {
-        _impact = impact;
-        _impactLoaded = true;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _impactFailed = true;
-        _impactLoaded = true;
-      });
-    });
+    ref
+        .read(familyControllerProvider.notifier)
+        .joinImpact()
+        .then((impact) {
+          if (!mounted) return;
+          setState(() {
+            _impact = impact;
+            _impactLoaded = true;
+          });
+        })
+        .catchError((_) {
+          if (!mounted) return;
+          setState(() {
+            _impactFailed = true;
+            _impactLoaded = true;
+          });
+        });
   }
 
   @override
@@ -430,9 +416,7 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
                     : _impactLoaded && _impact?.isAlone != null
                     ? () => setState(() => _step = _JoinStep.confirm)
                     : null,
-                child: Text(
-                  _impactFailed ? l10n.commonRetry : l10n.commonNext,
-                ),
+                child: Text(_impactFailed ? l10n.commonRetry : l10n.commonNext),
               ),
             ]
           : [

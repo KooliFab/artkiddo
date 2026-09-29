@@ -1,3 +1,4 @@
+import 'dart:async';
 // C-06 convergence engine tests.
 //
 // Each "device" is a fully independent local vault (its own temp-file
@@ -219,6 +220,51 @@ void main() {
         expect(familyAfterSecond, familyAfterFirst);
       },
     );
+  });
+
+  group('progress', () {
+    test('reports sending against a known total, then receiving', () async {
+      final a = await newDevice('user-a');
+      await a.sync(); // creates the family
+      final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
+      final childId =
+          (await a.children.create(name: 'Zoé', birthDate: DateTime(2019))
+                  as ActionSuccess<String>)
+              .value;
+      for (var i = 0; i < 3; i++) {
+        await createSyncedArtwork(a, childId: childId, seed: i);
+      }
+
+      final sent = <SyncProgress>[];
+      cloudApi.currentUserId = a.userId;
+      await a.engine.syncAll(onProgress: sent.add);
+
+      final sending = sent.where((p) => p.phase == SyncPhase.sending);
+      // One child + three artworks were waiting in the outbox.
+      expect(sending.map((p) => p.done), [0, 1, 2, 3, 4]);
+      expect(sending.every((p) => p.total == 4), isTrue);
+      expect(
+        sent.indexWhere((p) => p.phase == SyncPhase.receiving),
+        greaterThan(sent.lastIndexWhere((p) => p.phase == SyncPhase.sending)),
+        reason: 'receiving starts only once sending is over',
+      );
+
+      cloudApi.seedMembership('user-b', familyId);
+      final b = await newDevice('user-b');
+      final received = <SyncProgress>[];
+      cloudApi.currentUserId = b.userId;
+      await b.engine.syncAll(onProgress: received.add);
+
+      final receiving = received
+          .where((p) => p.phase == SyncPhase.receiving)
+          .toList();
+      expect(receiving.map((p) => p.done), [0, 1, 2, 3]);
+      expect(
+        receiving.every((p) => p.total == null),
+        isTrue,
+        reason: 'remote pages have no known total',
+      );
+    });
   });
 
   group('D13 — join and restore are the same operation', () {
@@ -947,7 +993,17 @@ void main() {
         );
 
         final initialUploads = uploader.uploadCount;
+        uploader.beforeUpload = (variant) async {
+          if (variant == ObjectVariant.audio) {
+            expect(
+              cloudApi.artworksInFamily(familyId),
+              1,
+              reason: 'audio reservation needs the photo metadata first',
+            );
+          }
+        };
         await a.sync();
+        uploader.beforeUpload = null;
         // Should have uploaded display and audio (2 uploads, no thumbnail in remote storage)
         expect(uploader.uploadCount, initialUploads + 2);
 
@@ -993,6 +1049,194 @@ void main() {
           currentUploads,
           reason: 'object keys reused, no new uploads',
         );
+      },
+    );
+  });
+  test('concurrent sync triggers share one upload and drain', () async {
+    final deviceA = await newDevice('user-a');
+    cloudApi.currentUserId = 'user-a';
+    final childId =
+        (await deviceA.children.create(name: 'C', birthDate: DateTime(2020))
+                as ActionSuccess<String>)
+            .value;
+    await createSyncedArtwork(deviceA, childId: childId);
+    final gate = Completer<void>();
+    final entered = Completer<void>();
+    uploader.beforeUpload = (_) async {
+      if (!entered.isCompleted) entered.complete();
+      await gate.future;
+    };
+    final first = deviceA.engine.syncAll();
+    await entered.future;
+    final second = deviceA.engine.syncAll();
+    expect(identical(first, second), true);
+    gate.complete();
+    await Future.wait([first, second]);
+    expect(await deviceA.engine.outbox.countPending(), 0);
+  });
+
+  group('Audio replacement safety', () {
+    Future<(Device, Device, String)> pair() async {
+      final a = await newDevice('audio-a');
+      await a.sync();
+      final familyId = (await VaultMetaRepository(a.db).getFamilyId())!;
+      final childId =
+          (await a.children.create(name: 'C', birthDate: DateTime(2020))
+                  as ActionSuccess<String>)
+              .value;
+      final audio = File('${a.tempRoot.path}/original.m4a');
+      await audio.writeAsBytes(List.filled(100, 1));
+      final id = await createSyncedArtwork(
+        a,
+        childId: childId,
+        sourceAudioFile: audio,
+        audioDurationMs: 1000,
+      );
+      await a.sync();
+      cloudApi.seedMembership('audio-b', familyId);
+      final b = await newDevice('audio-b');
+      await b.sync();
+      return (a, b, id);
+    }
+
+    test(
+      'editing text without a cached audio preserves the remote voice',
+      () async {
+        final (a, b, id) = await pair();
+        final old =
+            (await a.db.select(a.db.artworksTable).get()).single.audioObjectKey;
+        await b.artworks.updateStory(id: id, story: 'Another story');
+        await b.sync();
+        final row = (await b.db.select(b.db.artworksTable).get()).single;
+        expect(row.audioObjectKey, old);
+        expect(row.audioRevision, 1);
+        expect((await b.artworks.getById(id))!.relativeAudioPath, isNull);
+      },
+    );
+
+    test(
+      'replacement invalidates another device cache and clear removes the shared voice',
+      () async {
+        final (a, b, id) = await pair();
+        await b.engine.ensureAudioDownloaded(id);
+        final oldPath = (await b.artworks.getById(id))!.relativeAudioPath!;
+        final replacement = File('${a.tempRoot.path}/new.m4a');
+        await replacement.writeAsBytes(List.filled(120, 2));
+        await a.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: replacement,
+          durationMs: 2000,
+        );
+        await a.sync();
+        await b.sync();
+        expect(await (await b.vault.resolveFile(oldPath)).exists(), isFalse);
+        expect((await b.artworks.getById(id))!.relativeAudioPath, isNull);
+        await b.engine.ensureAudioDownloaded(id);
+        final path = (await b.artworks.getById(id))!.relativeAudioPath!;
+        expect(
+          await (await b.vault.resolveFile(path)).readAsBytes(),
+          List.filled(120, 2),
+        );
+        await a.artworks.clearAudio(id);
+        await a.sync();
+        await b.sync();
+        expect((await b.artworks.getById(id))!.hasAudio, isFalse);
+      },
+    );
+
+    test(
+      'missing pending audio is an error and never acknowledged as synced',
+      () async {
+        final (a, _, id) = await pair();
+        final source = File('${a.tempRoot.path}/missing.m4a');
+        await source.writeAsBytes([3, 4, 5]);
+        await a.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: source,
+          durationMs: 1000,
+        );
+        final pending = (await a.artworks.getById(id))!;
+        await (await a.vault.resolveFile(pending.relativeAudioPath!)).delete();
+        final summary = await a.sync();
+        expect(summary.pushFailed, 1);
+        expect((await a.artworks.getById(id))!.syncState, SyncState.syncError);
+      },
+    );
+
+    test(
+      'an edit made during upload remains queued with an advanced baseline',
+      () async {
+        final (a, _, id) = await pair();
+        final one = File('${a.tempRoot.path}/inflight-one.m4a');
+        final two = File('${a.tempRoot.path}/inflight-two.m4a');
+        await one.writeAsBytes([1, 2]);
+        await two.writeAsBytes([3, 4]);
+        await a.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: one,
+          durationMs: 1000,
+        );
+        uploader.beforeUpload = (variant) async {
+          if (variant == ObjectVariant.audio) {
+            uploader.beforeUpload = null;
+            await a.artworks.updateAudio(
+              id: id,
+              sourceAudioFile: two,
+              durationMs: 2000,
+            );
+          }
+        };
+        await a.sync();
+        var row = (await a.db.select(a.db.artworksTable).get()).single;
+        expect(row.audioRevision, 2);
+        expect(row.audioSyncIntent, 'replace');
+        expect(row.audioDurationMs, 2000);
+        expect(await a.engine.outbox.countPending(), 1);
+        await a.sync();
+        row = (await a.db.select(a.db.artworksTable).get()).single;
+        expect(row.audioRevision, 3);
+        expect(row.audioSyncIntent, 'keep');
+        expect(await a.engine.outbox.countPending(), 0);
+      },
+    );
+
+    test(
+      'concurrent recordings require a decision and preserve both local files',
+      () async {
+        final (a, b, id) = await pair();
+        final one = File('${a.tempRoot.path}/one.m4a');
+        final two = File('${b.tempRoot.path}/two.m4a');
+        await one.writeAsBytes([1, 2]);
+        await two.writeAsBytes([3, 4]);
+        await a.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: one,
+          durationMs: 1000,
+        );
+        await b.artworks.updateAudio(
+          id: id,
+          sourceAudioFile: two,
+          durationMs: 1000,
+        );
+        await a.sync();
+        await b.sync();
+        final local = (await b.artworks.getById(id))!;
+        expect(local.audioConflict, isTrue);
+        expect(
+          await (await b.vault.resolveFile(local.relativeAudioPath!)).exists(),
+          isTrue,
+        );
+        expect(
+          await b.engine.resolveAudioConflict(id, keepLocal: true),
+          isTrue,
+        );
+        await b.sync();
+        await a.sync();
+        expect(
+          (await a.db.select(a.db.artworksTable).get()).single.audioRevision,
+          3,
+        );
+        expect((await b.artworks.getById(id))!.audioConflict, isFalse);
       },
     );
   });

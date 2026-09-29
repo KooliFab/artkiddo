@@ -621,6 +621,56 @@ class $ArtworksTableTable extends ArtworksTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _audioRevisionMeta = const VerificationMeta(
+    'audioRevision',
+  );
+  @override
+  late final GeneratedColumn<int> audioRevision = GeneratedColumn<int>(
+    'audio_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _audioSyncIntentMeta = const VerificationMeta(
+    'audioSyncIntent',
+  );
+  @override
+  late final GeneratedColumn<String> audioSyncIntent = GeneratedColumn<String>(
+    'audio_sync_intent',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('keep'),
+  );
+  static const VerificationMeta _audioConflictMeta = const VerificationMeta(
+    'audioConflict',
+  );
+  @override
+  late final GeneratedColumn<bool> audioConflict = GeneratedColumn<bool>(
+    'audio_conflict',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("audio_conflict" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _addedByMeta = const VerificationMeta(
+    'addedBy',
+  );
+  @override
+  late final GeneratedColumn<String> addedBy = GeneratedColumn<String>(
+    'added_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -652,6 +702,10 @@ class $ArtworksTableTable extends ArtworksTable
     audioDurationMs,
     audioObjectKey,
     audioByteSize,
+    audioRevision,
+    audioSyncIntent,
+    audioConflict,
+    addedBy,
     deletedAt,
   ];
   @override
@@ -807,6 +861,39 @@ class $ArtworksTableTable extends ArtworksTable
         ),
       );
     }
+    if (data.containsKey('audio_revision')) {
+      context.handle(
+        _audioRevisionMeta,
+        audioRevision.isAcceptableOrUnknown(
+          data['audio_revision']!,
+          _audioRevisionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('audio_sync_intent')) {
+      context.handle(
+        _audioSyncIntentMeta,
+        audioSyncIntent.isAcceptableOrUnknown(
+          data['audio_sync_intent']!,
+          _audioSyncIntentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('audio_conflict')) {
+      context.handle(
+        _audioConflictMeta,
+        audioConflict.isAcceptableOrUnknown(
+          data['audio_conflict']!,
+          _audioConflictMeta,
+        ),
+      );
+    }
+    if (data.containsKey('added_by')) {
+      context.handle(
+        _addedByMeta,
+        addedBy.isAcceptableOrUnknown(data['added_by']!, _addedByMeta),
+      );
+    }
     if (data.containsKey('deleted_at')) {
       context.handle(
         _deletedAtMeta,
@@ -894,6 +981,22 @@ class $ArtworksTableTable extends ArtworksTable
         DriftSqlType.int,
         data['${effectivePrefix}audio_byte_size'],
       )!,
+      audioRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}audio_revision'],
+      )!,
+      audioSyncIntent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}audio_sync_intent'],
+      )!,
+      audioConflict: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}audio_conflict'],
+      )!,
+      addedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}added_by'],
+      ),
       deletedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
@@ -929,6 +1032,12 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
   final int? audioDurationMs;
   final String? audioObjectKey;
   final int audioByteSize;
+
+  /// Baseline acknowledged by the remote store, independent of local edits.
+  final int audioRevision;
+  final String audioSyncIntent;
+  final bool audioConflict;
+  final String? addedBy;
   final DateTime? deletedAt;
   const ArtworkEntity({
     required this.id,
@@ -949,6 +1058,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     this.audioDurationMs,
     this.audioObjectKey,
     required this.audioByteSize,
+    required this.audioRevision,
+    required this.audioSyncIntent,
+    required this.audioConflict,
+    this.addedBy,
     this.deletedAt,
   });
   @override
@@ -996,6 +1109,12 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       map['audio_object_key'] = Variable<String>(audioObjectKey);
     }
     map['audio_byte_size'] = Variable<int>(audioByteSize);
+    map['audio_revision'] = Variable<int>(audioRevision);
+    map['audio_sync_intent'] = Variable<String>(audioSyncIntent);
+    map['audio_conflict'] = Variable<bool>(audioConflict);
+    if (!nullToAbsent || addedBy != null) {
+      map['added_by'] = Variable<String>(addedBy);
+    }
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
@@ -1046,6 +1165,12 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ? const Value.absent()
           : Value(audioObjectKey),
       audioByteSize: Value(audioByteSize),
+      audioRevision: Value(audioRevision),
+      audioSyncIntent: Value(audioSyncIntent),
+      audioConflict: Value(audioConflict),
+      addedBy: addedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(addedBy),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
@@ -1084,6 +1209,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       audioDurationMs: serializer.fromJson<int?>(json['audioDurationMs']),
       audioObjectKey: serializer.fromJson<String?>(json['audioObjectKey']),
       audioByteSize: serializer.fromJson<int>(json['audioByteSize']),
+      audioRevision: serializer.fromJson<int>(json['audioRevision']),
+      audioSyncIntent: serializer.fromJson<String>(json['audioSyncIntent']),
+      audioConflict: serializer.fromJson<bool>(json['audioConflict']),
+      addedBy: serializer.fromJson<String?>(json['addedBy']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
@@ -1109,6 +1238,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       'audioDurationMs': serializer.toJson<int?>(audioDurationMs),
       'audioObjectKey': serializer.toJson<String?>(audioObjectKey),
       'audioByteSize': serializer.toJson<int>(audioByteSize),
+      'audioRevision': serializer.toJson<int>(audioRevision),
+      'audioSyncIntent': serializer.toJson<String>(audioSyncIntent),
+      'audioConflict': serializer.toJson<bool>(audioConflict),
+      'addedBy': serializer.toJson<String?>(addedBy),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
@@ -1132,6 +1265,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     Value<int?> audioDurationMs = const Value.absent(),
     Value<String?> audioObjectKey = const Value.absent(),
     int? audioByteSize,
+    int? audioRevision,
+    String? audioSyncIntent,
+    bool? audioConflict,
+    Value<String?> addedBy = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => ArtworkEntity(
     id: id ?? this.id,
@@ -1168,6 +1305,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
         ? audioObjectKey.value
         : this.audioObjectKey,
     audioByteSize: audioByteSize ?? this.audioByteSize,
+    audioRevision: audioRevision ?? this.audioRevision,
+    audioSyncIntent: audioSyncIntent ?? this.audioSyncIntent,
+    audioConflict: audioConflict ?? this.audioConflict,
+    addedBy: addedBy.present ? addedBy.value : this.addedBy,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   ArtworkEntity copyWithCompanion(ArtworksTableCompanion data) {
@@ -1212,6 +1353,16 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       audioByteSize: data.audioByteSize.present
           ? data.audioByteSize.value
           : this.audioByteSize,
+      audioRevision: data.audioRevision.present
+          ? data.audioRevision.value
+          : this.audioRevision,
+      audioSyncIntent: data.audioSyncIntent.present
+          ? data.audioSyncIntent.value
+          : this.audioSyncIntent,
+      audioConflict: data.audioConflict.present
+          ? data.audioConflict.value
+          : this.audioConflict,
+      addedBy: data.addedBy.present ? data.addedBy.value : this.addedBy,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
@@ -1237,13 +1388,17 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ..write('audioDurationMs: $audioDurationMs, ')
           ..write('audioObjectKey: $audioObjectKey, ')
           ..write('audioByteSize: $audioByteSize, ')
+          ..write('audioRevision: $audioRevision, ')
+          ..write('audioSyncIntent: $audioSyncIntent, ')
+          ..write('audioConflict: $audioConflict, ')
+          ..write('addedBy: $addedBy, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     childId,
     relativeImagePath,
@@ -1262,8 +1417,12 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     audioDurationMs,
     audioObjectKey,
     audioByteSize,
+    audioRevision,
+    audioSyncIntent,
+    audioConflict,
+    addedBy,
     deletedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1286,6 +1445,10 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           other.audioDurationMs == this.audioDurationMs &&
           other.audioObjectKey == this.audioObjectKey &&
           other.audioByteSize == this.audioByteSize &&
+          other.audioRevision == this.audioRevision &&
+          other.audioSyncIntent == this.audioSyncIntent &&
+          other.audioConflict == this.audioConflict &&
+          other.addedBy == this.addedBy &&
           other.deletedAt == this.deletedAt);
 }
 
@@ -1308,6 +1471,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
   final Value<int?> audioDurationMs;
   final Value<String?> audioObjectKey;
   final Value<int> audioByteSize;
+  final Value<int> audioRevision;
+  final Value<String> audioSyncIntent;
+  final Value<bool> audioConflict;
+  final Value<String?> addedBy;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const ArtworksTableCompanion({
@@ -1329,6 +1496,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioDurationMs = const Value.absent(),
     this.audioObjectKey = const Value.absent(),
     this.audioByteSize = const Value.absent(),
+    this.audioRevision = const Value.absent(),
+    this.audioSyncIntent = const Value.absent(),
+    this.audioConflict = const Value.absent(),
+    this.addedBy = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1351,6 +1522,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioDurationMs = const Value.absent(),
     this.audioObjectKey = const Value.absent(),
     this.audioByteSize = const Value.absent(),
+    this.audioRevision = const Value.absent(),
+    this.audioSyncIntent = const Value.absent(),
+    this.audioConflict = const Value.absent(),
+    this.addedBy = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1375,6 +1550,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Expression<int>? audioDurationMs,
     Expression<String>? audioObjectKey,
     Expression<int>? audioByteSize,
+    Expression<int>? audioRevision,
+    Expression<String>? audioSyncIntent,
+    Expression<bool>? audioConflict,
+    Expression<String>? addedBy,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
@@ -1399,6 +1578,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       if (audioDurationMs != null) 'audio_duration_ms': audioDurationMs,
       if (audioObjectKey != null) 'audio_object_key': audioObjectKey,
       if (audioByteSize != null) 'audio_byte_size': audioByteSize,
+      if (audioRevision != null) 'audio_revision': audioRevision,
+      if (audioSyncIntent != null) 'audio_sync_intent': audioSyncIntent,
+      if (audioConflict != null) 'audio_conflict': audioConflict,
+      if (addedBy != null) 'added_by': addedBy,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1423,6 +1606,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Value<int?>? audioDurationMs,
     Value<String?>? audioObjectKey,
     Value<int>? audioByteSize,
+    Value<int>? audioRevision,
+    Value<String>? audioSyncIntent,
+    Value<bool>? audioConflict,
+    Value<String?>? addedBy,
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
@@ -1445,6 +1632,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
       audioObjectKey: audioObjectKey ?? this.audioObjectKey,
       audioByteSize: audioByteSize ?? this.audioByteSize,
+      audioRevision: audioRevision ?? this.audioRevision,
+      audioSyncIntent: audioSyncIntent ?? this.audioSyncIntent,
+      audioConflict: audioConflict ?? this.audioConflict,
+      addedBy: addedBy ?? this.addedBy,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1507,6 +1698,18 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     if (audioByteSize.present) {
       map['audio_byte_size'] = Variable<int>(audioByteSize.value);
     }
+    if (audioRevision.present) {
+      map['audio_revision'] = Variable<int>(audioRevision.value);
+    }
+    if (audioSyncIntent.present) {
+      map['audio_sync_intent'] = Variable<String>(audioSyncIntent.value);
+    }
+    if (audioConflict.present) {
+      map['audio_conflict'] = Variable<bool>(audioConflict.value);
+    }
+    if (addedBy.present) {
+      map['added_by'] = Variable<String>(addedBy.value);
+    }
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
@@ -1537,6 +1740,10 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
           ..write('audioDurationMs: $audioDurationMs, ')
           ..write('audioObjectKey: $audioObjectKey, ')
           ..write('audioByteSize: $audioByteSize, ')
+          ..write('audioRevision: $audioRevision, ')
+          ..write('audioSyncIntent: $audioSyncIntent, ')
+          ..write('audioConflict: $audioConflict, ')
+          ..write('addedBy: $addedBy, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3398,6 +3605,10 @@ typedef $$ArtworksTableTableCreateCompanionBuilder =
       Value<int?> audioDurationMs,
       Value<String?> audioObjectKey,
       Value<int> audioByteSize,
+      Value<int> audioRevision,
+      Value<String> audioSyncIntent,
+      Value<bool> audioConflict,
+      Value<String?> addedBy,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3421,6 +3632,10 @@ typedef $$ArtworksTableTableUpdateCompanionBuilder =
       Value<int?> audioDurationMs,
       Value<String?> audioObjectKey,
       Value<int> audioByteSize,
+      Value<int> audioRevision,
+      Value<String> audioSyncIntent,
+      Value<bool> audioConflict,
+      Value<String?> addedBy,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3542,6 +3757,26 @@ class $$ArtworksTableTableFilterComposer
 
   ColumnFilters<int> get audioByteSize => $composableBuilder(
     column: $table.audioByteSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get audioRevision => $composableBuilder(
+    column: $table.audioRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get audioSyncIntent => $composableBuilder(
+    column: $table.audioSyncIntent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get audioConflict => $composableBuilder(
+    column: $table.audioConflict,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3668,6 +3903,26 @@ class $$ArtworksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get audioRevision => $composableBuilder(
+    column: $table.audioRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get audioSyncIntent => $composableBuilder(
+    column: $table.audioSyncIntent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get audioConflict => $composableBuilder(
+    column: $table.audioConflict,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
@@ -3779,6 +4034,24 @@ class $$ArtworksTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get audioRevision => $composableBuilder(
+    column: $table.audioRevision,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get audioSyncIntent => $composableBuilder(
+    column: $table.audioSyncIntent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get audioConflict => $composableBuilder(
+    column: $table.audioConflict,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get addedBy =>
+      $composableBuilder(column: $table.addedBy, builder: (column) => column);
+
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
@@ -3852,6 +4125,10 @@ class $$ArtworksTableTableTableManager
                 Value<int?> audioDurationMs = const Value.absent(),
                 Value<String?> audioObjectKey = const Value.absent(),
                 Value<int> audioByteSize = const Value.absent(),
+                Value<int> audioRevision = const Value.absent(),
+                Value<String> audioSyncIntent = const Value.absent(),
+                Value<bool> audioConflict = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion(
@@ -3873,6 +4150,10 @@ class $$ArtworksTableTableTableManager
                 audioDurationMs: audioDurationMs,
                 audioObjectKey: audioObjectKey,
                 audioByteSize: audioByteSize,
+                audioRevision: audioRevision,
+                audioSyncIntent: audioSyncIntent,
+                audioConflict: audioConflict,
+                addedBy: addedBy,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),
@@ -3896,6 +4177,10 @@ class $$ArtworksTableTableTableManager
                 Value<int?> audioDurationMs = const Value.absent(),
                 Value<String?> audioObjectKey = const Value.absent(),
                 Value<int> audioByteSize = const Value.absent(),
+                Value<int> audioRevision = const Value.absent(),
+                Value<String> audioSyncIntent = const Value.absent(),
+                Value<bool> audioConflict = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion.insert(
@@ -3917,6 +4202,10 @@ class $$ArtworksTableTableTableManager
                 audioDurationMs: audioDurationMs,
                 audioObjectKey: audioObjectKey,
                 audioByteSize: audioByteSize,
+                audioRevision: audioRevision,
+                audioSyncIntent: audioSyncIntent,
+                audioConflict: audioConflict,
+                addedBy: addedBy,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),

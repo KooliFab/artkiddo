@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/action_result.dart';
-import '../settings/debug_settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/child_row.dart';
 import '../ui/state_block.dart';
@@ -24,23 +22,10 @@ class ChildrenScreen extends ConsumerWidget {
     final countsAsync = ref.watch(artworkCountByChildProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.childrenTitle),
-        actions: [
-          if (kDebugMode)
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: 'Debug / Réglages',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const DebugSettingsScreen(),
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
+      // No settings affordance here: this screen manages children. Settings
+      // (language, about, trash, debug) are one tap from the gallery's own
+      // app bar instead of being reachable only by first opening this list.
+      appBar: AppBar(title: Text(l10n.childrenTitle)),
       body: SafeArea(
         child: childrenAsync.when(
           loading: () => ListView.builder(
@@ -117,21 +102,21 @@ class ChildrenScreen extends ConsumerWidget {
           },
         ),
       ),
-      // Migrates into the shell's rail header at medium/expanded — see AppShell._railFab.
-      floatingActionButton:
-          AppBreakpoints.isCompact(MediaQuery.of(context).size.width)
-          ? FloatingActionButton.extended(
-              onPressed: () => _openEditor(
-                context,
-                ref,
-                const ChildEditorArgs(origin: ChildEditorOrigin.childrenList),
-              ),
-              backgroundColor: AppColors.accent,
-              foregroundColor: AppColors.onAccent,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.childrenAdd),
-            )
-          : null,
+      // Shown at every breakpoint. This used to be compact-only because the
+      // shell's navigation rail hosted the "add" action at medium/expanded;
+      // the shell is a single gallery surface now, so hiding it there left a
+      // non-empty list with no way to add a child at all.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openEditor(
+          context,
+          ref,
+          const ChildEditorArgs(origin: ChildEditorOrigin.childrenList),
+        ),
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.onAccent,
+        icon: const Icon(Icons.add),
+        label: Text(l10n.childrenAdd),
+      ),
     );
   }
 
