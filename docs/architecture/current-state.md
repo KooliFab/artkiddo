@@ -100,7 +100,11 @@ public contracts only. Rules: `dependency-rules.md`.
   composition's own UI.
 - `SharingService`: web gallery links. `ShareBackup` is invoked for one child
   before link creation; revoked and expired links are hidden using an
-  injectable clock.
+  injectable clock. The share controller is disposed when its sheet loses
+  its last observer, reloads on session changes, and rejects results from an
+  earlier build lifetime. List failures expose a retry without disabling new
+  creation attempts after a past network error. The sheet scrolls when its
+  content exceeds the available height; see `../qa/share-links-p1.md`.
 - `CompositionActions.syncPhotos` is the only trigger for `remoteBackup`; the
   gallery binds it to pull-to-refresh only when the capability is enabled and
   the action is bound.

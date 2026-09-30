@@ -77,40 +77,42 @@ class _ShareSheetContent extends ConsumerWidget {
         ),
         child: PopScope(
           canPop: !creating,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.shareTitle(childName),
-                      style: AppTypography.h2,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.shareTitle(childName),
+                        style: AppTypography.h2,
+                      ),
                     ),
-                  ),
-                  if (!creating)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                l10n.shareWarning,
-                style: AppTypography.body.copyWith(color: AppColors.inkMuted),
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              if (state.loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else
-                _buildBody(context, ref, l10n, state, controller, childName),
-            ],
+                    if (!creating)
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s1),
+                Text(
+                  l10n.shareWarning,
+                  style: AppTypography.body.copyWith(color: AppColors.inkMuted),
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                if (state.loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  _buildBody(context, ref, l10n, state, controller, childName),
+              ],
+            ),
           ),
         ),
       ),
@@ -223,6 +225,16 @@ class _ShareSheetContent extends ConsumerWidget {
     // "send this image" block — factored above the step-specific
     // content.
     final children = <Widget>[
+      if (state.loadError case final failure?) ...[
+        StateBlock(
+          intent: ErrorPresenter.intentFor(failure),
+          title: ErrorPresenter.present(l10n, failure).title,
+          body: ErrorPresenter.present(l10n, failure).body,
+          actionLabel: l10n.commonRetry,
+          onAction: controller.refresh,
+        ),
+        const SizedBox(height: AppSpacing.s3),
+      ],
       if (state.offline) ...[
         OfflineBanner(label: l10n.settingsOffline),
         const SizedBox(height: AppSpacing.s3),
@@ -330,11 +342,7 @@ class _ShareSheetContent extends ConsumerWidget {
           busyLabel: l10n.shareGalleryCreating,
           variant: AppButtonVariant.share,
           fullWidth: true,
-          enabled:
-              state.childHasSyncedArtworks &&
-              !state.offline &&
-              !state.backup.isBusy,
-          disabledReason: state.offline ? l10n.settingsOffline : null,
+          enabled: state.childHasSyncedArtworks && !state.backup.isBusy,
           onPressed: controller.createLink,
         ),
       ]);
