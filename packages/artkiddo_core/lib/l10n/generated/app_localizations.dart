@@ -2850,6 +2850,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aperçu indisponible'**
   String get trashPreviewUnavailable;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activité de la famille'**
+  String get pushChannelFamilyActivityName;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelles œuvres ajoutées par les membres de votre famille.'**
+  String get pushChannelFamilyActivityDescription;
 }
 
 class _AppLocalizationsDelegate

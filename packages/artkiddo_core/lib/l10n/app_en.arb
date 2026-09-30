@@ -2102,5 +2102,13 @@
   "artworkAudioKeepRemote": "Keep the shared voice story",
   "artworkAudioUseLocal": "Use my new version",
   "trashPreviewOpen": "View deleted photo",
-  "trashPreviewUnavailable": "Preview unavailable"
+  "trashPreviewUnavailable": "Preview unavailable",
+  "pushChannelFamilyActivityName": "Family activity",
+  "@pushChannelFamilyActivityName": {
+    "description": "Localized user-facing copy."
+  },
+  "pushChannelFamilyActivityDescription": "New artworks added by your family members.",
+  "@pushChannelFamilyActivityDescription": {
+    "description": "Localized user-facing copy."
+  }
 }

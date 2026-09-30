@@ -1683,4 +1683,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trashPreviewUnavailable => 'Preview unavailable';
+
+  @override
+  String get pushChannelFamilyActivityName => 'Family activity';
+
+  @override
+  String get pushChannelFamilyActivityDescription =>
+      'New artworks added by your family members.';
 }
