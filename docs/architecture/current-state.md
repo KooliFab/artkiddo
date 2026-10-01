@@ -71,7 +71,7 @@ public contracts only. Rules: `dependency-rules.md`.
 ## Local persistence
 
 - `AppDatabase` is Drift schema v5: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018). Each version
+  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018), v6 adds `media_versions`. Each version
   has a snapshot in `drift_schemas/`, covered by
   `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
   vaults.
@@ -80,7 +80,7 @@ public contracts only. Rules: `dependency-rules.md`.
   days), `vault_meta`,
   `pending_file_cleanups`, `share_link_url_cache`. Artworks store neutral
   opaque object keys only.
-- `LocalVault` owns image and audio files. Local deletion is recoverable for 30
+- `LocalVault` owns image and audio files. Every write goes through `writeFileAtomically` (temporary file in the same folder, flush, size check, rename); `*.tmp` leftovers are removed at start-up and an unreferenced final file is kept. Audio lives at `audio/<artworkId>/v<N>.m4a`, a new recording is a new version and the old file stays; `media_versions` registers the files and `isMediaReferenced` tells a cleanup whether one is still needed. Local deletion is recoverable for 30
   days, cleanup is journaled, success is reported only after a durable write.
 - `VaultRescueExport` zips vault files (≈3.5 GB parts) without opening the
   database, so it has no child/date/story metadata.

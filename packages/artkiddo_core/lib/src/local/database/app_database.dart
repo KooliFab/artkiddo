@@ -163,6 +163,32 @@ class ReplacedValuesTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Every media file version the vault holds. A version is immutable: a new
+/// recording is a new row and a new file, never a rewrite. An artwork's
+/// original and its audio share its id as `media_id` and are told apart by
+/// `role`, each with its own version numbers.
+@DataClassName('MediaVersionEntity')
+class MediaVersionsTable extends Table {
+  TextColumn get mediaId => text()();
+  IntColumn get version => integer()();
+
+  /// 'original' | 'optimized' | 'audio'.
+  TextColumn get role => text()();
+
+  /// Path relative to the vault, so it survives container moves.
+  TextColumn get localPath => text()();
+  IntColumn get byteSize => integer().withDefault(const Constant(0))();
+
+  /// 'present' | 'missing' | 'pendingDownload'.
+  TextColumn get state => text().withDefault(const Constant('present'))();
+
+  @override
+  String get tableName => 'media_versions';
+
+  @override
+  Set<Column> get primaryKey => {mediaId, version, role};
+}
+
 @DataClassName('VaultMetaEntity')
 class VaultMetaTable extends Table {
   TextColumn get id => text()();
@@ -217,6 +243,7 @@ class ShareLinkUrlCacheTable extends Table {
     PendingFileCleanupsTable,
     SyncOutboxTable,
     ReplacedValuesTable,
+    MediaVersionsTable,
     VaultMetaTable,
     ShareLinkUrlCacheTable,
   ],
@@ -231,9 +258,10 @@ class AppDatabase extends _$AppDatabase {
   /// commits a family switch but before the local vault is erased. Schema v3
   /// adds added_by attribution to artworks. Schema v4 adds the audio revision
   /// baseline. Schema v5 adds per-field revisions, turns the outbox into an
-  /// operation queue and adds the local `replaced_values` history.
+  /// operation queue and adds the local `replaced_values` history. Schema v6 adds
+  /// `media_versions`, the registry of the vault's media files.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -284,6 +312,20 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       }
+      if (from < 6) {
+        await m.createTable(mediaVersionsTable);
+        // Register the files the rows already point at. Whether they still
+        // exist is checked at start-up (`MediaVersionsRepository.reconcile`),
+        // which marks the absent ones `missing` without touching the artwork.
+        await customStatement('''
+INSERT INTO media_versions (media_id, version, role, local_path, byte_size, state)
+SELECT id, 1, 'original', relative_image_path, 0, 'present'
+FROM artworks WHERE relative_image_path IS NOT NULL''');
+        await customStatement('''
+INSERT INTO media_versions (media_id, version, role, local_path, byte_size, state)
+SELECT id, 1, 'audio', relative_audio_path, audio_byte_size, 'present'
+FROM artworks WHERE relative_audio_path IS NOT NULL''');
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -300,6 +342,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(childrenTable).go();
       await delete(syncOutboxTable).go();
       await delete(replacedValuesTable).go();
+      await delete(mediaVersionsTable).go();
       await delete(pendingFileCleanupsTable).go();
       await delete(shareLinkUrlCacheTable).go();
       await delete(vaultMetaTable).go();

@@ -3473,6 +3473,420 @@ class ReplacedValuesTableCompanion
   }
 }
 
+class $MediaVersionsTableTable extends MediaVersionsTable
+    with TableInfo<$MediaVersionsTableTable, MediaVersionEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MediaVersionsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _mediaIdMeta = const VerificationMeta(
+    'mediaId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localPathMeta = const VerificationMeta(
+    'localPath',
+  );
+  @override
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+    'local_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _byteSizeMeta = const VerificationMeta(
+    'byteSize',
+  );
+  @override
+  late final GeneratedColumn<int> byteSize = GeneratedColumn<int>(
+    'byte_size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('present'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    mediaId,
+    version,
+    role,
+    localPath,
+    byteSize,
+    state,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'media_versions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MediaVersionEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('media_id')) {
+      context.handle(
+        _mediaIdMeta,
+        mediaId.isAcceptableOrUnknown(data['media_id']!, _mediaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mediaIdMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roleMeta);
+    }
+    if (data.containsKey('local_path')) {
+      context.handle(
+        _localPathMeta,
+        localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localPathMeta);
+    }
+    if (data.containsKey('byte_size')) {
+      context.handle(
+        _byteSizeMeta,
+        byteSize.isAcceptableOrUnknown(data['byte_size']!, _byteSizeMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mediaId, version, role};
+  @override
+  MediaVersionEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MediaVersionEntity(
+      mediaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_id'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      localPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_path'],
+      )!,
+      byteSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}byte_size'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+    );
+  }
+
+  @override
+  $MediaVersionsTableTable createAlias(String alias) {
+    return $MediaVersionsTableTable(attachedDatabase, alias);
+  }
+}
+
+class MediaVersionEntity extends DataClass
+    implements Insertable<MediaVersionEntity> {
+  final String mediaId;
+  final int version;
+
+  /// 'original' | 'optimized' | 'audio'.
+  final String role;
+
+  /// Path relative to the vault, so it survives container moves.
+  final String localPath;
+  final int byteSize;
+
+  /// 'present' | 'missing' | 'pendingDownload'.
+  final String state;
+  const MediaVersionEntity({
+    required this.mediaId,
+    required this.version,
+    required this.role,
+    required this.localPath,
+    required this.byteSize,
+    required this.state,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['media_id'] = Variable<String>(mediaId);
+    map['version'] = Variable<int>(version);
+    map['role'] = Variable<String>(role);
+    map['local_path'] = Variable<String>(localPath);
+    map['byte_size'] = Variable<int>(byteSize);
+    map['state'] = Variable<String>(state);
+    return map;
+  }
+
+  MediaVersionsTableCompanion toCompanion(bool nullToAbsent) {
+    return MediaVersionsTableCompanion(
+      mediaId: Value(mediaId),
+      version: Value(version),
+      role: Value(role),
+      localPath: Value(localPath),
+      byteSize: Value(byteSize),
+      state: Value(state),
+    );
+  }
+
+  factory MediaVersionEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MediaVersionEntity(
+      mediaId: serializer.fromJson<String>(json['mediaId']),
+      version: serializer.fromJson<int>(json['version']),
+      role: serializer.fromJson<String>(json['role']),
+      localPath: serializer.fromJson<String>(json['localPath']),
+      byteSize: serializer.fromJson<int>(json['byteSize']),
+      state: serializer.fromJson<String>(json['state']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'mediaId': serializer.toJson<String>(mediaId),
+      'version': serializer.toJson<int>(version),
+      'role': serializer.toJson<String>(role),
+      'localPath': serializer.toJson<String>(localPath),
+      'byteSize': serializer.toJson<int>(byteSize),
+      'state': serializer.toJson<String>(state),
+    };
+  }
+
+  MediaVersionEntity copyWith({
+    String? mediaId,
+    int? version,
+    String? role,
+    String? localPath,
+    int? byteSize,
+    String? state,
+  }) => MediaVersionEntity(
+    mediaId: mediaId ?? this.mediaId,
+    version: version ?? this.version,
+    role: role ?? this.role,
+    localPath: localPath ?? this.localPath,
+    byteSize: byteSize ?? this.byteSize,
+    state: state ?? this.state,
+  );
+  MediaVersionEntity copyWithCompanion(MediaVersionsTableCompanion data) {
+    return MediaVersionEntity(
+      mediaId: data.mediaId.present ? data.mediaId.value : this.mediaId,
+      version: data.version.present ? data.version.value : this.version,
+      role: data.role.present ? data.role.value : this.role,
+      localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      byteSize: data.byteSize.present ? data.byteSize.value : this.byteSize,
+      state: data.state.present ? data.state.value : this.state,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MediaVersionEntity(')
+          ..write('mediaId: $mediaId, ')
+          ..write('version: $version, ')
+          ..write('role: $role, ')
+          ..write('localPath: $localPath, ')
+          ..write('byteSize: $byteSize, ')
+          ..write('state: $state')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(mediaId, version, role, localPath, byteSize, state);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MediaVersionEntity &&
+          other.mediaId == this.mediaId &&
+          other.version == this.version &&
+          other.role == this.role &&
+          other.localPath == this.localPath &&
+          other.byteSize == this.byteSize &&
+          other.state == this.state);
+}
+
+class MediaVersionsTableCompanion extends UpdateCompanion<MediaVersionEntity> {
+  final Value<String> mediaId;
+  final Value<int> version;
+  final Value<String> role;
+  final Value<String> localPath;
+  final Value<int> byteSize;
+  final Value<String> state;
+  final Value<int> rowid;
+  const MediaVersionsTableCompanion({
+    this.mediaId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.role = const Value.absent(),
+    this.localPath = const Value.absent(),
+    this.byteSize = const Value.absent(),
+    this.state = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MediaVersionsTableCompanion.insert({
+    required String mediaId,
+    required int version,
+    required String role,
+    required String localPath,
+    this.byteSize = const Value.absent(),
+    this.state = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : mediaId = Value(mediaId),
+       version = Value(version),
+       role = Value(role),
+       localPath = Value(localPath);
+  static Insertable<MediaVersionEntity> custom({
+    Expression<String>? mediaId,
+    Expression<int>? version,
+    Expression<String>? role,
+    Expression<String>? localPath,
+    Expression<int>? byteSize,
+    Expression<String>? state,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (mediaId != null) 'media_id': mediaId,
+      if (version != null) 'version': version,
+      if (role != null) 'role': role,
+      if (localPath != null) 'local_path': localPath,
+      if (byteSize != null) 'byte_size': byteSize,
+      if (state != null) 'state': state,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MediaVersionsTableCompanion copyWith({
+    Value<String>? mediaId,
+    Value<int>? version,
+    Value<String>? role,
+    Value<String>? localPath,
+    Value<int>? byteSize,
+    Value<String>? state,
+    Value<int>? rowid,
+  }) {
+    return MediaVersionsTableCompanion(
+      mediaId: mediaId ?? this.mediaId,
+      version: version ?? this.version,
+      role: role ?? this.role,
+      localPath: localPath ?? this.localPath,
+      byteSize: byteSize ?? this.byteSize,
+      state: state ?? this.state,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (mediaId.present) {
+      map['media_id'] = Variable<String>(mediaId.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (localPath.present) {
+      map['local_path'] = Variable<String>(localPath.value);
+    }
+    if (byteSize.present) {
+      map['byte_size'] = Variable<int>(byteSize.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MediaVersionsTableCompanion(')
+          ..write('mediaId: $mediaId, ')
+          ..write('version: $version, ')
+          ..write('role: $role, ')
+          ..write('localPath: $localPath, ')
+          ..write('byteSize: $byteSize, ')
+          ..write('state: $state, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $VaultMetaTableTable extends VaultMetaTable
     with TableInfo<$VaultMetaTableTable, VaultMetaEntity> {
   @override
@@ -4214,6 +4628,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $ReplacedValuesTableTable replacedValuesTable =
       $ReplacedValuesTableTable(this);
+  late final $MediaVersionsTableTable mediaVersionsTable =
+      $MediaVersionsTableTable(this);
   late final $VaultMetaTableTable vaultMetaTable = $VaultMetaTableTable(this);
   late final $ShareLinkUrlCacheTableTable shareLinkUrlCacheTable =
       $ShareLinkUrlCacheTableTable(this);
@@ -4227,6 +4643,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pendingFileCleanupsTable,
     syncOutboxTable,
     replacedValuesTable,
+    mediaVersionsTable,
     vaultMetaTable,
     shareLinkUrlCacheTable,
   ];
@@ -6174,6 +6591,249 @@ typedef $$ReplacedValuesTableTableProcessedTableManager =
       ReplacedValueEntity,
       PrefetchHooks Function()
     >;
+typedef $$MediaVersionsTableTableCreateCompanionBuilder =
+    MediaVersionsTableCompanion Function({
+      required String mediaId,
+      required int version,
+      required String role,
+      required String localPath,
+      Value<int> byteSize,
+      Value<String> state,
+      Value<int> rowid,
+    });
+typedef $$MediaVersionsTableTableUpdateCompanionBuilder =
+    MediaVersionsTableCompanion Function({
+      Value<String> mediaId,
+      Value<int> version,
+      Value<String> role,
+      Value<String> localPath,
+      Value<int> byteSize,
+      Value<String> state,
+      Value<int> rowid,
+    });
+
+class $$MediaVersionsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $MediaVersionsTableTable> {
+  $$MediaVersionsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get mediaId => $composableBuilder(
+    column: $table.mediaId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get byteSize => $composableBuilder(
+    column: $table.byteSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MediaVersionsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $MediaVersionsTableTable> {
+  $$MediaVersionsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get mediaId => $composableBuilder(
+    column: $table.mediaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get byteSize => $composableBuilder(
+    column: $table.byteSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MediaVersionsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MediaVersionsTableTable> {
+  $$MediaVersionsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get mediaId =>
+      $composableBuilder(column: $table.mediaId, builder: (column) => column);
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get localPath =>
+      $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<int> get byteSize =>
+      $composableBuilder(column: $table.byteSize, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+}
+
+class $$MediaVersionsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MediaVersionsTableTable,
+          MediaVersionEntity,
+          $$MediaVersionsTableTableFilterComposer,
+          $$MediaVersionsTableTableOrderingComposer,
+          $$MediaVersionsTableTableAnnotationComposer,
+          $$MediaVersionsTableTableCreateCompanionBuilder,
+          $$MediaVersionsTableTableUpdateCompanionBuilder,
+          (
+            MediaVersionEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $MediaVersionsTableTable,
+              MediaVersionEntity
+            >,
+          ),
+          MediaVersionEntity,
+          PrefetchHooks Function()
+        > {
+  $$MediaVersionsTableTableTableManager(
+    _$AppDatabase db,
+    $MediaVersionsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MediaVersionsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MediaVersionsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MediaVersionsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> mediaId = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String> localPath = const Value.absent(),
+                Value<int> byteSize = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MediaVersionsTableCompanion(
+                mediaId: mediaId,
+                version: version,
+                role: role,
+                localPath: localPath,
+                byteSize: byteSize,
+                state: state,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String mediaId,
+                required int version,
+                required String role,
+                required String localPath,
+                Value<int> byteSize = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MediaVersionsTableCompanion.insert(
+                mediaId: mediaId,
+                version: version,
+                role: role,
+                localPath: localPath,
+                byteSize: byteSize,
+                state: state,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$MediaVersionsTableTable, MediaVersionEntity>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $MediaVersionsTableTable,
+                    MediaVersionEntity
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MediaVersionsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MediaVersionsTableTable,
+      MediaVersionEntity,
+      $$MediaVersionsTableTableFilterComposer,
+      $$MediaVersionsTableTableOrderingComposer,
+      $$MediaVersionsTableTableAnnotationComposer,
+      $$MediaVersionsTableTableCreateCompanionBuilder,
+      $$MediaVersionsTableTableUpdateCompanionBuilder,
+      (
+        MediaVersionEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $MediaVersionsTableTable,
+          MediaVersionEntity
+        >,
+      ),
+      MediaVersionEntity,
+      PrefetchHooks Function()
+    >;
 typedef $$VaultMetaTableTableCreateCompanionBuilder =
     VaultMetaTableCompanion Function({
       required String id,
@@ -6628,6 +7288,8 @@ class $AppDatabaseManager {
       $$SyncOutboxTableTableTableManager(_db, _db.syncOutboxTable);
   $$ReplacedValuesTableTableTableManager get replacedValuesTable =>
       $$ReplacedValuesTableTableTableManager(_db, _db.replacedValuesTable);
+  $$MediaVersionsTableTableTableManager get mediaVersionsTable =>
+      $$MediaVersionsTableTableTableManager(_db, _db.mediaVersionsTable);
   $$VaultMetaTableTableTableManager get vaultMetaTable =>
       $$VaultMetaTableTableTableManager(_db, _db.vaultMetaTable);
   $$ShareLinkUrlCacheTableTableTableManager get shareLinkUrlCacheTable =>

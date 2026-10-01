@@ -1,14 +1,20 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:drift/drift.dart' show OrderingTerm, driftRuntimeOptions;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:artkiddo_core/src/local/database/app_database.dart';
+import 'package:artkiddo_core/src/local/storage/local_vault.dart';
+import 'package:artkiddo_core/src/local/storage/media_versions.dart';
 import 'package:artkiddo_core/src/sync/sync_outbox.dart';
 
 import '../../generated/migrations/schema.dart';
 import '../../generated/migrations/schema_v1.dart' show DatabaseAtV1;
 import '../../generated/migrations/schema_v3.dart' show DatabaseAtV3;
 import '../../generated/migrations/schema_v4.dart' show DatabaseAtV4;
+import '../../generated/migrations/schema_v5.dart' show DatabaseAtV5;
 
 /// ADR 0007 reset the local vault to `schemaVersion = 1` and stated that
 /// future schema changes "resume normal practice (schema snapshot, and a
@@ -21,7 +27,7 @@ import '../../generated/migrations/schema_v4.dart' show DatabaseAtV4;
 ///
 /// Both are additive `addColumn` steps, which is exactly the kind of change
 /// that looks too trivial to test and then silently drops a column on one
-/// path. These tests pin every reachable upgrade, including the v1 -> v5 jump
+/// path. These tests pin every reachable upgrade, including the v1 -> v6 jump
 /// a device that skipped a release actually takes.
 void main() {
   late SchemaVerifier verifier;
@@ -39,11 +45,11 @@ void main() {
   // is the common case for a user who updates infrequently, and it is the
   // path where a forgotten `if (from < N)` branch actually bites.
   //
-  // The target is always 5 because `migrateAndValidate` upgrades through
+  // The target is always 6 because `migrateAndValidate` upgrades through
   // `AppDatabase`'s own `schemaVersion` — asking it to stop at an
   // intermediate version would validate the current schema against an older
   // snapshot and always fail.
-  for (final from in const [1, 2, 3, 4]) {
+  for (final from in const [1, 2, 3, 4, 5]) {
     test('migrates a v$from vault to the current schema', () async {
       final connection = await verifier.startAt(from);
       final db = AppDatabase.forTesting(connection);
@@ -53,7 +59,7 @@ void main() {
     });
   }
 
-  test('a v1 -> v5 upgrade preserves the rows already in the vault', () async {
+  test('a v1 -> v6 upgrade preserves the rows already in the vault', () async {
     // Written in raw SQL on purpose: the point is to prove that a row
     // inserted through the *old* physical shape survives, so going through
     // today's typed API would defeat the test.
@@ -70,7 +76,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 5);
+    await verifier.migrateAndValidate(db, 6);
 
     final children = await db.select(db.childrenTable).get();
     expect(children, hasLength(1));
@@ -115,7 +121,7 @@ void main() {
     await oldDb.close();
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 5);
+    await verifier.migrateAndValidate(db, 6);
     final rows = await db.select(db.artworksTable).get();
     for (final row in rows) {
       expect(row.audioSyncIntent, row.id);
@@ -155,7 +161,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 5);
+    await verifier.migrateAndValidate(db, 6);
 
     final ops = await (db.select(
       db.syncOutboxTable,
@@ -194,4 +200,72 @@ void main() {
     );
     expect(await SyncOutboxRepository(db).countPending(), 4);
   });
+
+  test(
+    'v5 files are registered; the absent one is flagged, the artwork kept',
+    () async {
+      final docs = await Directory.systemTemp.createTemp('artkiddo_v6_vault_');
+      addTearDown(() => docs.delete(recursive: true));
+      File(p.join(docs.path, 'artworks', 'kept.jpg'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([1, 2, 3]);
+      File(p.join(docs.path, 'audio', 'kept.m4a'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([4, 5]);
+
+      final schema = await verifier.schemaAt(5);
+      final oldDb = DatabaseAtV5(schema.newConnection());
+      await oldDb.customStatement(
+        "INSERT INTO children (id,name,birth_date,created_at,updated_at,sync_state) VALUES ('c','Léa',1,1,1,'localOnly')",
+      );
+      for (final row in [
+        ['kept', 'artworks/kept.jpg', 'audio/kept.m4a'],
+        ['lost', 'artworks/lost.jpg', 'audio/lost.m4a'],
+        ['silent', 'artworks/silent.jpg', null],
+      ]) {
+        await oldDb.customStatement(
+          'INSERT INTO artworks (id,child_id,created_at,relative_image_path,relative_audio_path,audio_byte_size) VALUES (?, ?, 1, ?, ?, 2)',
+          [row[0], 'c', row[1], row[2]],
+        );
+      }
+      await oldDb.close();
+
+      final db = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(db.close);
+      await verifier.migrateAndValidate(db, 6);
+
+      final registered = await db.select(db.mediaVersionsTable).get();
+      expect(registered, hasLength(5));
+      expect(
+        registered.every((r) => r.version == 1 && r.state == 'present'),
+        isTrue,
+      );
+
+      final vault = LocalVault(documentsDirProvider: () async => docs);
+      final changed = await MediaVersionsRepository(db).reconcile(vault);
+
+      expect(changed, 4, reason: 'every entry whose size or state moved');
+      final byPath = {
+        for (final r in await db.select(db.mediaVersionsTable).get())
+          r.localPath: r,
+      };
+      expect(byPath['artworks/kept.jpg']!.state, 'present');
+      expect(byPath['artworks/kept.jpg']!.byteSize, 3);
+      expect(byPath['audio/kept.m4a']!.byteSize, 2);
+      expect(byPath['artworks/lost.jpg']!.state, 'missing');
+      expect(byPath['audio/lost.m4a']!.state, 'missing');
+      expect(byPath['artworks/silent.jpg']!.state, 'missing');
+
+      // Every artwork row is exactly as before.
+      final artworks = await db.select(db.artworksTable).get();
+      expect(
+        artworks.map((a) => a.id),
+        unorderedEquals(['kept', 'lost', 'silent']),
+      );
+      expect(
+        artworks.singleWhere((a) => a.id == 'lost').relativeAudioPath,
+        'audio/lost.m4a',
+      );
+    },
+  );
 }
