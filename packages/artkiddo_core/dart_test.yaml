@@ -1,0 +1,4 @@
+tags:
+  # Reproductions of confirmed data-loss bugs. They are skipped by default and
+  # run with: flutter test --run-skipped --tags known-loss
+  known-loss:
