@@ -1,12 +1,14 @@
-import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/drift.dart' show OrderingTerm, driftRuntimeOptions;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:artkiddo_core/src/local/database/app_database.dart';
+import 'package:artkiddo_core/src/sync/sync_outbox.dart';
 
 import '../../generated/migrations/schema.dart';
 import '../../generated/migrations/schema_v1.dart' show DatabaseAtV1;
 import '../../generated/migrations/schema_v3.dart' show DatabaseAtV3;
+import '../../generated/migrations/schema_v4.dart' show DatabaseAtV4;
 
 /// ADR 0007 reset the local vault to `schemaVersion = 1` and stated that
 /// future schema changes "resume normal practice (schema snapshot, and a
@@ -19,7 +21,7 @@ import '../../generated/migrations/schema_v3.dart' show DatabaseAtV3;
 ///
 /// Both are additive `addColumn` steps, which is exactly the kind of change
 /// that looks too trivial to test and then silently drops a column on one
-/// path. These tests pin every reachable upgrade, including the v1 -> v4 jump
+/// path. These tests pin every reachable upgrade, including the v1 -> v5 jump
 /// a device that skipped a release actually takes.
 void main() {
   late SchemaVerifier verifier;
@@ -37,11 +39,11 @@ void main() {
   // is the common case for a user who updates infrequently, and it is the
   // path where a forgotten `if (from < N)` branch actually bites.
   //
-  // The target is always 4 because `migrateAndValidate` upgrades through
+  // The target is always 5 because `migrateAndValidate` upgrades through
   // `AppDatabase`'s own `schemaVersion` — asking it to stop at an
   // intermediate version would validate the current schema against an older
   // snapshot and always fail.
-  for (final from in const [1, 2, 3]) {
+  for (final from in const [1, 2, 3, 4]) {
     test('migrates a v$from vault to the current schema', () async {
       final connection = await verifier.startAt(from);
       final db = AppDatabase.forTesting(connection);
@@ -51,7 +53,7 @@ void main() {
     });
   }
 
-  test('a v1 -> v4 upgrade preserves the rows already in the vault', () async {
+  test('a v1 -> v5 upgrade preserves the rows already in the vault', () async {
     // Written in raw SQL on purpose: the point is to prove that a row
     // inserted through the *old* physical shape survives, so going through
     // today's typed API would defeat the test.
@@ -68,7 +70,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 4);
+    await verifier.migrateAndValidate(db, 5);
 
     final children = await db.select(db.childrenTable).get();
     expect(children, hasLength(1));
@@ -113,7 +115,7 @@ void main() {
     await oldDb.close();
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 4);
+    await verifier.migrateAndValidate(db, 5);
     final rows = await db.select(db.artworksTable).get();
     for (final row in rows) {
       expect(row.audioSyncIntent, row.id);
@@ -128,5 +130,68 @@ void main() {
       rows.firstWhere((r) => r.id == 'keep').audioObjectKey,
       'remote-voice',
     );
+  });
+
+  test('v4 outbox entries become pending operations with their own id', () async {
+    final schema = await verifier.schemaAt(4);
+    final oldDb = DatabaseAtV4(schema.newConnection());
+    await oldDb.customStatement(
+      "INSERT INTO children (id,name,birth_date,created_at,updated_at,sync_state) VALUES ('c','Léa',1,1,1,'localOnly')",
+    );
+    await oldDb.customStatement(
+      "INSERT INTO artworks (id,child_id,created_at,sync_state,story) VALUES ('a','c',1,'localOnly','Un dragon')",
+    );
+    for (final entry in [
+      ['child', 'c', 'upsert', 0, null],
+      ['artwork', 'a', 'upsert', 2, 'boom'],
+      ['artwork', 'z', 'delete', 0, null],
+    ]) {
+      await oldDb.customStatement(
+        'INSERT INTO sync_outbox (entity,entity_id,op,attempts,last_error,created_at) VALUES (?,?,?,?,?,1)',
+        entry,
+      );
+    }
+    await oldDb.close();
+
+    final db = AppDatabase.forTesting(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, 5);
+
+    final ops = await (db.select(
+      db.syncOutboxTable,
+    )..orderBy([(t) => OrderingTerm(expression: t.seq)])).get();
+    expect(ops.map((o) => (o.entity, o.entityId, o.op, o.attempts)), [
+      ('child', 'c', 'upsert', 0),
+      ('artwork', 'a', 'upsert', 2),
+      ('artwork', 'z', 'delete', 0),
+    ]);
+    expect(ops[1].lastError, 'boom');
+    final uuidV4 = RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    );
+    for (final op in ops) {
+      expect(op.opId, matches(uuidV4));
+      expect(op.state, 'pending');
+      expect(op.patchJson, isNull, reason: 'read from the row when sent');
+    }
+    expect(ops.map((o) => o.opId).toSet(), hasLength(3));
+
+    // The rows the operations point at keep their data and start at revision 0.
+    final child = await db.select(db.childrenTable).getSingle();
+    expect((child.name, child.nameRev, child.birthDateRev), ('Léa', 0, 0));
+    final artwork = await db.select(db.artworksTable).getSingle();
+    expect(
+      (artwork.story, artwork.storyRev, artwork.drawnAtRev),
+      ('Un dragon', 0, 0),
+    );
+    expect(await db.select(db.replacedValuesTable).get(), isEmpty);
+
+    // A new operation can be queued on the migrated table.
+    await SyncOutboxRepository(db).enqueue(
+      entity: SyncEntityKind.child,
+      entityId: 'c2',
+      op: SyncOutboxOp.upsert,
+    );
+    expect(await SyncOutboxRepository(db).countPending(), 4);
   });
 }

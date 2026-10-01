@@ -76,6 +76,42 @@ class $ChildrenTableTable extends ChildrenTable
     requiredDuringInsert: false,
     defaultValue: const Constant('localOnly'),
   );
+  static const VerificationMeta _nameRevMeta = const VerificationMeta(
+    'nameRev',
+  );
+  @override
+  late final GeneratedColumn<int> nameRev = GeneratedColumn<int>(
+    'name_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _birthDateRevMeta = const VerificationMeta(
+    'birthDateRev',
+  );
+  @override
+  late final GeneratedColumn<int> birthDateRev = GeneratedColumn<int>(
+    'birth_date_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lifecycleRevMeta = const VerificationMeta(
+    'lifecycleRev',
+  );
+  @override
+  late final GeneratedColumn<int> lifecycleRev = GeneratedColumn<int>(
+    'lifecycle_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -84,6 +120,9 @@ class $ChildrenTableTable extends ChildrenTable
     createdAt,
     updatedAt,
     syncState,
+    nameRev,
+    birthDateRev,
+    lifecycleRev,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -140,6 +179,30 @@ class $ChildrenTableTable extends ChildrenTable
         syncState.isAcceptableOrUnknown(data['sync_state']!, _syncStateMeta),
       );
     }
+    if (data.containsKey('name_rev')) {
+      context.handle(
+        _nameRevMeta,
+        nameRev.isAcceptableOrUnknown(data['name_rev']!, _nameRevMeta),
+      );
+    }
+    if (data.containsKey('birth_date_rev')) {
+      context.handle(
+        _birthDateRevMeta,
+        birthDateRev.isAcceptableOrUnknown(
+          data['birth_date_rev']!,
+          _birthDateRevMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lifecycle_rev')) {
+      context.handle(
+        _lifecycleRevMeta,
+        lifecycleRev.isAcceptableOrUnknown(
+          data['lifecycle_rev']!,
+          _lifecycleRevMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -173,6 +236,18 @@ class $ChildrenTableTable extends ChildrenTable
         DriftSqlType.string,
         data['${effectivePrefix}sync_state'],
       )!,
+      nameRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}name_rev'],
+      )!,
+      birthDateRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}birth_date_rev'],
+      )!,
+      lifecycleRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lifecycle_rev'],
+      )!,
     );
   }
 
@@ -189,6 +264,13 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String syncState;
+
+  /// Last remote revision known for each synchronized field
+  /// (`ChildSyncFields`); `0` until the remote side has acknowledged it. A
+  /// new operation names these as its base revisions.
+  final int nameRev;
+  final int birthDateRev;
+  final int lifecycleRev;
   const ChildEntity({
     required this.id,
     required this.name,
@@ -196,6 +278,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     required this.createdAt,
     required this.updatedAt,
     required this.syncState,
+    required this.nameRev,
+    required this.birthDateRev,
+    required this.lifecycleRev,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -206,6 +291,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['sync_state'] = Variable<String>(syncState);
+    map['name_rev'] = Variable<int>(nameRev);
+    map['birth_date_rev'] = Variable<int>(birthDateRev);
+    map['lifecycle_rev'] = Variable<int>(lifecycleRev);
     return map;
   }
 
@@ -217,6 +305,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       syncState: Value(syncState),
+      nameRev: Value(nameRev),
+      birthDateRev: Value(birthDateRev),
+      lifecycleRev: Value(lifecycleRev),
     );
   }
 
@@ -232,6 +323,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncState: serializer.fromJson<String>(json['syncState']),
+      nameRev: serializer.fromJson<int>(json['nameRev']),
+      birthDateRev: serializer.fromJson<int>(json['birthDateRev']),
+      lifecycleRev: serializer.fromJson<int>(json['lifecycleRev']),
     );
   }
   @override
@@ -244,6 +338,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncState': serializer.toJson<String>(syncState),
+      'nameRev': serializer.toJson<int>(nameRev),
+      'birthDateRev': serializer.toJson<int>(birthDateRev),
+      'lifecycleRev': serializer.toJson<int>(lifecycleRev),
     };
   }
 
@@ -254,6 +351,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? syncState,
+    int? nameRev,
+    int? birthDateRev,
+    int? lifecycleRev,
   }) => ChildEntity(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -261,6 +361,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     syncState: syncState ?? this.syncState,
+    nameRev: nameRev ?? this.nameRev,
+    birthDateRev: birthDateRev ?? this.birthDateRev,
+    lifecycleRev: lifecycleRev ?? this.lifecycleRev,
   );
   ChildEntity copyWithCompanion(ChildrenTableCompanion data) {
     return ChildEntity(
@@ -270,6 +373,13 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncState: data.syncState.present ? data.syncState.value : this.syncState,
+      nameRev: data.nameRev.present ? data.nameRev.value : this.nameRev,
+      birthDateRev: data.birthDateRev.present
+          ? data.birthDateRev.value
+          : this.birthDateRev,
+      lifecycleRev: data.lifecycleRev.present
+          ? data.lifecycleRev.value
+          : this.lifecycleRev,
     );
   }
 
@@ -281,14 +391,26 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
           ..write('birthDate: $birthDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('syncState: $syncState')
+          ..write('syncState: $syncState, ')
+          ..write('nameRev: $nameRev, ')
+          ..write('birthDateRev: $birthDateRev, ')
+          ..write('lifecycleRev: $lifecycleRev')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, birthDate, createdAt, updatedAt, syncState);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    birthDate,
+    createdAt,
+    updatedAt,
+    syncState,
+    nameRev,
+    birthDateRev,
+    lifecycleRev,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -298,7 +420,10 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
           other.birthDate == this.birthDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.syncState == this.syncState);
+          other.syncState == this.syncState &&
+          other.nameRev == this.nameRev &&
+          other.birthDateRev == this.birthDateRev &&
+          other.lifecycleRev == this.lifecycleRev);
 }
 
 class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
@@ -308,6 +433,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<String> syncState;
+  final Value<int> nameRev;
+  final Value<int> birthDateRev;
+  final Value<int> lifecycleRev;
   final Value<int> rowid;
   const ChildrenTableCompanion({
     this.id = const Value.absent(),
@@ -316,6 +444,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncState = const Value.absent(),
+    this.nameRev = const Value.absent(),
+    this.birthDateRev = const Value.absent(),
+    this.lifecycleRev = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChildrenTableCompanion.insert({
@@ -325,6 +456,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.syncState = const Value.absent(),
+    this.nameRev = const Value.absent(),
+    this.birthDateRev = const Value.absent(),
+    this.lifecycleRev = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -338,6 +472,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncState,
+    Expression<int>? nameRev,
+    Expression<int>? birthDateRev,
+    Expression<int>? lifecycleRev,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -347,6 +484,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncState != null) 'sync_state': syncState,
+      if (nameRev != null) 'name_rev': nameRev,
+      if (birthDateRev != null) 'birth_date_rev': birthDateRev,
+      if (lifecycleRev != null) 'lifecycle_rev': lifecycleRev,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -358,6 +498,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<String>? syncState,
+    Value<int>? nameRev,
+    Value<int>? birthDateRev,
+    Value<int>? lifecycleRev,
     Value<int>? rowid,
   }) {
     return ChildrenTableCompanion(
@@ -367,6 +510,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       syncState: syncState ?? this.syncState,
+      nameRev: nameRev ?? this.nameRev,
+      birthDateRev: birthDateRev ?? this.birthDateRev,
+      lifecycleRev: lifecycleRev ?? this.lifecycleRev,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -392,6 +538,15 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     if (syncState.present) {
       map['sync_state'] = Variable<String>(syncState.value);
     }
+    if (nameRev.present) {
+      map['name_rev'] = Variable<int>(nameRev.value);
+    }
+    if (birthDateRev.present) {
+      map['birth_date_rev'] = Variable<int>(birthDateRev.value);
+    }
+    if (lifecycleRev.present) {
+      map['lifecycle_rev'] = Variable<int>(lifecycleRev.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -407,6 +562,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncState: $syncState, ')
+          ..write('nameRev: $nameRev, ')
+          ..write('birthDateRev: $birthDateRev, ')
+          ..write('lifecycleRev: $lifecycleRev, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -671,6 +829,42 @@ class $ArtworksTableTable extends ArtworksTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _storyRevMeta = const VerificationMeta(
+    'storyRev',
+  );
+  @override
+  late final GeneratedColumn<int> storyRev = GeneratedColumn<int>(
+    'story_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _drawnAtRevMeta = const VerificationMeta(
+    'drawnAtRev',
+  );
+  @override
+  late final GeneratedColumn<int> drawnAtRev = GeneratedColumn<int>(
+    'drawn_at_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lifecycleRevMeta = const VerificationMeta(
+    'lifecycleRev',
+  );
+  @override
+  late final GeneratedColumn<int> lifecycleRev = GeneratedColumn<int>(
+    'lifecycle_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -706,6 +900,9 @@ class $ArtworksTableTable extends ArtworksTable
     audioSyncIntent,
     audioConflict,
     addedBy,
+    storyRev,
+    drawnAtRev,
+    lifecycleRev,
     deletedAt,
   ];
   @override
@@ -894,6 +1091,30 @@ class $ArtworksTableTable extends ArtworksTable
         addedBy.isAcceptableOrUnknown(data['added_by']!, _addedByMeta),
       );
     }
+    if (data.containsKey('story_rev')) {
+      context.handle(
+        _storyRevMeta,
+        storyRev.isAcceptableOrUnknown(data['story_rev']!, _storyRevMeta),
+      );
+    }
+    if (data.containsKey('drawn_at_rev')) {
+      context.handle(
+        _drawnAtRevMeta,
+        drawnAtRev.isAcceptableOrUnknown(
+          data['drawn_at_rev']!,
+          _drawnAtRevMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lifecycle_rev')) {
+      context.handle(
+        _lifecycleRevMeta,
+        lifecycleRev.isAcceptableOrUnknown(
+          data['lifecycle_rev']!,
+          _lifecycleRevMeta,
+        ),
+      );
+    }
     if (data.containsKey('deleted_at')) {
       context.handle(
         _deletedAtMeta,
@@ -997,6 +1218,18 @@ class $ArtworksTableTable extends ArtworksTable
         DriftSqlType.string,
         data['${effectivePrefix}added_by'],
       ),
+      storyRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}story_rev'],
+      )!,
+      drawnAtRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}drawn_at_rev'],
+      )!,
+      lifecycleRev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lifecycle_rev'],
+      )!,
       deletedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
@@ -1038,6 +1271,12 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
   final String audioSyncIntent;
   final bool audioConflict;
   final String? addedBy;
+
+  /// Last remote revision known for each synchronized field
+  /// (`ArtworkSyncFields`). The audio revision is [audioRevision].
+  final int storyRev;
+  final int drawnAtRev;
+  final int lifecycleRev;
   final DateTime? deletedAt;
   const ArtworkEntity({
     required this.id,
@@ -1062,6 +1301,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     required this.audioSyncIntent,
     required this.audioConflict,
     this.addedBy,
+    required this.storyRev,
+    required this.drawnAtRev,
+    required this.lifecycleRev,
     this.deletedAt,
   });
   @override
@@ -1115,6 +1357,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     if (!nullToAbsent || addedBy != null) {
       map['added_by'] = Variable<String>(addedBy);
     }
+    map['story_rev'] = Variable<int>(storyRev);
+    map['drawn_at_rev'] = Variable<int>(drawnAtRev);
+    map['lifecycle_rev'] = Variable<int>(lifecycleRev);
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
@@ -1171,6 +1416,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       addedBy: addedBy == null && nullToAbsent
           ? const Value.absent()
           : Value(addedBy),
+      storyRev: Value(storyRev),
+      drawnAtRev: Value(drawnAtRev),
+      lifecycleRev: Value(lifecycleRev),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
@@ -1213,6 +1461,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       audioSyncIntent: serializer.fromJson<String>(json['audioSyncIntent']),
       audioConflict: serializer.fromJson<bool>(json['audioConflict']),
       addedBy: serializer.fromJson<String?>(json['addedBy']),
+      storyRev: serializer.fromJson<int>(json['storyRev']),
+      drawnAtRev: serializer.fromJson<int>(json['drawnAtRev']),
+      lifecycleRev: serializer.fromJson<int>(json['lifecycleRev']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
@@ -1242,6 +1493,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       'audioSyncIntent': serializer.toJson<String>(audioSyncIntent),
       'audioConflict': serializer.toJson<bool>(audioConflict),
       'addedBy': serializer.toJson<String?>(addedBy),
+      'storyRev': serializer.toJson<int>(storyRev),
+      'drawnAtRev': serializer.toJson<int>(drawnAtRev),
+      'lifecycleRev': serializer.toJson<int>(lifecycleRev),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
@@ -1269,6 +1523,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     String? audioSyncIntent,
     bool? audioConflict,
     Value<String?> addedBy = const Value.absent(),
+    int? storyRev,
+    int? drawnAtRev,
+    int? lifecycleRev,
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => ArtworkEntity(
     id: id ?? this.id,
@@ -1309,6 +1566,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     audioSyncIntent: audioSyncIntent ?? this.audioSyncIntent,
     audioConflict: audioConflict ?? this.audioConflict,
     addedBy: addedBy.present ? addedBy.value : this.addedBy,
+    storyRev: storyRev ?? this.storyRev,
+    drawnAtRev: drawnAtRev ?? this.drawnAtRev,
+    lifecycleRev: lifecycleRev ?? this.lifecycleRev,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   ArtworkEntity copyWithCompanion(ArtworksTableCompanion data) {
@@ -1363,6 +1623,13 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ? data.audioConflict.value
           : this.audioConflict,
       addedBy: data.addedBy.present ? data.addedBy.value : this.addedBy,
+      storyRev: data.storyRev.present ? data.storyRev.value : this.storyRev,
+      drawnAtRev: data.drawnAtRev.present
+          ? data.drawnAtRev.value
+          : this.drawnAtRev,
+      lifecycleRev: data.lifecycleRev.present
+          ? data.lifecycleRev.value
+          : this.lifecycleRev,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
@@ -1392,6 +1659,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ..write('audioSyncIntent: $audioSyncIntent, ')
           ..write('audioConflict: $audioConflict, ')
           ..write('addedBy: $addedBy, ')
+          ..write('storyRev: $storyRev, ')
+          ..write('drawnAtRev: $drawnAtRev, ')
+          ..write('lifecycleRev: $lifecycleRev, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
@@ -1421,6 +1691,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     audioSyncIntent,
     audioConflict,
     addedBy,
+    storyRev,
+    drawnAtRev,
+    lifecycleRev,
     deletedAt,
   ]);
   @override
@@ -1449,6 +1722,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           other.audioSyncIntent == this.audioSyncIntent &&
           other.audioConflict == this.audioConflict &&
           other.addedBy == this.addedBy &&
+          other.storyRev == this.storyRev &&
+          other.drawnAtRev == this.drawnAtRev &&
+          other.lifecycleRev == this.lifecycleRev &&
           other.deletedAt == this.deletedAt);
 }
 
@@ -1475,6 +1751,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
   final Value<String> audioSyncIntent;
   final Value<bool> audioConflict;
   final Value<String?> addedBy;
+  final Value<int> storyRev;
+  final Value<int> drawnAtRev;
+  final Value<int> lifecycleRev;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const ArtworksTableCompanion({
@@ -1500,6 +1779,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioSyncIntent = const Value.absent(),
     this.audioConflict = const Value.absent(),
     this.addedBy = const Value.absent(),
+    this.storyRev = const Value.absent(),
+    this.drawnAtRev = const Value.absent(),
+    this.lifecycleRev = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1526,6 +1808,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.audioSyncIntent = const Value.absent(),
     this.audioConflict = const Value.absent(),
     this.addedBy = const Value.absent(),
+    this.storyRev = const Value.absent(),
+    this.drawnAtRev = const Value.absent(),
+    this.lifecycleRev = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1554,6 +1839,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Expression<String>? audioSyncIntent,
     Expression<bool>? audioConflict,
     Expression<String>? addedBy,
+    Expression<int>? storyRev,
+    Expression<int>? drawnAtRev,
+    Expression<int>? lifecycleRev,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
@@ -1582,6 +1870,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       if (audioSyncIntent != null) 'audio_sync_intent': audioSyncIntent,
       if (audioConflict != null) 'audio_conflict': audioConflict,
       if (addedBy != null) 'added_by': addedBy,
+      if (storyRev != null) 'story_rev': storyRev,
+      if (drawnAtRev != null) 'drawn_at_rev': drawnAtRev,
+      if (lifecycleRev != null) 'lifecycle_rev': lifecycleRev,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1610,6 +1901,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Value<String>? audioSyncIntent,
     Value<bool>? audioConflict,
     Value<String?>? addedBy,
+    Value<int>? storyRev,
+    Value<int>? drawnAtRev,
+    Value<int>? lifecycleRev,
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
@@ -1636,6 +1930,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       audioSyncIntent: audioSyncIntent ?? this.audioSyncIntent,
       audioConflict: audioConflict ?? this.audioConflict,
       addedBy: addedBy ?? this.addedBy,
+      storyRev: storyRev ?? this.storyRev,
+      drawnAtRev: drawnAtRev ?? this.drawnAtRev,
+      lifecycleRev: lifecycleRev ?? this.lifecycleRev,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1710,6 +2007,15 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     if (addedBy.present) {
       map['added_by'] = Variable<String>(addedBy.value);
     }
+    if (storyRev.present) {
+      map['story_rev'] = Variable<int>(storyRev.value);
+    }
+    if (drawnAtRev.present) {
+      map['drawn_at_rev'] = Variable<int>(drawnAtRev.value);
+    }
+    if (lifecycleRev.present) {
+      map['lifecycle_rev'] = Variable<int>(lifecycleRev.value);
+    }
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
@@ -1744,6 +2050,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
           ..write('audioSyncIntent: $audioSyncIntent, ')
           ..write('audioConflict: $audioConflict, ')
           ..write('addedBy: $addedBy, ')
+          ..write('storyRev: $storyRev, ')
+          ..write('drawnAtRev: $drawnAtRev, ')
+          ..write('lifecycleRev: $lifecycleRev, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2005,6 +2314,21 @@ class $SyncOutboxTableTable extends SyncOutboxTable
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _opIdMeta = const VerificationMeta('opId');
+  @override
+  late final GeneratedColumn<String> opId = GeneratedColumn<String>(
+    'op_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const CustomExpression<String>(
+      "(lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || "
+      "substr(hex(randomblob(2)), 2) || '-' || "
+      "substr('89ab', 1 + (abs(random()) % 4), 1) || "
+      "substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))))",
+    ),
+  );
   static const VerificationMeta _entityMeta = const VerificationMeta('entity');
   @override
   late final GeneratedColumn<String> entity = GeneratedColumn<String>(
@@ -2033,6 +2357,27 @@ class $SyncOutboxTableTable extends SyncOutboxTable
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _patchJsonMeta = const VerificationMeta(
+    'patchJson',
+  );
+  @override
+  late final GeneratedColumn<String> patchJson = GeneratedColumn<String>(
+    'patch_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
   );
   static const VerificationMeta _attemptsMeta = const VerificationMeta(
     'attempts',
@@ -2083,9 +2428,12 @@ class $SyncOutboxTableTable extends SyncOutboxTable
   @override
   List<GeneratedColumn> get $columns => [
     seq,
+    opId,
     entity,
     entityId,
     op,
+    patchJson,
+    state,
     attempts,
     nextAttemptAt,
     lastError,
@@ -2109,6 +2457,12 @@ class $SyncOutboxTableTable extends SyncOutboxTable
         seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
       );
     }
+    if (data.containsKey('op_id')) {
+      context.handle(
+        _opIdMeta,
+        opId.isAcceptableOrUnknown(data['op_id']!, _opIdMeta),
+      );
+    }
     if (data.containsKey('entity')) {
       context.handle(
         _entityMeta,
@@ -2129,6 +2483,18 @@ class $SyncOutboxTableTable extends SyncOutboxTable
       context.handle(_opMeta, op.isAcceptableOrUnknown(data['op']!, _opMeta));
     } else if (isInserting) {
       context.missing(_opMeta);
+    }
+    if (data.containsKey('patch_json')) {
+      context.handle(
+        _patchJsonMeta,
+        patchJson.isAcceptableOrUnknown(data['patch_json']!, _patchJsonMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
     }
     if (data.containsKey('attempts')) {
       context.handle(
@@ -2165,12 +2531,20 @@ class $SyncOutboxTableTable extends SyncOutboxTable
   @override
   Set<GeneratedColumn> get $primaryKey => {seq};
   @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {opId},
+  ];
+  @override
   SyncOutboxEntryEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SyncOutboxEntryEntity(
       seq: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}seq'],
+      )!,
+      opId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}op_id'],
       )!,
       entity: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2183,6 +2557,14 @@ class $SyncOutboxTableTable extends SyncOutboxTable
       op: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}op'],
+      )!,
+      patchJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}patch_json'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
       )!,
       attempts: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -2212,18 +2594,32 @@ class $SyncOutboxTableTable extends SyncOutboxTable
 class SyncOutboxEntryEntity extends DataClass
     implements Insertable<SyncOutboxEntryEntity> {
   final int seq;
+  final String opId;
+
+  /// Kept as `entity` (the entity type) so existing readers of the table keep
+  /// working.
   final String entity;
   final String entityId;
   final String op;
+
+  /// `EntityPatch.toJson`. Null for an operation that has no field snapshot
+  /// yet: the content is then read from the row when the operation is sent.
+  final String? patchJson;
+
+  /// 'pending' | 'in_flight'.
+  final String state;
   final int attempts;
   final DateTime? nextAttemptAt;
   final String? lastError;
   final DateTime createdAt;
   const SyncOutboxEntryEntity({
     required this.seq,
+    required this.opId,
     required this.entity,
     required this.entityId,
     required this.op,
+    this.patchJson,
+    required this.state,
     required this.attempts,
     this.nextAttemptAt,
     this.lastError,
@@ -2233,9 +2629,14 @@ class SyncOutboxEntryEntity extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['seq'] = Variable<int>(seq);
+    map['op_id'] = Variable<String>(opId);
     map['entity'] = Variable<String>(entity);
     map['entity_id'] = Variable<String>(entityId);
     map['op'] = Variable<String>(op);
+    if (!nullToAbsent || patchJson != null) {
+      map['patch_json'] = Variable<String>(patchJson);
+    }
+    map['state'] = Variable<String>(state);
     map['attempts'] = Variable<int>(attempts);
     if (!nullToAbsent || nextAttemptAt != null) {
       map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
@@ -2250,9 +2651,14 @@ class SyncOutboxEntryEntity extends DataClass
   SyncOutboxTableCompanion toCompanion(bool nullToAbsent) {
     return SyncOutboxTableCompanion(
       seq: Value(seq),
+      opId: Value(opId),
       entity: Value(entity),
       entityId: Value(entityId),
       op: Value(op),
+      patchJson: patchJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(patchJson),
+      state: Value(state),
       attempts: Value(attempts),
       nextAttemptAt: nextAttemptAt == null && nullToAbsent
           ? const Value.absent()
@@ -2271,9 +2677,12 @@ class SyncOutboxEntryEntity extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SyncOutboxEntryEntity(
       seq: serializer.fromJson<int>(json['seq']),
+      opId: serializer.fromJson<String>(json['opId']),
       entity: serializer.fromJson<String>(json['entity']),
       entityId: serializer.fromJson<String>(json['entityId']),
       op: serializer.fromJson<String>(json['op']),
+      patchJson: serializer.fromJson<String?>(json['patchJson']),
+      state: serializer.fromJson<String>(json['state']),
       attempts: serializer.fromJson<int>(json['attempts']),
       nextAttemptAt: serializer.fromJson<DateTime?>(json['nextAttemptAt']),
       lastError: serializer.fromJson<String?>(json['lastError']),
@@ -2285,9 +2694,12 @@ class SyncOutboxEntryEntity extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'seq': serializer.toJson<int>(seq),
+      'opId': serializer.toJson<String>(opId),
       'entity': serializer.toJson<String>(entity),
       'entityId': serializer.toJson<String>(entityId),
       'op': serializer.toJson<String>(op),
+      'patchJson': serializer.toJson<String?>(patchJson),
+      'state': serializer.toJson<String>(state),
       'attempts': serializer.toJson<int>(attempts),
       'nextAttemptAt': serializer.toJson<DateTime?>(nextAttemptAt),
       'lastError': serializer.toJson<String?>(lastError),
@@ -2297,18 +2709,24 @@ class SyncOutboxEntryEntity extends DataClass
 
   SyncOutboxEntryEntity copyWith({
     int? seq,
+    String? opId,
     String? entity,
     String? entityId,
     String? op,
+    Value<String?> patchJson = const Value.absent(),
+    String? state,
     int? attempts,
     Value<DateTime?> nextAttemptAt = const Value.absent(),
     Value<String?> lastError = const Value.absent(),
     DateTime? createdAt,
   }) => SyncOutboxEntryEntity(
     seq: seq ?? this.seq,
+    opId: opId ?? this.opId,
     entity: entity ?? this.entity,
     entityId: entityId ?? this.entityId,
     op: op ?? this.op,
+    patchJson: patchJson.present ? patchJson.value : this.patchJson,
+    state: state ?? this.state,
     attempts: attempts ?? this.attempts,
     nextAttemptAt: nextAttemptAt.present
         ? nextAttemptAt.value
@@ -2319,9 +2737,12 @@ class SyncOutboxEntryEntity extends DataClass
   SyncOutboxEntryEntity copyWithCompanion(SyncOutboxTableCompanion data) {
     return SyncOutboxEntryEntity(
       seq: data.seq.present ? data.seq.value : this.seq,
+      opId: data.opId.present ? data.opId.value : this.opId,
       entity: data.entity.present ? data.entity.value : this.entity,
       entityId: data.entityId.present ? data.entityId.value : this.entityId,
       op: data.op.present ? data.op.value : this.op,
+      patchJson: data.patchJson.present ? data.patchJson.value : this.patchJson,
+      state: data.state.present ? data.state.value : this.state,
       attempts: data.attempts.present ? data.attempts.value : this.attempts,
       nextAttemptAt: data.nextAttemptAt.present
           ? data.nextAttemptAt.value
@@ -2335,9 +2756,12 @@ class SyncOutboxEntryEntity extends DataClass
   String toString() {
     return (StringBuffer('SyncOutboxEntryEntity(')
           ..write('seq: $seq, ')
+          ..write('opId: $opId, ')
           ..write('entity: $entity, ')
           ..write('entityId: $entityId, ')
           ..write('op: $op, ')
+          ..write('patchJson: $patchJson, ')
+          ..write('state: $state, ')
           ..write('attempts: $attempts, ')
           ..write('nextAttemptAt: $nextAttemptAt, ')
           ..write('lastError: $lastError, ')
@@ -2349,9 +2773,12 @@ class SyncOutboxEntryEntity extends DataClass
   @override
   int get hashCode => Object.hash(
     seq,
+    opId,
     entity,
     entityId,
     op,
+    patchJson,
+    state,
     attempts,
     nextAttemptAt,
     lastError,
@@ -2362,9 +2789,12 @@ class SyncOutboxEntryEntity extends DataClass
       identical(this, other) ||
       (other is SyncOutboxEntryEntity &&
           other.seq == this.seq &&
+          other.opId == this.opId &&
           other.entity == this.entity &&
           other.entityId == this.entityId &&
           other.op == this.op &&
+          other.patchJson == this.patchJson &&
+          other.state == this.state &&
           other.attempts == this.attempts &&
           other.nextAttemptAt == this.nextAttemptAt &&
           other.lastError == this.lastError &&
@@ -2373,18 +2803,24 @@ class SyncOutboxEntryEntity extends DataClass
 
 class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
   final Value<int> seq;
+  final Value<String> opId;
   final Value<String> entity;
   final Value<String> entityId;
   final Value<String> op;
+  final Value<String?> patchJson;
+  final Value<String> state;
   final Value<int> attempts;
   final Value<DateTime?> nextAttemptAt;
   final Value<String?> lastError;
   final Value<DateTime> createdAt;
   const SyncOutboxTableCompanion({
     this.seq = const Value.absent(),
+    this.opId = const Value.absent(),
     this.entity = const Value.absent(),
     this.entityId = const Value.absent(),
     this.op = const Value.absent(),
+    this.patchJson = const Value.absent(),
+    this.state = const Value.absent(),
     this.attempts = const Value.absent(),
     this.nextAttemptAt = const Value.absent(),
     this.lastError = const Value.absent(),
@@ -2392,9 +2828,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
   });
   SyncOutboxTableCompanion.insert({
     this.seq = const Value.absent(),
+    this.opId = const Value.absent(),
     required String entity,
     required String entityId,
     required String op,
+    this.patchJson = const Value.absent(),
+    this.state = const Value.absent(),
     this.attempts = const Value.absent(),
     this.nextAttemptAt = const Value.absent(),
     this.lastError = const Value.absent(),
@@ -2405,9 +2844,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
        createdAt = Value(createdAt);
   static Insertable<SyncOutboxEntryEntity> custom({
     Expression<int>? seq,
+    Expression<String>? opId,
     Expression<String>? entity,
     Expression<String>? entityId,
     Expression<String>? op,
+    Expression<String>? patchJson,
+    Expression<String>? state,
     Expression<int>? attempts,
     Expression<DateTime>? nextAttemptAt,
     Expression<String>? lastError,
@@ -2415,9 +2857,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
   }) {
     return RawValuesInsertable({
       if (seq != null) 'seq': seq,
+      if (opId != null) 'op_id': opId,
       if (entity != null) 'entity': entity,
       if (entityId != null) 'entity_id': entityId,
       if (op != null) 'op': op,
+      if (patchJson != null) 'patch_json': patchJson,
+      if (state != null) 'state': state,
       if (attempts != null) 'attempts': attempts,
       if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
       if (lastError != null) 'last_error': lastError,
@@ -2427,9 +2872,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
 
   SyncOutboxTableCompanion copyWith({
     Value<int>? seq,
+    Value<String>? opId,
     Value<String>? entity,
     Value<String>? entityId,
     Value<String>? op,
+    Value<String?>? patchJson,
+    Value<String>? state,
     Value<int>? attempts,
     Value<DateTime?>? nextAttemptAt,
     Value<String?>? lastError,
@@ -2437,9 +2885,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
   }) {
     return SyncOutboxTableCompanion(
       seq: seq ?? this.seq,
+      opId: opId ?? this.opId,
       entity: entity ?? this.entity,
       entityId: entityId ?? this.entityId,
       op: op ?? this.op,
+      patchJson: patchJson ?? this.patchJson,
+      state: state ?? this.state,
       attempts: attempts ?? this.attempts,
       nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
       lastError: lastError ?? this.lastError,
@@ -2453,6 +2904,9 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
     if (seq.present) {
       map['seq'] = Variable<int>(seq.value);
     }
+    if (opId.present) {
+      map['op_id'] = Variable<String>(opId.value);
+    }
     if (entity.present) {
       map['entity'] = Variable<String>(entity.value);
     }
@@ -2461,6 +2915,12 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
     }
     if (op.present) {
       map['op'] = Variable<String>(op.value);
+    }
+    if (patchJson.present) {
+      map['patch_json'] = Variable<String>(patchJson.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
     }
     if (attempts.present) {
       map['attempts'] = Variable<int>(attempts.value);
@@ -2481,13 +2941,533 @@ class SyncOutboxTableCompanion extends UpdateCompanion<SyncOutboxEntryEntity> {
   String toString() {
     return (StringBuffer('SyncOutboxTableCompanion(')
           ..write('seq: $seq, ')
+          ..write('opId: $opId, ')
           ..write('entity: $entity, ')
           ..write('entityId: $entityId, ')
           ..write('op: $op, ')
+          ..write('patchJson: $patchJson, ')
+          ..write('state: $state, ')
           ..write('attempts: $attempts, ')
           ..write('nextAttemptAt: $nextAttemptAt, ')
           ..write('lastError: $lastError, ')
           ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReplacedValuesTableTable extends ReplacedValuesTable
+    with TableInfo<$ReplacedValuesTableTable, ReplacedValueEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReplacedValuesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityTypeMeta = const VerificationMeta(
+    'entityType',
+  );
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldMeta = const VerificationMeta('field');
+  @override
+  late final GeneratedColumn<String> field = GeneratedColumn<String>(
+    'field',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueJsonMeta = const VerificationMeta(
+    'valueJson',
+  );
+  @override
+  late final GeneratedColumn<String> valueJson = GeneratedColumn<String>(
+    'value_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaRefMeta = const VerificationMeta(
+    'mediaRef',
+  );
+  @override
+  late final GeneratedColumn<String> mediaRef = GeneratedColumn<String>(
+    'media_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entityType,
+    entityId,
+    field,
+    valueJson,
+    mediaRef,
+    source,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'replaced_values';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReplacedValueEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entity_type')) {
+      context.handle(
+        _entityTypeMeta,
+        entityType.isAcceptableOrUnknown(data['entity_type']!, _entityTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('field')) {
+      context.handle(
+        _fieldMeta,
+        field.isAcceptableOrUnknown(data['field']!, _fieldMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldMeta);
+    }
+    if (data.containsKey('value_json')) {
+      context.handle(
+        _valueJsonMeta,
+        valueJson.isAcceptableOrUnknown(data['value_json']!, _valueJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueJsonMeta);
+    }
+    if (data.containsKey('media_ref')) {
+      context.handle(
+        _mediaRefMeta,
+        mediaRef.isAcceptableOrUnknown(data['media_ref']!, _mediaRefMeta),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReplacedValueEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReplacedValueEntity(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      entityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_type'],
+      )!,
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      field: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field'],
+      )!,
+      valueJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value_json'],
+      )!,
+      mediaRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_ref'],
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ReplacedValuesTableTable createAlias(String alias) {
+    return $ReplacedValuesTableTable(attachedDatabase, alias);
+  }
+}
+
+class ReplacedValueEntity extends DataClass
+    implements Insertable<ReplacedValueEntity> {
+  final String id;
+  final String entityType;
+  final String entityId;
+  final String field;
+  final String valueJson;
+
+  /// `MediaRef.toJson` when the value is a media version.
+  final String? mediaRef;
+
+  /// Whose value was replaced: 'remote' | 'local'.
+  final String source;
+  final DateTime createdAt;
+  const ReplacedValueEntity({
+    required this.id,
+    required this.entityType,
+    required this.entityId,
+    required this.field,
+    required this.valueJson,
+    this.mediaRef,
+    required this.source,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entity_type'] = Variable<String>(entityType);
+    map['entity_id'] = Variable<String>(entityId);
+    map['field'] = Variable<String>(field);
+    map['value_json'] = Variable<String>(valueJson);
+    if (!nullToAbsent || mediaRef != null) {
+      map['media_ref'] = Variable<String>(mediaRef);
+    }
+    map['source'] = Variable<String>(source);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ReplacedValuesTableCompanion toCompanion(bool nullToAbsent) {
+    return ReplacedValuesTableCompanion(
+      id: Value(id),
+      entityType: Value(entityType),
+      entityId: Value(entityId),
+      field: Value(field),
+      valueJson: Value(valueJson),
+      mediaRef: mediaRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaRef),
+      source: Value(source),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ReplacedValueEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReplacedValueEntity(
+      id: serializer.fromJson<String>(json['id']),
+      entityType: serializer.fromJson<String>(json['entityType']),
+      entityId: serializer.fromJson<String>(json['entityId']),
+      field: serializer.fromJson<String>(json['field']),
+      valueJson: serializer.fromJson<String>(json['valueJson']),
+      mediaRef: serializer.fromJson<String?>(json['mediaRef']),
+      source: serializer.fromJson<String>(json['source']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entityType': serializer.toJson<String>(entityType),
+      'entityId': serializer.toJson<String>(entityId),
+      'field': serializer.toJson<String>(field),
+      'valueJson': serializer.toJson<String>(valueJson),
+      'mediaRef': serializer.toJson<String?>(mediaRef),
+      'source': serializer.toJson<String>(source),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ReplacedValueEntity copyWith({
+    String? id,
+    String? entityType,
+    String? entityId,
+    String? field,
+    String? valueJson,
+    Value<String?> mediaRef = const Value.absent(),
+    String? source,
+    DateTime? createdAt,
+  }) => ReplacedValueEntity(
+    id: id ?? this.id,
+    entityType: entityType ?? this.entityType,
+    entityId: entityId ?? this.entityId,
+    field: field ?? this.field,
+    valueJson: valueJson ?? this.valueJson,
+    mediaRef: mediaRef.present ? mediaRef.value : this.mediaRef,
+    source: source ?? this.source,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ReplacedValueEntity copyWithCompanion(ReplacedValuesTableCompanion data) {
+    return ReplacedValueEntity(
+      id: data.id.present ? data.id.value : this.id,
+      entityType: data.entityType.present
+          ? data.entityType.value
+          : this.entityType,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      field: data.field.present ? data.field.value : this.field,
+      valueJson: data.valueJson.present ? data.valueJson.value : this.valueJson,
+      mediaRef: data.mediaRef.present ? data.mediaRef.value : this.mediaRef,
+      source: data.source.present ? data.source.value : this.source,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReplacedValueEntity(')
+          ..write('id: $id, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('field: $field, ')
+          ..write('valueJson: $valueJson, ')
+          ..write('mediaRef: $mediaRef, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    entityType,
+    entityId,
+    field,
+    valueJson,
+    mediaRef,
+    source,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReplacedValueEntity &&
+          other.id == this.id &&
+          other.entityType == this.entityType &&
+          other.entityId == this.entityId &&
+          other.field == this.field &&
+          other.valueJson == this.valueJson &&
+          other.mediaRef == this.mediaRef &&
+          other.source == this.source &&
+          other.createdAt == this.createdAt);
+}
+
+class ReplacedValuesTableCompanion
+    extends UpdateCompanion<ReplacedValueEntity> {
+  final Value<String> id;
+  final Value<String> entityType;
+  final Value<String> entityId;
+  final Value<String> field;
+  final Value<String> valueJson;
+  final Value<String?> mediaRef;
+  final Value<String> source;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ReplacedValuesTableCompanion({
+    this.id = const Value.absent(),
+    this.entityType = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.field = const Value.absent(),
+    this.valueJson = const Value.absent(),
+    this.mediaRef = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReplacedValuesTableCompanion.insert({
+    required String id,
+    required String entityType,
+    required String entityId,
+    required String field,
+    required String valueJson,
+    this.mediaRef = const Value.absent(),
+    required String source,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       entityType = Value(entityType),
+       entityId = Value(entityId),
+       field = Value(field),
+       valueJson = Value(valueJson),
+       source = Value(source),
+       createdAt = Value(createdAt);
+  static Insertable<ReplacedValueEntity> custom({
+    Expression<String>? id,
+    Expression<String>? entityType,
+    Expression<String>? entityId,
+    Expression<String>? field,
+    Expression<String>? valueJson,
+    Expression<String>? mediaRef,
+    Expression<String>? source,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entityType != null) 'entity_type': entityType,
+      if (entityId != null) 'entity_id': entityId,
+      if (field != null) 'field': field,
+      if (valueJson != null) 'value_json': valueJson,
+      if (mediaRef != null) 'media_ref': mediaRef,
+      if (source != null) 'source': source,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReplacedValuesTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? entityType,
+    Value<String>? entityId,
+    Value<String>? field,
+    Value<String>? valueJson,
+    Value<String?>? mediaRef,
+    Value<String>? source,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ReplacedValuesTableCompanion(
+      id: id ?? this.id,
+      entityType: entityType ?? this.entityType,
+      entityId: entityId ?? this.entityId,
+      field: field ?? this.field,
+      valueJson: valueJson ?? this.valueJson,
+      mediaRef: mediaRef ?? this.mediaRef,
+      source: source ?? this.source,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (field.present) {
+      map['field'] = Variable<String>(field.value);
+    }
+    if (valueJson.present) {
+      map['value_json'] = Variable<String>(valueJson.value);
+    }
+    if (mediaRef.present) {
+      map['media_ref'] = Variable<String>(mediaRef.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReplacedValuesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('field: $field, ')
+          ..write('valueJson: $valueJson, ')
+          ..write('mediaRef: $mediaRef, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -3232,6 +4212,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncOutboxTableTable syncOutboxTable = $SyncOutboxTableTable(
     this,
   );
+  late final $ReplacedValuesTableTable replacedValuesTable =
+      $ReplacedValuesTableTable(this);
   late final $VaultMetaTableTable vaultMetaTable = $VaultMetaTableTable(this);
   late final $ShareLinkUrlCacheTableTable shareLinkUrlCacheTable =
       $ShareLinkUrlCacheTableTable(this);
@@ -3244,6 +4226,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     artworksTable,
     pendingFileCleanupsTable,
     syncOutboxTable,
+    replacedValuesTable,
     vaultMetaTable,
     shareLinkUrlCacheTable,
   ];
@@ -3267,6 +4250,9 @@ typedef $$ChildrenTableTableCreateCompanionBuilder =
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<String> syncState,
+      Value<int> nameRev,
+      Value<int> birthDateRev,
+      Value<int> lifecycleRev,
       Value<int> rowid,
     });
 typedef $$ChildrenTableTableUpdateCompanionBuilder =
@@ -3277,6 +4263,9 @@ typedef $$ChildrenTableTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<String> syncState,
+      Value<int> nameRev,
+      Value<int> birthDateRev,
+      Value<int> lifecycleRev,
       Value<int> rowid,
     });
 
@@ -3346,6 +4335,21 @@ class $$ChildrenTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get nameRev => $composableBuilder(
+    column: $table.nameRev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get birthDateRev => $composableBuilder(
+    column: $table.birthDateRev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> artworksTableRefs(
     Expression<bool> Function($$ArtworksTableTableFilterComposer f) f,
   ) {
@@ -3410,6 +4414,21 @@ class $$ChildrenTableTableOrderingComposer
     column: $table.syncState,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get nameRev => $composableBuilder(
+    column: $table.nameRev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get birthDateRev => $composableBuilder(
+    column: $table.birthDateRev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ChildrenTableTableAnnotationComposer
@@ -3438,6 +4457,19 @@ class $$ChildrenTableTableAnnotationComposer
 
   GeneratedColumn<String> get syncState =>
       $composableBuilder(column: $table.syncState, builder: (column) => column);
+
+  GeneratedColumn<int> get nameRev =>
+      $composableBuilder(column: $table.nameRev, builder: (column) => column);
+
+  GeneratedColumn<int> get birthDateRev => $composableBuilder(
+    column: $table.birthDateRev,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
+    builder: (column) => column,
+  );
 
   Expression<T> artworksTableRefs<T extends Object>(
     Expression<T> Function($$ArtworksTableTableAnnotationComposer a) f,
@@ -3499,6 +4531,9 @@ class $$ChildrenTableTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> syncState = const Value.absent(),
+                Value<int> nameRev = const Value.absent(),
+                Value<int> birthDateRev = const Value.absent(),
+                Value<int> lifecycleRev = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChildrenTableCompanion(
                 id: id,
@@ -3507,6 +4542,9 @@ class $$ChildrenTableTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 syncState: syncState,
+                nameRev: nameRev,
+                birthDateRev: birthDateRev,
+                lifecycleRev: lifecycleRev,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3517,6 +4555,9 @@ class $$ChildrenTableTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<String> syncState = const Value.absent(),
+                Value<int> nameRev = const Value.absent(),
+                Value<int> birthDateRev = const Value.absent(),
+                Value<int> lifecycleRev = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChildrenTableCompanion.insert(
                 id: id,
@@ -3525,6 +4566,9 @@ class $$ChildrenTableTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 syncState: syncState,
+                nameRev: nameRev,
+                birthDateRev: birthDateRev,
+                lifecycleRev: lifecycleRev,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3609,6 +4653,9 @@ typedef $$ArtworksTableTableCreateCompanionBuilder =
       Value<String> audioSyncIntent,
       Value<bool> audioConflict,
       Value<String?> addedBy,
+      Value<int> storyRev,
+      Value<int> drawnAtRev,
+      Value<int> lifecycleRev,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3636,6 +4683,9 @@ typedef $$ArtworksTableTableUpdateCompanionBuilder =
       Value<String> audioSyncIntent,
       Value<bool> audioConflict,
       Value<String?> addedBy,
+      Value<int> storyRev,
+      Value<int> drawnAtRev,
+      Value<int> lifecycleRev,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
@@ -3777,6 +4827,21 @@ class $$ArtworksTableTableFilterComposer
 
   ColumnFilters<String> get addedBy => $composableBuilder(
     column: $table.addedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get storyRev => $composableBuilder(
+    column: $table.storyRev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get drawnAtRev => $composableBuilder(
+    column: $table.drawnAtRev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3923,6 +4988,21 @@ class $$ArtworksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get storyRev => $composableBuilder(
+    column: $table.storyRev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get drawnAtRev => $composableBuilder(
+    column: $table.drawnAtRev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
@@ -4052,6 +5132,19 @@ class $$ArtworksTableTableAnnotationComposer
   GeneratedColumn<String> get addedBy =>
       $composableBuilder(column: $table.addedBy, builder: (column) => column);
 
+  GeneratedColumn<int> get storyRev =>
+      $composableBuilder(column: $table.storyRev, builder: (column) => column);
+
+  GeneratedColumn<int> get drawnAtRev => $composableBuilder(
+    column: $table.drawnAtRev,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lifecycleRev => $composableBuilder(
+    column: $table.lifecycleRev,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
@@ -4129,6 +5222,9 @@ class $$ArtworksTableTableTableManager
                 Value<String> audioSyncIntent = const Value.absent(),
                 Value<bool> audioConflict = const Value.absent(),
                 Value<String?> addedBy = const Value.absent(),
+                Value<int> storyRev = const Value.absent(),
+                Value<int> drawnAtRev = const Value.absent(),
+                Value<int> lifecycleRev = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion(
@@ -4154,6 +5250,9 @@ class $$ArtworksTableTableTableManager
                 audioSyncIntent: audioSyncIntent,
                 audioConflict: audioConflict,
                 addedBy: addedBy,
+                storyRev: storyRev,
+                drawnAtRev: drawnAtRev,
+                lifecycleRev: lifecycleRev,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),
@@ -4181,6 +5280,9 @@ class $$ArtworksTableTableTableManager
                 Value<String> audioSyncIntent = const Value.absent(),
                 Value<bool> audioConflict = const Value.absent(),
                 Value<String?> addedBy = const Value.absent(),
+                Value<int> storyRev = const Value.absent(),
+                Value<int> drawnAtRev = const Value.absent(),
+                Value<int> lifecycleRev = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion.insert(
@@ -4206,6 +5308,9 @@ class $$ArtworksTableTableTableManager
                 audioSyncIntent: audioSyncIntent,
                 audioConflict: audioConflict,
                 addedBy: addedBy,
+                storyRev: storyRev,
+                drawnAtRev: drawnAtRev,
+                lifecycleRev: lifecycleRev,
                 deletedAt: deletedAt,
                 rowid: rowid,
               ),
@@ -4455,9 +5560,12 @@ typedef $$PendingFileCleanupsTableTableProcessedTableManager =
 typedef $$SyncOutboxTableTableCreateCompanionBuilder =
     SyncOutboxTableCompanion Function({
       Value<int> seq,
+      Value<String> opId,
       required String entity,
       required String entityId,
       required String op,
+      Value<String?> patchJson,
+      Value<String> state,
       Value<int> attempts,
       Value<DateTime?> nextAttemptAt,
       Value<String?> lastError,
@@ -4466,9 +5574,12 @@ typedef $$SyncOutboxTableTableCreateCompanionBuilder =
 typedef $$SyncOutboxTableTableUpdateCompanionBuilder =
     SyncOutboxTableCompanion Function({
       Value<int> seq,
+      Value<String> opId,
       Value<String> entity,
       Value<String> entityId,
       Value<String> op,
+      Value<String?> patchJson,
+      Value<String> state,
       Value<int> attempts,
       Value<DateTime?> nextAttemptAt,
       Value<String?> lastError,
@@ -4489,6 +5600,11 @@ class $$SyncOutboxTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get opId => $composableBuilder(
+    column: $table.opId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get entity => $composableBuilder(
     column: $table.entity,
     builder: (column) => ColumnFilters(column),
@@ -4501,6 +5617,16 @@ class $$SyncOutboxTableTableFilterComposer
 
   ColumnFilters<String> get op => $composableBuilder(
     column: $table.op,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get patchJson => $composableBuilder(
+    column: $table.patchJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4539,6 +5665,11 @@ class $$SyncOutboxTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get opId => $composableBuilder(
+    column: $table.opId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get entity => $composableBuilder(
     column: $table.entity,
     builder: (column) => ColumnOrderings(column),
@@ -4551,6 +5682,16 @@ class $$SyncOutboxTableTableOrderingComposer
 
   ColumnOrderings<String> get op => $composableBuilder(
     column: $table.op,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get patchJson => $composableBuilder(
+    column: $table.patchJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4587,6 +5728,9 @@ class $$SyncOutboxTableTableAnnotationComposer
   GeneratedColumn<int> get seq =>
       $composableBuilder(column: $table.seq, builder: (column) => column);
 
+  GeneratedColumn<String> get opId =>
+      $composableBuilder(column: $table.opId, builder: (column) => column);
+
   GeneratedColumn<String> get entity =>
       $composableBuilder(column: $table.entity, builder: (column) => column);
 
@@ -4595,6 +5739,12 @@ class $$SyncOutboxTableTableAnnotationComposer
 
   GeneratedColumn<String> get op =>
       $composableBuilder(column: $table.op, builder: (column) => column);
+
+  GeneratedColumn<String> get patchJson =>
+      $composableBuilder(column: $table.patchJson, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
 
   GeneratedColumn<int> get attempts =>
       $composableBuilder(column: $table.attempts, builder: (column) => column);
@@ -4649,18 +5799,24 @@ class $$SyncOutboxTableTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> seq = const Value.absent(),
+                Value<String> opId = const Value.absent(),
                 Value<String> entity = const Value.absent(),
                 Value<String> entityId = const Value.absent(),
                 Value<String> op = const Value.absent(),
+                Value<String?> patchJson = const Value.absent(),
+                Value<String> state = const Value.absent(),
                 Value<int> attempts = const Value.absent(),
                 Value<DateTime?> nextAttemptAt = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SyncOutboxTableCompanion(
                 seq: seq,
+                opId: opId,
                 entity: entity,
                 entityId: entityId,
                 op: op,
+                patchJson: patchJson,
+                state: state,
                 attempts: attempts,
                 nextAttemptAt: nextAttemptAt,
                 lastError: lastError,
@@ -4669,18 +5825,24 @@ class $$SyncOutboxTableTableTableManager
           createCompanionCallback:
               ({
                 Value<int> seq = const Value.absent(),
+                Value<String> opId = const Value.absent(),
                 required String entity,
                 required String entityId,
                 required String op,
+                Value<String?> patchJson = const Value.absent(),
+                Value<String> state = const Value.absent(),
                 Value<int> attempts = const Value.absent(),
                 Value<DateTime?> nextAttemptAt = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
                 required DateTime createdAt,
               }) => SyncOutboxTableCompanion.insert(
                 seq: seq,
+                opId: opId,
                 entity: entity,
                 entityId: entityId,
                 op: op,
+                patchJson: patchJson,
+                state: state,
                 attempts: attempts,
                 nextAttemptAt: nextAttemptAt,
                 lastError: lastError,
@@ -4724,6 +5886,292 @@ typedef $$SyncOutboxTableTableProcessedTableManager =
         >,
       ),
       SyncOutboxEntryEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$ReplacedValuesTableTableCreateCompanionBuilder =
+    ReplacedValuesTableCompanion Function({
+      required String id,
+      required String entityType,
+      required String entityId,
+      required String field,
+      required String valueJson,
+      Value<String?> mediaRef,
+      required String source,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$ReplacedValuesTableTableUpdateCompanionBuilder =
+    ReplacedValuesTableCompanion Function({
+      Value<String> id,
+      Value<String> entityType,
+      Value<String> entityId,
+      Value<String> field,
+      Value<String> valueJson,
+      Value<String?> mediaRef,
+      Value<String> source,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ReplacedValuesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ReplacedValuesTableTable> {
+  $$ReplacedValuesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get field => $composableBuilder(
+    column: $table.field,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get valueJson => $composableBuilder(
+    column: $table.valueJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mediaRef => $composableBuilder(
+    column: $table.mediaRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReplacedValuesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReplacedValuesTableTable> {
+  $$ReplacedValuesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get field => $composableBuilder(
+    column: $table.field,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get valueJson => $composableBuilder(
+    column: $table.valueJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mediaRef => $composableBuilder(
+    column: $table.mediaRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReplacedValuesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReplacedValuesTableTable> {
+  $$ReplacedValuesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get field =>
+      $composableBuilder(column: $table.field, builder: (column) => column);
+
+  GeneratedColumn<String> get valueJson =>
+      $composableBuilder(column: $table.valueJson, builder: (column) => column);
+
+  GeneratedColumn<String> get mediaRef =>
+      $composableBuilder(column: $table.mediaRef, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ReplacedValuesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReplacedValuesTableTable,
+          ReplacedValueEntity,
+          $$ReplacedValuesTableTableFilterComposer,
+          $$ReplacedValuesTableTableOrderingComposer,
+          $$ReplacedValuesTableTableAnnotationComposer,
+          $$ReplacedValuesTableTableCreateCompanionBuilder,
+          $$ReplacedValuesTableTableUpdateCompanionBuilder,
+          (
+            ReplacedValueEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $ReplacedValuesTableTable,
+              ReplacedValueEntity
+            >,
+          ),
+          ReplacedValueEntity,
+          PrefetchHooks Function()
+        > {
+  $$ReplacedValuesTableTableTableManager(
+    _$AppDatabase db,
+    $ReplacedValuesTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReplacedValuesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReplacedValuesTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ReplacedValuesTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> entityType = const Value.absent(),
+                Value<String> entityId = const Value.absent(),
+                Value<String> field = const Value.absent(),
+                Value<String> valueJson = const Value.absent(),
+                Value<String?> mediaRef = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReplacedValuesTableCompanion(
+                id: id,
+                entityType: entityType,
+                entityId: entityId,
+                field: field,
+                valueJson: valueJson,
+                mediaRef: mediaRef,
+                source: source,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String entityType,
+                required String entityId,
+                required String field,
+                required String valueJson,
+                Value<String?> mediaRef = const Value.absent(),
+                required String source,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ReplacedValuesTableCompanion.insert(
+                id: id,
+                entityType: entityType,
+                entityId: entityId,
+                field: field,
+                valueJson: valueJson,
+                mediaRef: mediaRef,
+                source: source,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReplacedValuesTableTable, ReplacedValueEntity>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ReplacedValuesTableTable,
+                    ReplacedValueEntity
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReplacedValuesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReplacedValuesTableTable,
+      ReplacedValueEntity,
+      $$ReplacedValuesTableTableFilterComposer,
+      $$ReplacedValuesTableTableOrderingComposer,
+      $$ReplacedValuesTableTableAnnotationComposer,
+      $$ReplacedValuesTableTableCreateCompanionBuilder,
+      $$ReplacedValuesTableTableUpdateCompanionBuilder,
+      (
+        ReplacedValueEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $ReplacedValuesTableTable,
+          ReplacedValueEntity
+        >,
+      ),
+      ReplacedValueEntity,
       PrefetchHooks Function()
     >;
 typedef $$VaultMetaTableTableCreateCompanionBuilder =
@@ -5178,6 +6626,8 @@ class $AppDatabaseManager {
       );
   $$SyncOutboxTableTableTableManager get syncOutboxTable =>
       $$SyncOutboxTableTableTableManager(_db, _db.syncOutboxTable);
+  $$ReplacedValuesTableTableTableManager get replacedValuesTable =>
+      $$ReplacedValuesTableTableTableManager(_db, _db.replacedValuesTable);
   $$VaultMetaTableTableTableManager get vaultMetaTable =>
       $$VaultMetaTableTableTableManager(_db, _db.vaultMetaTable);
   $$ShareLinkUrlCacheTableTableTableManager get shareLinkUrlCacheTable =>

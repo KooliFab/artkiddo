@@ -7,6 +7,7 @@ import '../storage/local_vault.dart';
 import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
+import '../../contracts/sync_protocol.dart';
 import '../../sync/sync_outbox.dart';
 import '../../domain/artwork.dart';
 import '../../domain/child.dart';
@@ -427,15 +428,27 @@ class DriftArtworksRepository implements ArtworksRepository {
     int rows;
     try {
       rows = await _db.transaction(() async {
+        // Read inside the transaction: the base revision of the operation
+        // must be the one of the row it changes.
+        final row =
+            await (_db.select(_db.artworksTable)
+                  ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+                .getSingleOrNull();
+        if (row == null) return 0;
         final written =
             await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
                 .write(ArtworksTableCompanion(story: Value(normalized)));
-        if (written > 0) {
-          await _outbox.enqueue(
-            entity: SyncEntityKind.artwork,
-            entityId: id,
-            op: SyncOutboxOp.upsert,
+        if (written > 0 && row.story != normalized) {
+          await _outbox.enqueuePatch(
+            EntityPatch(
+              opId: _outbox.newOpId(),
+              entityType: SyncEntityType.artwork,
+              entityId: id,
+              baseRevisions: {ArtworkSyncFields.story: row.storyRev},
+              fields: {ArtworkSyncFields.story: normalized},
+              createdAt: DateTime.now(),
+            ),
           );
         }
         return written;
@@ -466,15 +479,29 @@ class DriftArtworksRepository implements ArtworksRepository {
     int rows;
     try {
       rows = await _db.transaction(() async {
+        final row =
+            await (_db.select(_db.artworksTable)
+                  ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+                .getSingleOrNull();
+        if (row == null) return 0;
         final written =
             await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
                 .write(ArtworksTableCompanion(drawnAt: Value(drawnAt)));
-        if (written > 0) {
-          await _outbox.enqueue(
-            entity: SyncEntityKind.artwork,
-            entityId: id,
-            op: SyncOutboxOp.upsert,
+        final previous = row.drawnAt == null
+            ? null
+            : syncDateValue(row.drawnAt!);
+        final next = drawnAt == null ? null : syncDateValue(drawnAt);
+        if (written > 0 && previous != next) {
+          await _outbox.enqueuePatch(
+            EntityPatch(
+              opId: _outbox.newOpId(),
+              entityType: SyncEntityType.artwork,
+              entityId: id,
+              baseRevisions: {ArtworkSyncFields.drawnAt: row.drawnAtRev},
+              fields: {ArtworkSyncFields.drawnAt: next},
+              createdAt: DateTime.now(),
+            ),
           );
         }
         return written;

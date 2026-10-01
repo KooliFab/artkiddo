@@ -33,11 +33,11 @@ void main() {
     return rows.map((row) => row.data['name'] as String).toSet();
   }
 
-  test('a fresh vault is created at schema version 4', () async {
+  test('a fresh vault is created at schema version 5', () async {
     await db.customStatement('SELECT 1');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(db.schemaVersion, 4);
-    expect(version.data['user_version'], 4);
+    expect(db.schemaVersion, 5);
+    expect(version.data['user_version'], 5);
   });
 
   test('a fresh vault exposes exactly the baseline tables', () async {
@@ -46,6 +46,7 @@ void main() {
       'children',
       'artworks',
       'sync_outbox',
+      'replaced_values',
       'vault_meta',
       'pending_file_cleanups',
       'share_link_url_cache',
@@ -78,6 +79,48 @@ void main() {
       'audio_revision',
       'audio_sync_intent',
       'audio_conflict',
+      'story_rev',
+      'drawn_at_rev',
+      'lifecycle_rev',
+    });
+  });
+
+  test('children carry one revision per synchronized field', () async {
+    await db.customStatement('SELECT 1');
+    expect(
+      await columnNames('children'),
+      containsAll(<String>{'name_rev', 'birth_date_rev', 'lifecycle_rev'}),
+    );
+  });
+
+  test('sync_outbox is an operation queue', () async {
+    await db.customStatement('SELECT 1');
+    expect(await columnNames('sync_outbox'), <String>{
+      'seq',
+      'op_id',
+      'entity',
+      'entity_id',
+      'op',
+      'patch_json',
+      'state',
+      'attempts',
+      'next_attempt_at',
+      'last_error',
+      'created_at',
+    });
+  });
+
+  test('replaced_values keeps the value that lost a conflict', () async {
+    await db.customStatement('SELECT 1');
+    expect(await columnNames('replaced_values'), <String>{
+      'id',
+      'entity_type',
+      'entity_id',
+      'field',
+      'value_json',
+      'media_ref',
+      'source',
+      'created_at',
     });
   });
 
