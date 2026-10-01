@@ -1,142 +1,81 @@
 // Reproduction of data loss #2: rows missed by a paginated pull.
 //
-// `SyncEngine._pull` persists a stream cursor equal to the largest
-// `updated_at` of the page it just applied, and the next request asks for
-// rows strictly after that instant (`SyncBackend.pullChildrenPage(since:)`,
-// same `isAfter` rule as `FakeHomeCloudApi`). A timestamp is not a position in
-// commit order, so a row that lands behind the cursor is never returned again.
+// The old pull persisted a stream cursor equal to the largest `updated_at` of
+// the page it had applied and asked for rows strictly after that instant. A
+// timestamp is not a position in commit order, so a row that landed behind
+// the cursor was never returned again.
 //
-// Expected red until the pull follows an ordered change journal.
-// Run without the skip: flutter test --run-skipped --tags known-loss
+// The pull now reads the ordered change journal: a change gets its position
+// when it is committed, so a late commit is always after a cursor already
+// returned, and rows sharing a timestamp are distinct positions. Both
+// scenarios are kept, against a journal served in pages of two.
 
 import 'package:artkiddo_core/artkiddo_core.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'fakes.dart';
-import 'sync_engine_test.dart' show Device;
+import 'operation_sync_test.dart' show FakeProtocolBackend, Node;
 
-DateTime _at(int second, [int millisecond = 0]) =>
-    DateTime.utc(2030, 1, 1, 0, 0, second, millisecond);
-
-RemoteChildRow _child(String id, String name, DateTime updatedAt) =>
-    RemoteChildRow(
-      id: id,
-      name: name,
-      birthDate: DateTime.utc(2019, 3, 1),
-      createdAt: _at(0),
-      updatedAt: updatedAt,
-    );
-
-/// A server that serves children in small pages ordered by `updated_at`,
-/// resuming strictly after the cursor. [onPageServed] runs right after a page
-/// has been handed to the client, which is where a concurrent write lands.
-class _PagedChildrenBackend extends FakeHomeCloudApi {
-  static const pageSize = 2;
-
-  final List<RemoteChildRow> serverRows = [];
-  void Function(int pageIndex)? onPageServed;
-  int _pagesServed = 0;
-
-  @override
-  Future<PullPage<RemoteChildRow>> pullChildrenPage({
-    required String familyId,
-    DateTime? since,
-  }) async {
-    final matching =
-        serverRows
-            .where((r) => since == null || r.updatedAt.isAfter(since))
-            .toList()
-          ..sort((a, b) {
-            final byTime = a.updatedAt.compareTo(b.updatedAt);
-            return byTime != 0 ? byTime : a.id.compareTo(b.id);
-          });
-    final items = matching.take(pageSize).toList();
-    final page = PullPage<RemoteChildRow>(
-      items: items,
-      nextCursor: items.isEmpty ? null : items.last.updatedAt,
-      hasMore: matching.length > pageSize,
-    );
-    onPageServed?.call(_pagesServed++);
-    return page;
-  }
-}
+const _a = '00000000-0000-4000-8000-00000000000a';
+const _b = '00000000-0000-4000-8000-00000000000b';
+const _c = '00000000-0000-4000-8000-00000000000c';
+const _d = '00000000-0000-4000-8000-00000000000d';
 
 void main() {
-  late _PagedChildrenBackend backend;
-  late FakeObjectUploader uploader;
-  late FakeObjectDownloader downloader;
-  Device? device;
+  late FakeProtocolBackend backend;
+  late Node node;
 
-  setUpAll(() {
-    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  setUpAll(() => driftRuntimeOptions.dontWarnAboutMultipleDatabases = true);
+
+  setUp(() async {
+    backend = FakeProtocolBackend()..pageSize = 2;
+    node = await Node.create(backend);
   });
 
-  setUp(() {
-    backend = _PagedChildrenBackend();
-    uploader = FakeObjectUploader();
-    downloader = FakeObjectDownloader(uploader.objects);
-  });
+  tearDown(() => node.close());
 
-  tearDown(() async {
-    await device?.close();
-    device = null;
-  });
-
-  Future<Device> newDevice() async => device = await Device.create(
-    cloudApi: backend,
-    uploader: uploader,
-    downloader: downloader,
-    userId: 'user-a',
+  void remoteChild(String id, String name) => backend.remoteCreate(
+    SyncEntityType.child,
+    id,
+    {'name': name, 'birthDate': '2019-03-01'},
   );
 
-  Future<Set<String>> localNames(Device d) async => (await d.children
-      .watchAll()
-      .first).map((c) => c.name).toSet();
+  Future<Set<String>> localNames() async =>
+      (await node.children.watchAll().first).map((c) => c.name).toSet();
 
   test(
     'a row committed behind the cursor between two pages is still pulled',
     () async {
-      backend.serverRows.addAll([
-        _child('a', 'A', _at(1)),
-        _child('b', 'B', _at(2)),
-        _child('c', 'C', _at(3)),
-      ]);
-      // A writer that started before page 1 was served commits after it, with
-      // an `updated_at` older than the cursor (`now()` is the transaction
-      // start in Postgres, not the commit instant).
+      remoteChild(_a, 'A');
+      remoteChild(_b, 'B');
+      remoteChild(_c, 'C');
+      // A writer that started before page 1 was served commits after it.
+      // With timestamps it landed behind the cursor; in the journal it is
+      // simply the next position.
       backend.onPageServed = (pageIndex) {
-        if (pageIndex == 0) {
-          backend.serverRows.add(_child('d', 'D', _at(1, 500)));
-        }
+        if (pageIndex == 0) remoteChild(_d, 'D');
       };
 
-      final a = await newDevice();
-      await a.sync();
-      await a.sync(); // a later sync must not be the one to notice it either
+      await node.sync();
+      await node.sync(); // a later sync must not be the one to notice it either
 
-      expect(await localNames(a), {'A', 'B', 'C', 'D'});
+      expect(await localNames(), {'A', 'B', 'C', 'D'});
     },
-    tags: ['known-loss'],
-    skip: 'Attendu rouge jusqu’à L02/L09',
   );
 
   test(
     'rows sharing the updated_at of a page boundary are all pulled',
     () async {
-      backend.serverRows.addAll([
-        _child('a', 'A', _at(1)),
-        _child('b', 'B', _at(1)),
-        _child('c', 'C', _at(1)),
-      ]);
+      // Same instant on the server; three distinct journal positions, and a
+      // page boundary after the second.
+      remoteChild(_a, 'A');
+      remoteChild(_b, 'B');
+      remoteChild(_c, 'C');
 
-      final a = await newDevice();
-      await a.sync();
-      await a.sync();
+      await node.sync();
+      await node.sync();
 
-      expect(await localNames(a), {'A', 'B', 'C'});
+      expect(await localNames(), {'A', 'B', 'C'});
     },
-    tags: ['known-loss'],
-    skip: 'Attendu rouge jusqu’à L02/L09',
   );
 }

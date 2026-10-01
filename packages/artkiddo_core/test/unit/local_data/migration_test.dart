@@ -15,6 +15,7 @@ import '../../generated/migrations/schema_v1.dart' show DatabaseAtV1;
 import '../../generated/migrations/schema_v3.dart' show DatabaseAtV3;
 import '../../generated/migrations/schema_v4.dart' show DatabaseAtV4;
 import '../../generated/migrations/schema_v5.dart' show DatabaseAtV5;
+import '../../generated/migrations/schema_v6.dart' show DatabaseAtV6;
 
 /// ADR 0007 reset the local vault to `schemaVersion = 1` and stated that
 /// future schema changes "resume normal practice (schema snapshot, and a
@@ -27,7 +28,7 @@ import '../../generated/migrations/schema_v5.dart' show DatabaseAtV5;
 ///
 /// Both are additive `addColumn` steps, which is exactly the kind of change
 /// that looks too trivial to test and then silently drops a column on one
-/// path. These tests pin every reachable upgrade, including the v1 -> v6 jump
+/// path. These tests pin every reachable upgrade, including the v1 -> v7 jump
 /// a device that skipped a release actually takes.
 void main() {
   late SchemaVerifier verifier;
@@ -45,11 +46,11 @@ void main() {
   // is the common case for a user who updates infrequently, and it is the
   // path where a forgotten `if (from < N)` branch actually bites.
   //
-  // The target is always 6 because `migrateAndValidate` upgrades through
+  // The target is always the current version because `migrateAndValidate` upgrades through
   // `AppDatabase`'s own `schemaVersion` — asking it to stop at an
   // intermediate version would validate the current schema against an older
   // snapshot and always fail.
-  for (final from in const [1, 2, 3, 4, 5]) {
+  for (final from in const [1, 2, 3, 4, 5, 6]) {
     test('migrates a v$from vault to the current schema', () async {
       final connection = await verifier.startAt(from);
       final db = AppDatabase.forTesting(connection);
@@ -59,41 +60,44 @@ void main() {
     });
   }
 
-  test('a v1 -> v6 upgrade preserves the rows already in the vault', () async {
-    // Written in raw SQL on purpose: the point is to prove that a row
-    // inserted through the *old* physical shape survives, so going through
-    // today's typed API would defeat the test.
-    final schema = await verifier.schemaAt(1);
-    // A fresh connection per database object, both onto the same underlying
-    // schema: drift refuses to reopen a connection once closed.
-    final oldDb = DatabaseAtV1(schema.newConnection());
-    await oldDb.customStatement(
-      'INSERT INTO children (id, name, birth_date, created_at, updated_at, '
-      'sync_state) VALUES (?, ?, ?, ?, ?, ?)',
-      ['child-1', 'Léa', 1615680000, 1767225600, 1767225600, 'localOnly'],
-    );
-    await oldDb.close();
+  test(
+    'a v1 -> current upgrade preserves the rows already in the vault',
+    () async {
+      // Written in raw SQL on purpose: the point is to prove that a row
+      // inserted through the *old* physical shape survives, so going through
+      // today's typed API would defeat the test.
+      final schema = await verifier.schemaAt(1);
+      // A fresh connection per database object, both onto the same underlying
+      // schema: drift refuses to reopen a connection once closed.
+      final oldDb = DatabaseAtV1(schema.newConnection());
+      await oldDb.customStatement(
+        'INSERT INTO children (id, name, birth_date, created_at, updated_at, '
+        'sync_state) VALUES (?, ?, ?, ?, ?, ?)',
+        ['child-1', 'Léa', 1615680000, 1767225600, 1767225600, 'localOnly'],
+      );
+      await oldDb.close();
 
-    final db = AppDatabase.forTesting(schema.newConnection());
-    addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+      final db = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(db.close);
+      await verifier.migrateAndValidate(db, db.schemaVersion);
 
-    final children = await db.select(db.childrenTable).get();
-    expect(children, hasLength(1));
-    expect(children.single.name, 'Léa');
+      final children = await db.select(db.childrenTable).get();
+      expect(children, hasLength(1));
+      expect(children.single.name, 'Léa');
 
-    // The column v3 added must exist and read as null, not be absent: an
-    // artwork stored before attribution existed has no known author, and
-    // saying so honestly is what stops the UI from inventing one.
-    final addedBy = await db
-        .customSelect('SELECT added_by FROM artworks')
-        .get();
-    expect(addedBy, isEmpty);
-    final pending = await db
-        .customSelect('SELECT join_reset_pending FROM vault_meta')
-        .get();
-    expect(pending, isEmpty);
-  });
+      // The column v3 added must exist and read as null, not be absent: an
+      // artwork stored before attribution existed has no known author, and
+      // saying so honestly is what stops the UI from inventing one.
+      final addedBy = await db
+          .customSelect('SELECT added_by FROM artworks')
+          .get();
+      expect(addedBy, isEmpty);
+      final pending = await db
+          .customSelect('SELECT join_reset_pending FROM vault_meta')
+          .get();
+      expect(pending, isEmpty);
+    },
+  );
   test('v3 audio migration preserves pending replacements and deletions', () async {
     final schema = await verifier.schemaAt(3);
     final oldDb = DatabaseAtV3(schema.newConnection());
@@ -121,7 +125,7 @@ void main() {
     await oldDb.close();
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
     final rows = await db.select(db.artworksTable).get();
     for (final row in rows) {
       expect(row.audioSyncIntent, row.id);
@@ -161,7 +165,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 6);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
 
     final ops = await (db.select(
       db.syncOutboxTable,
@@ -232,7 +236,7 @@ void main() {
 
       final db = AppDatabase.forTesting(schema.newConnection());
       addTearDown(db.close);
-      await verifier.migrateAndValidate(db, 6);
+      await verifier.migrateAndValidate(db, db.schemaVersion);
 
       final registered = await db.select(db.mediaVersionsTable).get();
       expect(registered, hasLength(5));
@@ -268,4 +272,28 @@ void main() {
       );
     },
   );
+
+  test('v6 rows survive v7; the journal starts unread', () async {
+    final schema = await verifier.schemaAt(6);
+    final oldDb = DatabaseAtV6(schema.newConnection());
+    await oldDb.customStatement(
+      "INSERT INTO children (id,name,birth_date,created_at,updated_at,sync_state,name_rev) VALUES ('c','Léa',1,1,1,'synced',3)",
+    );
+    await oldDb.customStatement(
+      "INSERT INTO vault_meta (id,family_id,join_reset_pending,children_pull_cursor) VALUES ('singleton','f',0,5)",
+    );
+    await oldDb.close();
+
+    final db = AppDatabase.forTesting(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
+
+    final child = await db.select(db.childrenTable).getSingle();
+    expect((child.name, child.nameRev, child.deletedAt), ('Léa', 3, null));
+    final meta = await db.select(db.vaultMetaTable).getSingle();
+    expect(meta.familyId, 'f');
+    expect((meta.changeCursor, meta.changeGeneration), (null, null));
+    expect(await db.select(db.deferredRemoteChangesTable).get(), isEmpty);
+    expect(await db.select(db.olderRemoteValuesTable).get(), isEmpty);
+  });
 }

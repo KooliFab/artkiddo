@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../local/database/app_database.dart';
 import '../contracts/sync_backend.dart';
+import '../contracts/sync_protocol.dart';
 
 /// Thrown when the authenticated user's household does not match the
 /// household this local vault is already attached to. The only two
@@ -26,15 +27,17 @@ class FamilyMismatchException implements Exception {
 }
 
 /// The one row of `VaultMetaTable` this device keeps: which household
-/// (if any) this local vault is attached to, and how far each
-/// independent `pull` stream got.
+/// (if any) this local vault is attached to, and how far the device read
+/// the remote change journal.
 ///
 /// `familyId` is written exactly once, at the vault's first remote
 /// attachment; every later sync must find the same value or refuse
-/// ([FamilyMismatchException]). The independent cursors are always the
-/// maximal **server** timestamp their own stream has applied, never a
-/// client clock. A null cursor means "never pulled" for that stream,
-/// which is exactly the join/restore starting point.
+/// ([FamilyMismatchException]). The journal cursor ([getChangeCursor]) is
+/// opaque and written only with the page it ends; a null cursor means
+/// "never pulled", which is exactly the join/restore starting point.
+///
+/// The three timestamp cursors belong to the deprecated `SyncBackend` pull
+/// and stay until the private adapter moves to the journal.
 class VaultMetaRepository {
   static const _singletonId = 'singleton';
 
@@ -88,6 +91,31 @@ class VaultMetaRepository {
         );
   }
 
+  /// Where the next journal read starts, or null to read from the
+  /// beginning.
+  Future<ChangeCursor?> getChangeCursor() async {
+    final row = await _readOrCreate();
+    final value = row.changeCursor;
+    final generation = row.changeGeneration;
+    if (value == null || generation == null) return null;
+    return ChangeCursor(value: value, generation: generation);
+  }
+
+  /// Records the end of a page of the journal. Call it inside the
+  /// transaction that applies that page.
+  Future<void> setChangeCursor(ChangeCursor cursor) async {
+    await _db
+        .into(_db.vaultMetaTable)
+        .insertOnConflictUpdate(
+          VaultMetaTableCompanion.insert(
+            id: _singletonId,
+            changeCursor: Value(cursor.value),
+            changeGeneration: Value(cursor.generation),
+          ),
+        );
+  }
+
+  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
   Future<PullCursorSet> getPullCursors() async {
     final row = await _readOrCreate();
     return PullCursorSet(
@@ -97,12 +125,15 @@ class VaultMetaRepository {
     );
   }
 
+  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
   Future<DateTime?> getChildrenPullCursor() async =>
       (await getPullCursors()).children;
 
+  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
   Future<DateTime?> getArtworksPullCursor() async =>
       (await getPullCursors()).artworks;
 
+  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
   Future<DateTime?> getPurgedPullCursor() async =>
       (await getPullCursors()).purged;
 
@@ -160,6 +191,7 @@ class VaultMetaRepository {
     }
   }
 
+  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
   Future<void> setPullCursor({required PullCursorSet cursors}) async {
     await _db
         .into(_db.vaultMetaTable)
@@ -173,6 +205,7 @@ class VaultMetaRepository {
         );
   }
 
+  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
   Future<void> setChildrenPullCursor(DateTime cursor) async {
     await _db
         .into(_db.vaultMetaTable)
@@ -184,6 +217,7 @@ class VaultMetaRepository {
         );
   }
 
+  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
   Future<void> setArtworksPullCursor(DateTime cursor) async {
     await _db
         .into(_db.vaultMetaTable)
@@ -195,6 +229,7 @@ class VaultMetaRepository {
         );
   }
 
+  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
   Future<void> setPurgedPullCursor(DateTime cursor) async {
     await _db
         .into(_db.vaultMetaTable)
@@ -210,6 +245,7 @@ class VaultMetaRepository {
   /// all streams only when explicitly requested by a legacy caller;
   /// migrations never call it, so the single legacy cursor is not
   /// copied into the independent ones.
+  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
   Future<void> setLastPullCursor(DateTime cursor) async {
     await setPullCursor(
       cursors: PullCursorSet(

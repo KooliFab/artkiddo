@@ -72,6 +72,24 @@ class ReplacedValuesRepository {
     required ReplacedValueSource source,
     MediaRef? mediaRef,
   }) async {
+    // The same replaced value can be met twice (by the pull, then in the
+    // receipt of the pending operation); the history keeps it once, for the
+    // retention period that follows its latest replacement.
+    final valueJson = jsonEncode(value);
+    final known = _db.update(_db.replacedValuesTable)
+      ..where(
+        (t) =>
+            t.entityId.equals(entityId) &
+            t.field.equals(field) &
+            t.valueJson.equals(valueJson) &
+            t.source.equals(source.name),
+      );
+    if (await known.write(
+          ReplacedValuesTableCompanion(createdAt: Value(_now())),
+        ) >
+        0) {
+      return;
+    }
     await _db
         .into(_db.replacedValuesTable)
         .insert(
@@ -80,7 +98,7 @@ class ReplacedValuesRepository {
             entityType: entityType.name,
             entityId: entityId,
             field: field,
-            valueJson: jsonEncode(value),
+            valueJson: valueJson,
             mediaRef: Value(
               mediaRef == null ? null : jsonEncode(mediaRef.toJson()),
             ),

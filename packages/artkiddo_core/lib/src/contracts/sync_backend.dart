@@ -133,6 +133,7 @@ class PullPage<T> {
 /// cursors. Keeping it in the neutral contract means public/local and
 /// private/cloud adapters share the same pagination semantics without
 /// exposing a provider token.
+@Deprecated('Timestamp pull of SyncBackend; use ChangeCursor.')
 class PullCursorSet {
   final DateTime? children;
   final DateTime? artworks;

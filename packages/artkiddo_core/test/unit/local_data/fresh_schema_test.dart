@@ -33,11 +33,11 @@ void main() {
     return rows.map((row) => row.data['name'] as String).toSet();
   }
 
-  test('a fresh vault is created at schema version 6', () async {
+  test('a fresh vault is created at schema version 7', () async {
     await db.customStatement('SELECT 1');
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(db.schemaVersion, 6);
-    expect(version.data['user_version'], 6);
+    expect(db.schemaVersion, 7);
+    expect(version.data['user_version'], 7);
   });
 
   test('a fresh vault exposes exactly the baseline tables', () async {
@@ -48,6 +48,8 @@ void main() {
       'sync_outbox',
       'replaced_values',
       'media_versions',
+      'deferred_remote_changes',
+      'older_remote_values',
       'vault_meta',
       'pending_file_cleanups',
       'share_link_url_cache',
@@ -83,6 +85,7 @@ void main() {
       'story_rev',
       'drawn_at_rev',
       'lifecycle_rev',
+      'remote_purged_at',
     });
   });
 
@@ -90,7 +93,12 @@ void main() {
     await db.customStatement('SELECT 1');
     expect(
       await columnNames('children'),
-      containsAll(<String>{'name_rev', 'birth_date_rev', 'lifecycle_rev'}),
+      containsAll(<String>{
+        'name_rev',
+        'birth_date_rev',
+        'lifecycle_rev',
+        'deleted_at',
+      }),
     );
   });
 
@@ -135,6 +143,8 @@ void main() {
         'children_pull_cursor',
         'artworks_pull_cursor',
         'purged_pull_cursor',
+        'change_cursor',
+        'change_generation',
       }),
     );
   });

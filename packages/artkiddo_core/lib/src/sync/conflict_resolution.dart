@@ -1,3 +1,8 @@
+/// **Deprecated with the timestamp pull of `SyncBackend`.** The change
+/// journal pull (`change_journal_pull.dart`) replaces both rules: a pending
+/// local field keeps its value and the remote one goes to `replaced_values`,
+/// and the cursor is the journal position of the page.
+///
 /// Conflict/cursor arithmetic, kept pure and separate from
 /// [SyncEngine]'s I/O so the two rules the client actually needs are
 /// each one small, directly-testable function:
@@ -22,6 +27,7 @@
 library;
 
 /// Result of planning a `pull` apply for one entity kind.
+@Deprecated('Timestamp pull of SyncBackend; see ChangeJournalPull.')
 class PullApplyPlan<T> {
   /// Rows to actually write into the local Drift tables, in the order
   /// they were pulled.
@@ -44,6 +50,7 @@ class PullApplyPlan<T> {
 /// [pendingLocalIds] is the current outbox's set of entity ids with an
 /// unpushed local change for this entity kind
 /// (`SyncOutboxRepository.pendingEntityIds`).
+@Deprecated('Timestamp pull of SyncBackend; see ChangeJournalPull.')
 PullApplyPlan<T> planPullApply<T>({
   required List<T> pulled,
   required String Function(T row) idOf,

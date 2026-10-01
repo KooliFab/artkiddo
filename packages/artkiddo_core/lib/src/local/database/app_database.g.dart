@@ -112,6 +112,17 @@ class $ChildrenTableTable extends ChildrenTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -123,6 +134,7 @@ class $ChildrenTableTable extends ChildrenTable
     nameRev,
     birthDateRev,
     lifecycleRev,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -203,6 +215,12 @@ class $ChildrenTableTable extends ChildrenTable
         ),
       );
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -248,6 +266,10 @@ class $ChildrenTableTable extends ChildrenTable
         DriftSqlType.int,
         data['${effectivePrefix}lifecycle_rev'],
       )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -271,6 +293,11 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
   final int nameRev;
   final int birthDateRev;
   final int lifecycleRev;
+
+  /// Set when the child was purged remotely while artworks of it are still
+  /// in the local trash: the row stays as their parent, hidden from every
+  /// list, until the last of them is gone.
+  final DateTime? deletedAt;
   const ChildEntity({
     required this.id,
     required this.name,
@@ -281,6 +308,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     required this.nameRev,
     required this.birthDateRev,
     required this.lifecycleRev,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -294,6 +322,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     map['name_rev'] = Variable<int>(nameRev);
     map['birth_date_rev'] = Variable<int>(birthDateRev);
     map['lifecycle_rev'] = Variable<int>(lifecycleRev);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -308,6 +339,9 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       nameRev: Value(nameRev),
       birthDateRev: Value(birthDateRev),
       lifecycleRev: Value(lifecycleRev),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -326,6 +360,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       nameRev: serializer.fromJson<int>(json['nameRev']),
       birthDateRev: serializer.fromJson<int>(json['birthDateRev']),
       lifecycleRev: serializer.fromJson<int>(json['lifecycleRev']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -341,6 +376,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       'nameRev': serializer.toJson<int>(nameRev),
       'birthDateRev': serializer.toJson<int>(birthDateRev),
       'lifecycleRev': serializer.toJson<int>(lifecycleRev),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -354,6 +390,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     int? nameRev,
     int? birthDateRev,
     int? lifecycleRev,
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => ChildEntity(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -364,6 +401,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     nameRev: nameRev ?? this.nameRev,
     birthDateRev: birthDateRev ?? this.birthDateRev,
     lifecycleRev: lifecycleRev ?? this.lifecycleRev,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   ChildEntity copyWithCompanion(ChildrenTableCompanion data) {
     return ChildEntity(
@@ -380,6 +418,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
       lifecycleRev: data.lifecycleRev.present
           ? data.lifecycleRev.value
           : this.lifecycleRev,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -394,7 +433,8 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
           ..write('syncState: $syncState, ')
           ..write('nameRev: $nameRev, ')
           ..write('birthDateRev: $birthDateRev, ')
-          ..write('lifecycleRev: $lifecycleRev')
+          ..write('lifecycleRev: $lifecycleRev, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -410,6 +450,7 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
     nameRev,
     birthDateRev,
     lifecycleRev,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -423,7 +464,8 @@ class ChildEntity extends DataClass implements Insertable<ChildEntity> {
           other.syncState == this.syncState &&
           other.nameRev == this.nameRev &&
           other.birthDateRev == this.birthDateRev &&
-          other.lifecycleRev == this.lifecycleRev);
+          other.lifecycleRev == this.lifecycleRev &&
+          other.deletedAt == this.deletedAt);
 }
 
 class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
@@ -436,6 +478,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
   final Value<int> nameRev;
   final Value<int> birthDateRev;
   final Value<int> lifecycleRev;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const ChildrenTableCompanion({
     this.id = const Value.absent(),
@@ -447,6 +490,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     this.nameRev = const Value.absent(),
     this.birthDateRev = const Value.absent(),
     this.lifecycleRev = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChildrenTableCompanion.insert({
@@ -459,6 +503,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     this.nameRev = const Value.absent(),
     this.birthDateRev = const Value.absent(),
     this.lifecycleRev = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -475,6 +520,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     Expression<int>? nameRev,
     Expression<int>? birthDateRev,
     Expression<int>? lifecycleRev,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -487,6 +533,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
       if (nameRev != null) 'name_rev': nameRev,
       if (birthDateRev != null) 'birth_date_rev': birthDateRev,
       if (lifecycleRev != null) 'lifecycle_rev': lifecycleRev,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -501,6 +548,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     Value<int>? nameRev,
     Value<int>? birthDateRev,
     Value<int>? lifecycleRev,
+    Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
     return ChildrenTableCompanion(
@@ -513,6 +561,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
       nameRev: nameRev ?? this.nameRev,
       birthDateRev: birthDateRev ?? this.birthDateRev,
       lifecycleRev: lifecycleRev ?? this.lifecycleRev,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -547,6 +596,9 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
     if (lifecycleRev.present) {
       map['lifecycle_rev'] = Variable<int>(lifecycleRev.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -565,6 +617,7 @@ class ChildrenTableCompanion extends UpdateCompanion<ChildEntity> {
           ..write('nameRev: $nameRev, ')
           ..write('birthDateRev: $birthDateRev, ')
           ..write('lifecycleRev: $lifecycleRev, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -876,6 +929,18 @@ class $ArtworksTableTable extends ArtworksTable
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _remotePurgedAtMeta = const VerificationMeta(
+    'remotePurgedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> remotePurgedAt =
+      GeneratedColumn<DateTime>(
+        'remote_purged_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -904,6 +969,7 @@ class $ArtworksTableTable extends ArtworksTable
     drawnAtRev,
     lifecycleRev,
     deletedAt,
+    remotePurgedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1121,6 +1187,15 @@ class $ArtworksTableTable extends ArtworksTable
         deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
+    if (data.containsKey('remote_purged_at')) {
+      context.handle(
+        _remotePurgedAtMeta,
+        remotePurgedAt.isAcceptableOrUnknown(
+          data['remote_purged_at']!,
+          _remotePurgedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1234,6 +1309,10 @@ class $ArtworksTableTable extends ArtworksTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
       ),
+      remotePurgedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}remote_purged_at'],
+      ),
     );
   }
 
@@ -1278,6 +1357,11 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
   final int drawnAtRev;
   final int lifecycleRev;
   final DateTime? deletedAt;
+
+  /// Set when the artwork was purged remotely while this device kept it in
+  /// its trash (its files or operations). Restored here, it exists on this
+  /// device only: the remote side refuses to bring it back.
+  final DateTime? remotePurgedAt;
   const ArtworkEntity({
     required this.id,
     required this.childId,
@@ -1305,6 +1389,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     required this.drawnAtRev,
     required this.lifecycleRev,
     this.deletedAt,
+    this.remotePurgedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1362,6 +1447,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     map['lifecycle_rev'] = Variable<int>(lifecycleRev);
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || remotePurgedAt != null) {
+      map['remote_purged_at'] = Variable<DateTime>(remotePurgedAt);
     }
     return map;
   }
@@ -1422,6 +1510,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
+      remotePurgedAt: remotePurgedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remotePurgedAt),
     );
   }
 
@@ -1465,6 +1556,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       drawnAtRev: serializer.fromJson<int>(json['drawnAtRev']),
       lifecycleRev: serializer.fromJson<int>(json['lifecycleRev']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      remotePurgedAt: serializer.fromJson<DateTime?>(json['remotePurgedAt']),
     );
   }
   @override
@@ -1497,6 +1589,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
       'drawnAtRev': serializer.toJson<int>(drawnAtRev),
       'lifecycleRev': serializer.toJson<int>(lifecycleRev),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'remotePurgedAt': serializer.toJson<DateTime?>(remotePurgedAt),
     };
   }
 
@@ -1527,6 +1620,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     int? drawnAtRev,
     int? lifecycleRev,
     Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> remotePurgedAt = const Value.absent(),
   }) => ArtworkEntity(
     id: id ?? this.id,
     childId: childId ?? this.childId,
@@ -1570,6 +1664,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     drawnAtRev: drawnAtRev ?? this.drawnAtRev,
     lifecycleRev: lifecycleRev ?? this.lifecycleRev,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    remotePurgedAt: remotePurgedAt.present
+        ? remotePurgedAt.value
+        : this.remotePurgedAt,
   );
   ArtworkEntity copyWithCompanion(ArtworksTableCompanion data) {
     return ArtworkEntity(
@@ -1631,6 +1728,9 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ? data.lifecycleRev.value
           : this.lifecycleRev,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      remotePurgedAt: data.remotePurgedAt.present
+          ? data.remotePurgedAt.value
+          : this.remotePurgedAt,
     );
   }
 
@@ -1662,7 +1762,8 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           ..write('storyRev: $storyRev, ')
           ..write('drawnAtRev: $drawnAtRev, ')
           ..write('lifecycleRev: $lifecycleRev, ')
-          ..write('deletedAt: $deletedAt')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('remotePurgedAt: $remotePurgedAt')
           ..write(')'))
         .toString();
   }
@@ -1695,6 +1796,7 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
     drawnAtRev,
     lifecycleRev,
     deletedAt,
+    remotePurgedAt,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1725,7 +1827,8 @@ class ArtworkEntity extends DataClass implements Insertable<ArtworkEntity> {
           other.storyRev == this.storyRev &&
           other.drawnAtRev == this.drawnAtRev &&
           other.lifecycleRev == this.lifecycleRev &&
-          other.deletedAt == this.deletedAt);
+          other.deletedAt == this.deletedAt &&
+          other.remotePurgedAt == this.remotePurgedAt);
 }
 
 class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
@@ -1755,6 +1858,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
   final Value<int> drawnAtRev;
   final Value<int> lifecycleRev;
   final Value<DateTime?> deletedAt;
+  final Value<DateTime?> remotePurgedAt;
   final Value<int> rowid;
   const ArtworksTableCompanion({
     this.id = const Value.absent(),
@@ -1783,6 +1887,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.drawnAtRev = const Value.absent(),
     this.lifecycleRev = const Value.absent(),
     this.deletedAt = const Value.absent(),
+    this.remotePurgedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ArtworksTableCompanion.insert({
@@ -1812,6 +1917,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     this.drawnAtRev = const Value.absent(),
     this.lifecycleRev = const Value.absent(),
     this.deletedAt = const Value.absent(),
+    this.remotePurgedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        childId = Value(childId),
@@ -1843,6 +1949,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Expression<int>? drawnAtRev,
     Expression<int>? lifecycleRev,
     Expression<DateTime>? deletedAt,
+    Expression<DateTime>? remotePurgedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1874,6 +1981,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       if (drawnAtRev != null) 'drawn_at_rev': drawnAtRev,
       if (lifecycleRev != null) 'lifecycle_rev': lifecycleRev,
       if (deletedAt != null) 'deleted_at': deletedAt,
+      if (remotePurgedAt != null) 'remote_purged_at': remotePurgedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1905,6 +2013,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     Value<int>? drawnAtRev,
     Value<int>? lifecycleRev,
     Value<DateTime?>? deletedAt,
+    Value<DateTime?>? remotePurgedAt,
     Value<int>? rowid,
   }) {
     return ArtworksTableCompanion(
@@ -1934,6 +2043,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
       drawnAtRev: drawnAtRev ?? this.drawnAtRev,
       lifecycleRev: lifecycleRev ?? this.lifecycleRev,
       deletedAt: deletedAt ?? this.deletedAt,
+      remotePurgedAt: remotePurgedAt ?? this.remotePurgedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2019,6 +2129,9 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
+    if (remotePurgedAt.present) {
+      map['remote_purged_at'] = Variable<DateTime>(remotePurgedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2054,6 +2167,7 @@ class ArtworksTableCompanion extends UpdateCompanion<ArtworkEntity> {
           ..write('drawnAtRev: $drawnAtRev, ')
           ..write('lifecycleRev: $lifecycleRev, ')
           ..write('deletedAt: $deletedAt, ')
+          ..write('remotePurgedAt: $remotePurgedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3887,6 +4001,565 @@ class MediaVersionsTableCompanion extends UpdateCompanion<MediaVersionEntity> {
   }
 }
 
+class $DeferredRemoteChangesTableTable extends DeferredRemoteChangesTable
+    with
+        TableInfo<
+          $DeferredRemoteChangesTableTable,
+          DeferredRemoteChangeEntity
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeferredRemoteChangesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _artworkIdMeta = const VerificationMeta(
+    'artworkId',
+  );
+  @override
+  late final GeneratedColumn<String> artworkId = GeneratedColumn<String>(
+    'artwork_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _childIdMeta = const VerificationMeta(
+    'childId',
+  );
+  @override
+  late final GeneratedColumn<String> childId = GeneratedColumn<String>(
+    'child_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _changeJsonMeta = const VerificationMeta(
+    'changeJson',
+  );
+  @override
+  late final GeneratedColumn<String> changeJson = GeneratedColumn<String>(
+    'change_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [artworkId, childId, changeJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deferred_remote_changes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DeferredRemoteChangeEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('artwork_id')) {
+      context.handle(
+        _artworkIdMeta,
+        artworkId.isAcceptableOrUnknown(data['artwork_id']!, _artworkIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_artworkIdMeta);
+    }
+    if (data.containsKey('child_id')) {
+      context.handle(
+        _childIdMeta,
+        childId.isAcceptableOrUnknown(data['child_id']!, _childIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_childIdMeta);
+    }
+    if (data.containsKey('change_json')) {
+      context.handle(
+        _changeJsonMeta,
+        changeJson.isAcceptableOrUnknown(data['change_json']!, _changeJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_changeJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {artworkId};
+  @override
+  DeferredRemoteChangeEntity map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeferredRemoteChangeEntity(
+      artworkId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}artwork_id'],
+      )!,
+      childId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_id'],
+      )!,
+      changeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}change_json'],
+      )!,
+    );
+  }
+
+  @override
+  $DeferredRemoteChangesTableTable createAlias(String alias) {
+    return $DeferredRemoteChangesTableTable(attachedDatabase, alias);
+  }
+}
+
+class DeferredRemoteChangeEntity extends DataClass
+    implements Insertable<DeferredRemoteChangeEntity> {
+  final String artworkId;
+  final String childId;
+
+  /// `SyncChange.toJson`.
+  final String changeJson;
+  const DeferredRemoteChangeEntity({
+    required this.artworkId,
+    required this.childId,
+    required this.changeJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['artwork_id'] = Variable<String>(artworkId);
+    map['child_id'] = Variable<String>(childId);
+    map['change_json'] = Variable<String>(changeJson);
+    return map;
+  }
+
+  DeferredRemoteChangesTableCompanion toCompanion(bool nullToAbsent) {
+    return DeferredRemoteChangesTableCompanion(
+      artworkId: Value(artworkId),
+      childId: Value(childId),
+      changeJson: Value(changeJson),
+    );
+  }
+
+  factory DeferredRemoteChangeEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeferredRemoteChangeEntity(
+      artworkId: serializer.fromJson<String>(json['artworkId']),
+      childId: serializer.fromJson<String>(json['childId']),
+      changeJson: serializer.fromJson<String>(json['changeJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'artworkId': serializer.toJson<String>(artworkId),
+      'childId': serializer.toJson<String>(childId),
+      'changeJson': serializer.toJson<String>(changeJson),
+    };
+  }
+
+  DeferredRemoteChangeEntity copyWith({
+    String? artworkId,
+    String? childId,
+    String? changeJson,
+  }) => DeferredRemoteChangeEntity(
+    artworkId: artworkId ?? this.artworkId,
+    childId: childId ?? this.childId,
+    changeJson: changeJson ?? this.changeJson,
+  );
+  DeferredRemoteChangeEntity copyWithCompanion(
+    DeferredRemoteChangesTableCompanion data,
+  ) {
+    return DeferredRemoteChangeEntity(
+      artworkId: data.artworkId.present ? data.artworkId.value : this.artworkId,
+      childId: data.childId.present ? data.childId.value : this.childId,
+      changeJson: data.changeJson.present
+          ? data.changeJson.value
+          : this.changeJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeferredRemoteChangeEntity(')
+          ..write('artworkId: $artworkId, ')
+          ..write('childId: $childId, ')
+          ..write('changeJson: $changeJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(artworkId, childId, changeJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeferredRemoteChangeEntity &&
+          other.artworkId == this.artworkId &&
+          other.childId == this.childId &&
+          other.changeJson == this.changeJson);
+}
+
+class DeferredRemoteChangesTableCompanion
+    extends UpdateCompanion<DeferredRemoteChangeEntity> {
+  final Value<String> artworkId;
+  final Value<String> childId;
+  final Value<String> changeJson;
+  final Value<int> rowid;
+  const DeferredRemoteChangesTableCompanion({
+    this.artworkId = const Value.absent(),
+    this.childId = const Value.absent(),
+    this.changeJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DeferredRemoteChangesTableCompanion.insert({
+    required String artworkId,
+    required String childId,
+    required String changeJson,
+    this.rowid = const Value.absent(),
+  }) : artworkId = Value(artworkId),
+       childId = Value(childId),
+       changeJson = Value(changeJson);
+  static Insertable<DeferredRemoteChangeEntity> custom({
+    Expression<String>? artworkId,
+    Expression<String>? childId,
+    Expression<String>? changeJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (artworkId != null) 'artwork_id': artworkId,
+      if (childId != null) 'child_id': childId,
+      if (changeJson != null) 'change_json': changeJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DeferredRemoteChangesTableCompanion copyWith({
+    Value<String>? artworkId,
+    Value<String>? childId,
+    Value<String>? changeJson,
+    Value<int>? rowid,
+  }) {
+    return DeferredRemoteChangesTableCompanion(
+      artworkId: artworkId ?? this.artworkId,
+      childId: childId ?? this.childId,
+      changeJson: changeJson ?? this.changeJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (artworkId.present) {
+      map['artwork_id'] = Variable<String>(artworkId.value);
+    }
+    if (childId.present) {
+      map['child_id'] = Variable<String>(childId.value);
+    }
+    if (changeJson.present) {
+      map['change_json'] = Variable<String>(changeJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeferredRemoteChangesTableCompanion(')
+          ..write('artworkId: $artworkId, ')
+          ..write('childId: $childId, ')
+          ..write('changeJson: $changeJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OlderRemoteValuesTableTable extends OlderRemoteValuesTable
+    with TableInfo<$OlderRemoteValuesTableTable, OlderRemoteValueEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OlderRemoteValuesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldMeta = const VerificationMeta('field');
+  @override
+  late final GeneratedColumn<String> field = GeneratedColumn<String>(
+    'field',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _changeJsonMeta = const VerificationMeta(
+    'changeJson',
+  );
+  @override
+  late final GeneratedColumn<String> changeJson = GeneratedColumn<String>(
+    'change_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityId, field, changeJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'older_remote_values';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OlderRemoteValueEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('field')) {
+      context.handle(
+        _fieldMeta,
+        field.isAcceptableOrUnknown(data['field']!, _fieldMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldMeta);
+    }
+    if (data.containsKey('change_json')) {
+      context.handle(
+        _changeJsonMeta,
+        changeJson.isAcceptableOrUnknown(data['change_json']!, _changeJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_changeJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId, field};
+  @override
+  OlderRemoteValueEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OlderRemoteValueEntity(
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      field: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field'],
+      )!,
+      changeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}change_json'],
+      )!,
+    );
+  }
+
+  @override
+  $OlderRemoteValuesTableTable createAlias(String alias) {
+    return $OlderRemoteValuesTableTable(attachedDatabase, alias);
+  }
+}
+
+class OlderRemoteValueEntity extends DataClass
+    implements Insertable<OlderRemoteValueEntity> {
+  final String entityId;
+  final String field;
+
+  /// `SyncChange.toJson` of the latest such change of the field.
+  final String changeJson;
+  const OlderRemoteValueEntity({
+    required this.entityId,
+    required this.field,
+    required this.changeJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_id'] = Variable<String>(entityId);
+    map['field'] = Variable<String>(field);
+    map['change_json'] = Variable<String>(changeJson);
+    return map;
+  }
+
+  OlderRemoteValuesTableCompanion toCompanion(bool nullToAbsent) {
+    return OlderRemoteValuesTableCompanion(
+      entityId: Value(entityId),
+      field: Value(field),
+      changeJson: Value(changeJson),
+    );
+  }
+
+  factory OlderRemoteValueEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OlderRemoteValueEntity(
+      entityId: serializer.fromJson<String>(json['entityId']),
+      field: serializer.fromJson<String>(json['field']),
+      changeJson: serializer.fromJson<String>(json['changeJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityId': serializer.toJson<String>(entityId),
+      'field': serializer.toJson<String>(field),
+      'changeJson': serializer.toJson<String>(changeJson),
+    };
+  }
+
+  OlderRemoteValueEntity copyWith({
+    String? entityId,
+    String? field,
+    String? changeJson,
+  }) => OlderRemoteValueEntity(
+    entityId: entityId ?? this.entityId,
+    field: field ?? this.field,
+    changeJson: changeJson ?? this.changeJson,
+  );
+  OlderRemoteValueEntity copyWithCompanion(
+    OlderRemoteValuesTableCompanion data,
+  ) {
+    return OlderRemoteValueEntity(
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      field: data.field.present ? data.field.value : this.field,
+      changeJson: data.changeJson.present
+          ? data.changeJson.value
+          : this.changeJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OlderRemoteValueEntity(')
+          ..write('entityId: $entityId, ')
+          ..write('field: $field, ')
+          ..write('changeJson: $changeJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entityId, field, changeJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OlderRemoteValueEntity &&
+          other.entityId == this.entityId &&
+          other.field == this.field &&
+          other.changeJson == this.changeJson);
+}
+
+class OlderRemoteValuesTableCompanion
+    extends UpdateCompanion<OlderRemoteValueEntity> {
+  final Value<String> entityId;
+  final Value<String> field;
+  final Value<String> changeJson;
+  final Value<int> rowid;
+  const OlderRemoteValuesTableCompanion({
+    this.entityId = const Value.absent(),
+    this.field = const Value.absent(),
+    this.changeJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OlderRemoteValuesTableCompanion.insert({
+    required String entityId,
+    required String field,
+    required String changeJson,
+    this.rowid = const Value.absent(),
+  }) : entityId = Value(entityId),
+       field = Value(field),
+       changeJson = Value(changeJson);
+  static Insertable<OlderRemoteValueEntity> custom({
+    Expression<String>? entityId,
+    Expression<String>? field,
+    Expression<String>? changeJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityId != null) 'entity_id': entityId,
+      if (field != null) 'field': field,
+      if (changeJson != null) 'change_json': changeJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OlderRemoteValuesTableCompanion copyWith({
+    Value<String>? entityId,
+    Value<String>? field,
+    Value<String>? changeJson,
+    Value<int>? rowid,
+  }) {
+    return OlderRemoteValuesTableCompanion(
+      entityId: entityId ?? this.entityId,
+      field: field ?? this.field,
+      changeJson: changeJson ?? this.changeJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (field.present) {
+      map['field'] = Variable<String>(field.value);
+    }
+    if (changeJson.present) {
+      map['change_json'] = Variable<String>(changeJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OlderRemoteValuesTableCompanion(')
+          ..write('entityId: $entityId, ')
+          ..write('field: $field, ')
+          ..write('changeJson: $changeJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $VaultMetaTableTable extends VaultMetaTable
     with TableInfo<$VaultMetaTableTable, VaultMetaEntity> {
   @override
@@ -3974,6 +4647,28 @@ class $VaultMetaTableTable extends VaultMetaTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _changeCursorMeta = const VerificationMeta(
+    'changeCursor',
+  );
+  @override
+  late final GeneratedColumn<String> changeCursor = GeneratedColumn<String>(
+    'change_cursor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _changeGenerationMeta = const VerificationMeta(
+    'changeGeneration',
+  );
+  @override
+  late final GeneratedColumn<int> changeGeneration = GeneratedColumn<int>(
+    'change_generation',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3983,6 +4678,8 @@ class $VaultMetaTableTable extends VaultMetaTable
     childrenPullCursor,
     artworksPullCursor,
     purgedPullCursor,
+    changeCursor,
+    changeGeneration,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4052,6 +4749,24 @@ class $VaultMetaTableTable extends VaultMetaTable
         ),
       );
     }
+    if (data.containsKey('change_cursor')) {
+      context.handle(
+        _changeCursorMeta,
+        changeCursor.isAcceptableOrUnknown(
+          data['change_cursor']!,
+          _changeCursorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('change_generation')) {
+      context.handle(
+        _changeGenerationMeta,
+        changeGeneration.isAcceptableOrUnknown(
+          data['change_generation']!,
+          _changeGenerationMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4089,6 +4804,14 @@ class $VaultMetaTableTable extends VaultMetaTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}purged_pull_cursor'],
       ),
+      changeCursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}change_cursor'],
+      ),
+      changeGeneration: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}change_generation'],
+      ),
     );
   }
 
@@ -4106,6 +4829,11 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
   final DateTime? childrenPullCursor;
   final DateTime? artworksPullCursor;
   final DateTime? purgedPullCursor;
+
+  /// Position in the remote change journal (`ChangeCursor.value`) and its
+  /// generation, written in the transaction that applies the page they end.
+  final String? changeCursor;
+  final int? changeGeneration;
   const VaultMetaEntity({
     required this.id,
     this.familyId,
@@ -4114,6 +4842,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     this.childrenPullCursor,
     this.artworksPullCursor,
     this.purgedPullCursor,
+    this.changeCursor,
+    this.changeGeneration,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4134,6 +4864,12 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     }
     if (!nullToAbsent || purgedPullCursor != null) {
       map['purged_pull_cursor'] = Variable<DateTime>(purgedPullCursor);
+    }
+    if (!nullToAbsent || changeCursor != null) {
+      map['change_cursor'] = Variable<String>(changeCursor);
+    }
+    if (!nullToAbsent || changeGeneration != null) {
+      map['change_generation'] = Variable<int>(changeGeneration);
     }
     return map;
   }
@@ -4157,6 +4893,12 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       purgedPullCursor: purgedPullCursor == null && nullToAbsent
           ? const Value.absent()
           : Value(purgedPullCursor),
+      changeCursor: changeCursor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(changeCursor),
+      changeGeneration: changeGeneration == null && nullToAbsent
+          ? const Value.absent()
+          : Value(changeGeneration),
     );
   }
 
@@ -4179,6 +4921,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       purgedPullCursor: serializer.fromJson<DateTime?>(
         json['purgedPullCursor'],
       ),
+      changeCursor: serializer.fromJson<String?>(json['changeCursor']),
+      changeGeneration: serializer.fromJson<int?>(json['changeGeneration']),
     );
   }
   @override
@@ -4192,6 +4936,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       'childrenPullCursor': serializer.toJson<DateTime?>(childrenPullCursor),
       'artworksPullCursor': serializer.toJson<DateTime?>(artworksPullCursor),
       'purgedPullCursor': serializer.toJson<DateTime?>(purgedPullCursor),
+      'changeCursor': serializer.toJson<String?>(changeCursor),
+      'changeGeneration': serializer.toJson<int?>(changeGeneration),
     };
   }
 
@@ -4203,6 +4949,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     Value<DateTime?> childrenPullCursor = const Value.absent(),
     Value<DateTime?> artworksPullCursor = const Value.absent(),
     Value<DateTime?> purgedPullCursor = const Value.absent(),
+    Value<String?> changeCursor = const Value.absent(),
+    Value<int?> changeGeneration = const Value.absent(),
   }) => VaultMetaEntity(
     id: id ?? this.id,
     familyId: familyId.present ? familyId.value : this.familyId,
@@ -4219,6 +4967,10 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     purgedPullCursor: purgedPullCursor.present
         ? purgedPullCursor.value
         : this.purgedPullCursor,
+    changeCursor: changeCursor.present ? changeCursor.value : this.changeCursor,
+    changeGeneration: changeGeneration.present
+        ? changeGeneration.value
+        : this.changeGeneration,
   );
   VaultMetaEntity copyWithCompanion(VaultMetaTableCompanion data) {
     return VaultMetaEntity(
@@ -4239,6 +4991,12 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
       purgedPullCursor: data.purgedPullCursor.present
           ? data.purgedPullCursor.value
           : this.purgedPullCursor,
+      changeCursor: data.changeCursor.present
+          ? data.changeCursor.value
+          : this.changeCursor,
+      changeGeneration: data.changeGeneration.present
+          ? data.changeGeneration.value
+          : this.changeGeneration,
     );
   }
 
@@ -4251,7 +5009,9 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
           ..write('lastPullCursor: $lastPullCursor, ')
           ..write('childrenPullCursor: $childrenPullCursor, ')
           ..write('artworksPullCursor: $artworksPullCursor, ')
-          ..write('purgedPullCursor: $purgedPullCursor')
+          ..write('purgedPullCursor: $purgedPullCursor, ')
+          ..write('changeCursor: $changeCursor, ')
+          ..write('changeGeneration: $changeGeneration')
           ..write(')'))
         .toString();
   }
@@ -4265,6 +5025,8 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
     childrenPullCursor,
     artworksPullCursor,
     purgedPullCursor,
+    changeCursor,
+    changeGeneration,
   );
   @override
   bool operator ==(Object other) =>
@@ -4276,7 +5038,9 @@ class VaultMetaEntity extends DataClass implements Insertable<VaultMetaEntity> {
           other.lastPullCursor == this.lastPullCursor &&
           other.childrenPullCursor == this.childrenPullCursor &&
           other.artworksPullCursor == this.artworksPullCursor &&
-          other.purgedPullCursor == this.purgedPullCursor);
+          other.purgedPullCursor == this.purgedPullCursor &&
+          other.changeCursor == this.changeCursor &&
+          other.changeGeneration == this.changeGeneration);
 }
 
 class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
@@ -4287,6 +5051,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
   final Value<DateTime?> childrenPullCursor;
   final Value<DateTime?> artworksPullCursor;
   final Value<DateTime?> purgedPullCursor;
+  final Value<String?> changeCursor;
+  final Value<int?> changeGeneration;
   final Value<int> rowid;
   const VaultMetaTableCompanion({
     this.id = const Value.absent(),
@@ -4296,6 +5062,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     this.childrenPullCursor = const Value.absent(),
     this.artworksPullCursor = const Value.absent(),
     this.purgedPullCursor = const Value.absent(),
+    this.changeCursor = const Value.absent(),
+    this.changeGeneration = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VaultMetaTableCompanion.insert({
@@ -4306,6 +5074,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     this.childrenPullCursor = const Value.absent(),
     this.artworksPullCursor = const Value.absent(),
     this.purgedPullCursor = const Value.absent(),
+    this.changeCursor = const Value.absent(),
+    this.changeGeneration = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id);
   static Insertable<VaultMetaEntity> custom({
@@ -4316,6 +5086,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     Expression<DateTime>? childrenPullCursor,
     Expression<DateTime>? artworksPullCursor,
     Expression<DateTime>? purgedPullCursor,
+    Expression<String>? changeCursor,
+    Expression<int>? changeGeneration,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4328,6 +5100,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
       if (artworksPullCursor != null)
         'artworks_pull_cursor': artworksPullCursor,
       if (purgedPullCursor != null) 'purged_pull_cursor': purgedPullCursor,
+      if (changeCursor != null) 'change_cursor': changeCursor,
+      if (changeGeneration != null) 'change_generation': changeGeneration,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4340,6 +5114,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     Value<DateTime?>? childrenPullCursor,
     Value<DateTime?>? artworksPullCursor,
     Value<DateTime?>? purgedPullCursor,
+    Value<String?>? changeCursor,
+    Value<int?>? changeGeneration,
     Value<int>? rowid,
   }) {
     return VaultMetaTableCompanion(
@@ -4350,6 +5126,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
       childrenPullCursor: childrenPullCursor ?? this.childrenPullCursor,
       artworksPullCursor: artworksPullCursor ?? this.artworksPullCursor,
       purgedPullCursor: purgedPullCursor ?? this.purgedPullCursor,
+      changeCursor: changeCursor ?? this.changeCursor,
+      changeGeneration: changeGeneration ?? this.changeGeneration,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4382,6 +5160,12 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
     if (purgedPullCursor.present) {
       map['purged_pull_cursor'] = Variable<DateTime>(purgedPullCursor.value);
     }
+    if (changeCursor.present) {
+      map['change_cursor'] = Variable<String>(changeCursor.value);
+    }
+    if (changeGeneration.present) {
+      map['change_generation'] = Variable<int>(changeGeneration.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4398,6 +5182,8 @@ class VaultMetaTableCompanion extends UpdateCompanion<VaultMetaEntity> {
           ..write('childrenPullCursor: $childrenPullCursor, ')
           ..write('artworksPullCursor: $artworksPullCursor, ')
           ..write('purgedPullCursor: $purgedPullCursor, ')
+          ..write('changeCursor: $changeCursor, ')
+          ..write('changeGeneration: $changeGeneration, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4630,6 +5416,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $ReplacedValuesTableTable(this);
   late final $MediaVersionsTableTable mediaVersionsTable =
       $MediaVersionsTableTable(this);
+  late final $DeferredRemoteChangesTableTable deferredRemoteChangesTable =
+      $DeferredRemoteChangesTableTable(this);
+  late final $OlderRemoteValuesTableTable olderRemoteValuesTable =
+      $OlderRemoteValuesTableTable(this);
   late final $VaultMetaTableTable vaultMetaTable = $VaultMetaTableTable(this);
   late final $ShareLinkUrlCacheTableTable shareLinkUrlCacheTable =
       $ShareLinkUrlCacheTableTable(this);
@@ -4644,6 +5434,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncOutboxTable,
     replacedValuesTable,
     mediaVersionsTable,
+    deferredRemoteChangesTable,
+    olderRemoteValuesTable,
     vaultMetaTable,
     shareLinkUrlCacheTable,
   ];
@@ -4670,6 +5462,7 @@ typedef $$ChildrenTableTableCreateCompanionBuilder =
       Value<int> nameRev,
       Value<int> birthDateRev,
       Value<int> lifecycleRev,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 typedef $$ChildrenTableTableUpdateCompanionBuilder =
@@ -4683,6 +5476,7 @@ typedef $$ChildrenTableTableUpdateCompanionBuilder =
       Value<int> nameRev,
       Value<int> birthDateRev,
       Value<int> lifecycleRev,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 
@@ -4767,6 +5561,11 @@ class $$ChildrenTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> artworksTableRefs(
     Expression<bool> Function($$ArtworksTableTableFilterComposer f) f,
   ) {
@@ -4846,6 +5645,11 @@ class $$ChildrenTableTableOrderingComposer
     column: $table.lifecycleRev,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ChildrenTableTableAnnotationComposer
@@ -4887,6 +5691,9 @@ class $$ChildrenTableTableAnnotationComposer
     column: $table.lifecycleRev,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> artworksTableRefs<T extends Object>(
     Expression<T> Function($$ArtworksTableTableAnnotationComposer a) f,
@@ -4951,6 +5758,7 @@ class $$ChildrenTableTableTableManager
                 Value<int> nameRev = const Value.absent(),
                 Value<int> birthDateRev = const Value.absent(),
                 Value<int> lifecycleRev = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChildrenTableCompanion(
                 id: id,
@@ -4962,6 +5770,7 @@ class $$ChildrenTableTableTableManager
                 nameRev: nameRev,
                 birthDateRev: birthDateRev,
                 lifecycleRev: lifecycleRev,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4975,6 +5784,7 @@ class $$ChildrenTableTableTableManager
                 Value<int> nameRev = const Value.absent(),
                 Value<int> birthDateRev = const Value.absent(),
                 Value<int> lifecycleRev = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChildrenTableCompanion.insert(
                 id: id,
@@ -4986,6 +5796,7 @@ class $$ChildrenTableTableTableManager
                 nameRev: nameRev,
                 birthDateRev: birthDateRev,
                 lifecycleRev: lifecycleRev,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5074,6 +5885,7 @@ typedef $$ArtworksTableTableCreateCompanionBuilder =
       Value<int> drawnAtRev,
       Value<int> lifecycleRev,
       Value<DateTime?> deletedAt,
+      Value<DateTime?> remotePurgedAt,
       Value<int> rowid,
     });
 typedef $$ArtworksTableTableUpdateCompanionBuilder =
@@ -5104,6 +5916,7 @@ typedef $$ArtworksTableTableUpdateCompanionBuilder =
       Value<int> drawnAtRev,
       Value<int> lifecycleRev,
       Value<DateTime?> deletedAt,
+      Value<DateTime?> remotePurgedAt,
       Value<int> rowid,
     });
 
@@ -5267,6 +6080,11 @@ class $$ArtworksTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get remotePurgedAt => $composableBuilder(
+    column: $table.remotePurgedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$ChildrenTableTableFilterComposer get childId {
     final $$ChildrenTableTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5425,6 +6243,11 @@ class $$ArtworksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get remotePurgedAt => $composableBuilder(
+    column: $table.remotePurgedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ChildrenTableTableOrderingComposer get childId {
     final $$ChildrenTableTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5565,6 +6388,11 @@ class $$ArtworksTableTableAnnotationComposer
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get remotePurgedAt => $composableBuilder(
+    column: $table.remotePurgedAt,
+    builder: (column) => column,
+  );
+
   $$ChildrenTableTableAnnotationComposer get childId {
     final $$ChildrenTableTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5643,6 +6471,7 @@ class $$ArtworksTableTableTableManager
                 Value<int> drawnAtRev = const Value.absent(),
                 Value<int> lifecycleRev = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> remotePurgedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion(
                 id: id,
@@ -5671,6 +6500,7 @@ class $$ArtworksTableTableTableManager
                 drawnAtRev: drawnAtRev,
                 lifecycleRev: lifecycleRev,
                 deletedAt: deletedAt,
+                remotePurgedAt: remotePurgedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5701,6 +6531,7 @@ class $$ArtworksTableTableTableManager
                 Value<int> drawnAtRev = const Value.absent(),
                 Value<int> lifecycleRev = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> remotePurgedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtworksTableCompanion.insert(
                 id: id,
@@ -5729,6 +6560,7 @@ class $$ArtworksTableTableTableManager
                 drawnAtRev: drawnAtRev,
                 lifecycleRev: lifecycleRev,
                 deletedAt: deletedAt,
+                remotePurgedAt: remotePurgedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -6834,6 +7666,396 @@ typedef $$MediaVersionsTableTableProcessedTableManager =
       MediaVersionEntity,
       PrefetchHooks Function()
     >;
+typedef $$DeferredRemoteChangesTableTableCreateCompanionBuilder =
+    DeferredRemoteChangesTableCompanion Function({
+      required String artworkId,
+      required String childId,
+      required String changeJson,
+      Value<int> rowid,
+    });
+typedef $$DeferredRemoteChangesTableTableUpdateCompanionBuilder =
+    DeferredRemoteChangesTableCompanion Function({
+      Value<String> artworkId,
+      Value<String> childId,
+      Value<String> changeJson,
+      Value<int> rowid,
+    });
+
+class $$DeferredRemoteChangesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $DeferredRemoteChangesTableTable> {
+  $$DeferredRemoteChangesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get artworkId => $composableBuilder(
+    column: $table.artworkId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childId => $composableBuilder(
+    column: $table.childId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DeferredRemoteChangesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeferredRemoteChangesTableTable> {
+  $$DeferredRemoteChangesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get artworkId => $composableBuilder(
+    column: $table.artworkId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childId => $composableBuilder(
+    column: $table.childId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DeferredRemoteChangesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeferredRemoteChangesTableTable> {
+  $$DeferredRemoteChangesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get artworkId =>
+      $composableBuilder(column: $table.artworkId, builder: (column) => column);
+
+  GeneratedColumn<String> get childId =>
+      $composableBuilder(column: $table.childId, builder: (column) => column);
+
+  GeneratedColumn<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => column,
+  );
+}
+
+class $$DeferredRemoteChangesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DeferredRemoteChangesTableTable,
+          DeferredRemoteChangeEntity,
+          $$DeferredRemoteChangesTableTableFilterComposer,
+          $$DeferredRemoteChangesTableTableOrderingComposer,
+          $$DeferredRemoteChangesTableTableAnnotationComposer,
+          $$DeferredRemoteChangesTableTableCreateCompanionBuilder,
+          $$DeferredRemoteChangesTableTableUpdateCompanionBuilder,
+          (
+            DeferredRemoteChangeEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $DeferredRemoteChangesTableTable,
+              DeferredRemoteChangeEntity
+            >,
+          ),
+          DeferredRemoteChangeEntity,
+          PrefetchHooks Function()
+        > {
+  $$DeferredRemoteChangesTableTableTableManager(
+    _$AppDatabase db,
+    $DeferredRemoteChangesTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeferredRemoteChangesTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$DeferredRemoteChangesTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DeferredRemoteChangesTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> artworkId = const Value.absent(),
+                Value<String> childId = const Value.absent(),
+                Value<String> changeJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DeferredRemoteChangesTableCompanion(
+                artworkId: artworkId,
+                childId: childId,
+                changeJson: changeJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String artworkId,
+                required String childId,
+                required String changeJson,
+                Value<int> rowid = const Value.absent(),
+              }) => DeferredRemoteChangesTableCompanion.insert(
+                artworkId: artworkId,
+                childId: childId,
+                changeJson: changeJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $DeferredRemoteChangesTableTable,
+                    DeferredRemoteChangeEntity
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $DeferredRemoteChangesTableTable,
+                    DeferredRemoteChangeEntity
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DeferredRemoteChangesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DeferredRemoteChangesTableTable,
+      DeferredRemoteChangeEntity,
+      $$DeferredRemoteChangesTableTableFilterComposer,
+      $$DeferredRemoteChangesTableTableOrderingComposer,
+      $$DeferredRemoteChangesTableTableAnnotationComposer,
+      $$DeferredRemoteChangesTableTableCreateCompanionBuilder,
+      $$DeferredRemoteChangesTableTableUpdateCompanionBuilder,
+      (
+        DeferredRemoteChangeEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $DeferredRemoteChangesTableTable,
+          DeferredRemoteChangeEntity
+        >,
+      ),
+      DeferredRemoteChangeEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$OlderRemoteValuesTableTableCreateCompanionBuilder =
+    OlderRemoteValuesTableCompanion Function({
+      required String entityId,
+      required String field,
+      required String changeJson,
+      Value<int> rowid,
+    });
+typedef $$OlderRemoteValuesTableTableUpdateCompanionBuilder =
+    OlderRemoteValuesTableCompanion Function({
+      Value<String> entityId,
+      Value<String> field,
+      Value<String> changeJson,
+      Value<int> rowid,
+    });
+
+class $$OlderRemoteValuesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $OlderRemoteValuesTableTable> {
+  $$OlderRemoteValuesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get field => $composableBuilder(
+    column: $table.field,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OlderRemoteValuesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $OlderRemoteValuesTableTable> {
+  $$OlderRemoteValuesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get field => $composableBuilder(
+    column: $table.field,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OlderRemoteValuesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OlderRemoteValuesTableTable> {
+  $$OlderRemoteValuesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get field =>
+      $composableBuilder(column: $table.field, builder: (column) => column);
+
+  GeneratedColumn<String> get changeJson => $composableBuilder(
+    column: $table.changeJson,
+    builder: (column) => column,
+  );
+}
+
+class $$OlderRemoteValuesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OlderRemoteValuesTableTable,
+          OlderRemoteValueEntity,
+          $$OlderRemoteValuesTableTableFilterComposer,
+          $$OlderRemoteValuesTableTableOrderingComposer,
+          $$OlderRemoteValuesTableTableAnnotationComposer,
+          $$OlderRemoteValuesTableTableCreateCompanionBuilder,
+          $$OlderRemoteValuesTableTableUpdateCompanionBuilder,
+          (
+            OlderRemoteValueEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $OlderRemoteValuesTableTable,
+              OlderRemoteValueEntity
+            >,
+          ),
+          OlderRemoteValueEntity,
+          PrefetchHooks Function()
+        > {
+  $$OlderRemoteValuesTableTableTableManager(
+    _$AppDatabase db,
+    $OlderRemoteValuesTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OlderRemoteValuesTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$OlderRemoteValuesTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$OlderRemoteValuesTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityId = const Value.absent(),
+                Value<String> field = const Value.absent(),
+                Value<String> changeJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OlderRemoteValuesTableCompanion(
+                entityId: entityId,
+                field: field,
+                changeJson: changeJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityId,
+                required String field,
+                required String changeJson,
+                Value<int> rowid = const Value.absent(),
+              }) => OlderRemoteValuesTableCompanion.insert(
+                entityId: entityId,
+                field: field,
+                changeJson: changeJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $OlderRemoteValuesTableTable,
+                    OlderRemoteValueEntity
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $OlderRemoteValuesTableTable,
+                    OlderRemoteValueEntity
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OlderRemoteValuesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OlderRemoteValuesTableTable,
+      OlderRemoteValueEntity,
+      $$OlderRemoteValuesTableTableFilterComposer,
+      $$OlderRemoteValuesTableTableOrderingComposer,
+      $$OlderRemoteValuesTableTableAnnotationComposer,
+      $$OlderRemoteValuesTableTableCreateCompanionBuilder,
+      $$OlderRemoteValuesTableTableUpdateCompanionBuilder,
+      (
+        OlderRemoteValueEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $OlderRemoteValuesTableTable,
+          OlderRemoteValueEntity
+        >,
+      ),
+      OlderRemoteValueEntity,
+      PrefetchHooks Function()
+    >;
 typedef $$VaultMetaTableTableCreateCompanionBuilder =
     VaultMetaTableCompanion Function({
       required String id,
@@ -6843,6 +8065,8 @@ typedef $$VaultMetaTableTableCreateCompanionBuilder =
       Value<DateTime?> childrenPullCursor,
       Value<DateTime?> artworksPullCursor,
       Value<DateTime?> purgedPullCursor,
+      Value<String?> changeCursor,
+      Value<int?> changeGeneration,
       Value<int> rowid,
     });
 typedef $$VaultMetaTableTableUpdateCompanionBuilder =
@@ -6854,6 +8078,8 @@ typedef $$VaultMetaTableTableUpdateCompanionBuilder =
       Value<DateTime?> childrenPullCursor,
       Value<DateTime?> artworksPullCursor,
       Value<DateTime?> purgedPullCursor,
+      Value<String?> changeCursor,
+      Value<int?> changeGeneration,
       Value<int> rowid,
     });
 
@@ -6898,6 +8124,16 @@ class $$VaultMetaTableTableFilterComposer
 
   ColumnFilters<DateTime> get purgedPullCursor => $composableBuilder(
     column: $table.purgedPullCursor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get changeCursor => $composableBuilder(
+    column: $table.changeCursor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get changeGeneration => $composableBuilder(
+    column: $table.changeGeneration,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6945,6 +8181,16 @@ class $$VaultMetaTableTableOrderingComposer
     column: $table.purgedPullCursor,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get changeCursor => $composableBuilder(
+    column: $table.changeCursor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get changeGeneration => $composableBuilder(
+    column: $table.changeGeneration,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VaultMetaTableTableAnnotationComposer
@@ -6984,6 +8230,16 @@ class $$VaultMetaTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get purgedPullCursor => $composableBuilder(
     column: $table.purgedPullCursor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get changeCursor => $composableBuilder(
+    column: $table.changeCursor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get changeGeneration => $composableBuilder(
+    column: $table.changeGeneration,
     builder: (column) => column,
   );
 }
@@ -7032,6 +8288,8 @@ class $$VaultMetaTableTableTableManager
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
                 Value<DateTime?> artworksPullCursor = const Value.absent(),
                 Value<DateTime?> purgedPullCursor = const Value.absent(),
+                Value<String?> changeCursor = const Value.absent(),
+                Value<int?> changeGeneration = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VaultMetaTableCompanion(
                 id: id,
@@ -7041,6 +8299,8 @@ class $$VaultMetaTableTableTableManager
                 childrenPullCursor: childrenPullCursor,
                 artworksPullCursor: artworksPullCursor,
                 purgedPullCursor: purgedPullCursor,
+                changeCursor: changeCursor,
+                changeGeneration: changeGeneration,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7052,6 +8312,8 @@ class $$VaultMetaTableTableTableManager
                 Value<DateTime?> childrenPullCursor = const Value.absent(),
                 Value<DateTime?> artworksPullCursor = const Value.absent(),
                 Value<DateTime?> purgedPullCursor = const Value.absent(),
+                Value<String?> changeCursor = const Value.absent(),
+                Value<int?> changeGeneration = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VaultMetaTableCompanion.insert(
                 id: id,
@@ -7061,6 +8323,8 @@ class $$VaultMetaTableTableTableManager
                 childrenPullCursor: childrenPullCursor,
                 artworksPullCursor: artworksPullCursor,
                 purgedPullCursor: purgedPullCursor,
+                changeCursor: changeCursor,
+                changeGeneration: changeGeneration,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -7290,6 +8554,17 @@ class $AppDatabaseManager {
       $$ReplacedValuesTableTableTableManager(_db, _db.replacedValuesTable);
   $$MediaVersionsTableTableTableManager get mediaVersionsTable =>
       $$MediaVersionsTableTableTableManager(_db, _db.mediaVersionsTable);
+  $$DeferredRemoteChangesTableTableTableManager
+  get deferredRemoteChangesTable =>
+      $$DeferredRemoteChangesTableTableTableManager(
+        _db,
+        _db.deferredRemoteChangesTable,
+      );
+  $$OlderRemoteValuesTableTableTableManager get olderRemoteValuesTable =>
+      $$OlderRemoteValuesTableTableTableManager(
+        _db,
+        _db.olderRemoteValuesTable,
+      );
   $$VaultMetaTableTableTableManager get vaultMetaTable =>
       $$VaultMetaTableTableTableManager(_db, _db.vaultMetaTable);
   $$ShareLinkUrlCacheTableTableTableManager get shareLinkUrlCacheTable =>

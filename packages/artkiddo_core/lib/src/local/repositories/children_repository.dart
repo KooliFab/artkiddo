@@ -93,7 +93,10 @@ class DriftChildrenRepository implements ChildrenRepository {
 
   @override
   Stream<List<Child>> watchAll() {
-    return _db.select(_db.childrenTable).watch().map((rows) {
+    // A child purged remotely stays only as the parent of trashed artworks.
+    final active = _db.select(_db.childrenTable)
+      ..where((t) => t.deletedAt.isNull());
+    return active.watch().map((rows) {
       final list = rows.map(_toDomain).toList();
       list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       return list;
@@ -111,7 +114,8 @@ class DriftChildrenRepository implements ChildrenRepository {
   @override
   Future<int> count() async {
     final query = _db.selectOnly(_db.childrenTable)
-      ..addColumns([_db.childrenTable.id.count()]);
+      ..addColumns([_db.childrenTable.id.count()])
+      ..where(_db.childrenTable.deletedAt.isNull());
     final row = await query.getSingle();
     return row.read(_db.childrenTable.id.count()) ?? 0;
   }
