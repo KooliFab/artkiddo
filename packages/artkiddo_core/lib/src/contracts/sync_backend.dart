@@ -176,6 +176,12 @@ bool _sameInstant(DateTime? left, DateTime? right) {
 }
 
 /// Public sync contract implemented by a private/cloud adapter.
+///
+/// Superseded by `SyncProtocolBackend` (protocol v3): row upserts and
+/// timestamp cursors cannot express per-field revisions, replayable
+/// operations or a commit-ordered journal. Kept until the engine and the
+/// adapters move to v3.
+@Deprecated('Use SyncProtocolBackend (sync protocol v3).')
 abstract class SyncBackend {
   Future<String> ensureMyFamily();
 

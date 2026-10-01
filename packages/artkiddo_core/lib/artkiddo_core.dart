@@ -14,6 +14,7 @@ export 'src/contracts/household.dart';
 export 'src/contracts/object_storage.dart';
 export 'src/contracts/remote_media.dart';
 export 'src/contracts/sync_backend.dart';
+export 'src/contracts/sync_protocol.dart';
 export 'src/contracts/trash.dart';
 export 'src/local/database/app_database.dart';
 export 'src/domain/app_failure.dart';

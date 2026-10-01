@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-09-27 (versioned audio writes and Drift v4).
+Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017).
 
 ## Repository shape
 
@@ -87,8 +87,13 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Public contracts
 
-- `SyncBackend`, `ObjectUploader`/`ObjectDownloader` (opaque object keys),
-  `RemoteMediaFetcher` (local default fetches nothing).
+- `SyncProtocolBackend` (sync protocol v3, ADR 0017): `EntityPatch` operations
+  replayed by `opId`, `MutationReceipt` with per-field `FieldConflict`s,
+  `MediaDescriptor` versions, and a journal read as `SyncChangePage`s with an
+  opaque `ChangeCursor` and a generation. Not wired yet: the engine still uses
+  the deprecated `SyncBackend`.
+- `SyncBackend` (deprecated), `ObjectUploader`/`ObjectDownloader` (opaque
+  object keys), `RemoteMediaFetcher` (local default fetches nothing).
 - `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress`
   (`sending` with a known count, then `receiving` with no total).
 - `FamilyApi`: membership and invites. `redeemInvite(discardPrevious:)` and
