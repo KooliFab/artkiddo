@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:image/image.dart' as image;
 import '../database/app_database.dart';
 import '../storage/local_vault.dart';
+import '../storage/media_versions.dart';
 import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
@@ -183,6 +184,7 @@ class DriftArtworksRepository implements ArtworksRepository {
   final LocalVault _vault;
   final Uuid _uuid;
   final SyncOutboxRepository _outbox;
+  late final MediaVersionsRepository _media = MediaVersionsRepository(_db);
   final ArtworkDeletionStrategy deletionStrategy;
   final DateTime Function() _now;
 
@@ -304,9 +306,20 @@ class DriftArtworksRepository implements ArtworksRepository {
       return const ActionFailed(ImageUnreadableFailure());
     }
 
+    // An announced recording that is not there fails the whole save: the
+    // artwork is never stored as complete without its voice.
+    final audioSource =
+        sourceAudioFile != null && sourceAudioFile.path.isNotEmpty
+        ? sourceAudioFile
+        : null;
+    if (audioSource != null && !await audioSource.exists()) {
+      return const ActionFailed(FileMissingFailure());
+    }
+
     final id = _uuid.v4();
     final normalizedStory = _normalizeStory(story);
     final dimensions = await _readImageDimensions(sourceImageFile);
+    final originalSize = await sourceImageFile.length();
 
     String relativePath;
     try {
@@ -326,32 +339,30 @@ class DriftArtworksRepository implements ArtworksRepository {
 
     String? relativeAudioPath;
     int audioByteSize = 0;
-    if (sourceAudioFile != null && sourceAudioFile.path.isNotEmpty) {
-      if (await sourceAudioFile.exists()) {
-        try {
-          relativeAudioPath = await _vault.storeArtworkAudio(
-            sourceFile: sourceAudioFile,
-            artworkId: id,
-            version: 1,
-          );
-          audioByteSize = await sourceAudioFile.length();
-        } catch (e, st) {
-          Log.e(
-            'Copie de l’enregistrement vocal dans le coffre impossible ($id)',
-            e,
-            st,
-            'ArtworksRepo',
-          );
-          // Roll back the copied files so no orphan remains in the vault.
-          // If the rollback deletion itself fails, it is recorded rather
-          // than silently dropped, and the failure is still reported
-          // honestly.
-          await _vault.deleteFileOrEnqueueCleanup(
-            relativePath: relativePath,
-            db: _db,
-          );
-          return ActionFailed(_mapWriteException(e, st));
-        }
+    if (audioSource != null) {
+      try {
+        relativeAudioPath = await _vault.storeArtworkAudio(
+          sourceFile: audioSource,
+          artworkId: id,
+          version: 1,
+        );
+        audioByteSize = await audioSource.length();
+      } catch (e, st) {
+        Log.e(
+          'Copie de l’enregistrement vocal dans le coffre impossible ($id)',
+          e,
+          st,
+          'ArtworksRepo',
+        );
+        // Roll back the copied files so no orphan remains in the vault.
+        // If the rollback deletion itself fails, it is recorded rather
+        // than silently dropped, and the failure is still reported
+        // honestly.
+        await _vault.deleteFileOrEnqueueCleanup(
+          relativePath: relativePath,
+          db: _db,
+        );
+        return ActionFailed(_mapWriteException(e, st));
       }
     }
 
@@ -378,6 +389,23 @@ class DriftArtworksRepository implements ArtworksRepository {
                 syncState: const Value('localOnly'),
               ),
             );
+        // The files are final; the registry and the row commit together.
+        await _media.record(
+          mediaId: id,
+          version: 1,
+          role: MediaRole.original,
+          localPath: relativePath,
+          byteSize: originalSize,
+        );
+        if (relativeAudioPath != null) {
+          await _media.record(
+            mediaId: id,
+            version: 1,
+            role: MediaRole.audio,
+            localPath: relativeAudioPath,
+            byteSize: audioByteSize,
+          );
+        }
         // The outbox entry is written in the same transaction as the row
         // it accompanies — an app kill between the two can never leave one
         // without the other.
@@ -568,11 +596,12 @@ class DriftArtworksRepository implements ArtworksRepository {
     }
 
     if (!await sourceAudioFile.exists()) {
-      return const ActionFailed(LocalWriteFailure());
+      return const ActionFailed(FileMissingFailure());
     }
 
     String audioPath;
-    final version = DateTime.now().millisecondsSinceEpoch;
+    // A new recording is a new version at a new path; earlier versions stay.
+    final version = await _media.nextVersion(id, MediaRole.audio);
     try {
       audioPath = await _vault.storeArtworkAudio(
         sourceFile: sourceAudioFile,
@@ -607,6 +636,13 @@ class DriftArtworksRepository implements ArtworksRepository {
               ),
             );
         if (rows == 0) throw StateError('Artwork row disappeared');
+        await _media.record(
+          mediaId: id,
+          version: version,
+          role: MediaRole.audio,
+          localPath: audioPath,
+          byteSize: fileSize,
+        );
         await _outbox.enqueue(
           entity: SyncEntityKind.artwork,
           entityId: id,
@@ -627,14 +663,9 @@ class DriftArtworksRepository implements ArtworksRepository {
       return ActionFailed(_mapWriteException(e, st));
     }
 
-    // Clean up the old audio file after the durable write is confirmed.
-    if (current.relativeAudioPath != null &&
-        current.relativeAudioPath != audioPath) {
-      await _vault.deleteAudioFileOrEnqueueCleanup(
-        relativeAudioPath: current.relativeAudioPath,
-        db: _db,
-      );
-    }
+    // The previous version's file is kept: the replaced recording may still
+    // be referenced (an operation in flight, a conflict history). Removing
+    // unreferenced versions is the cleanup's job, not the write's.
 
     // Reread to confirm the write is durable.
     final reread = await getById(id);

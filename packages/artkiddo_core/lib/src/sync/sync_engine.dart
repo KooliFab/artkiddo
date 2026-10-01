@@ -11,6 +11,7 @@ import '../local/logging/log.dart';
 import '../local/repositories/children_repository.dart';
 import '../local/repositories/artworks_repository.dart';
 import '../local/storage/local_vault.dart';
+import '../local/storage/media_versions.dart';
 import 'conflict_resolution.dart';
 import 'operation_receipts.dart';
 import 'replaced_values.dart';
@@ -1202,10 +1203,12 @@ class SyncEngine {
 
     try {
       final bytes = await downloader.downloadByKey(key);
+      final media = MediaVersionsRepository(db);
+      final version = await media.nextVersion(artworkId, MediaRole.audio);
       final path = await vault.storeDownloadedAudio(
         bytes: bytes,
         artworkId: artworkId,
-        version: DateTime.now().microsecondsSinceEpoch,
+        version: version,
       );
       final stored = await artworksRepo.markAudioDownloaded(
         id: artworkId,
@@ -1219,6 +1222,13 @@ class SyncEngine {
         );
         return ActionResultLike.failed;
       }
+      await media.record(
+        mediaId: artworkId,
+        version: version,
+        role: MediaRole.audio,
+        localPath: path,
+        byteSize: bytes.length,
+      );
       return ActionResultLike.downloaded;
     } catch (e, st) {
       Log.e('Téléchargement audio impossible ($artworkId)', e, st, 'Sync');

@@ -16,6 +16,7 @@ import '../family/family_controller.dart' show familyApiProvider;
 import '../sharing/share_controller.dart'
     show sharingServiceProvider, shareBackupProvider;
 import '../../local/repositories/trash_repository.dart';
+import '../../local/storage/media_versions.dart';
 
 /// Creates the provider graph after validating capabilities and services.
 ///
@@ -107,6 +108,25 @@ abstract final class ArtKiddoBootstrap {
   }
 
   static void _scheduleLocalMaintenance(ProviderContainer container) {
+    // Unfinished writes go first, then the media registry is checked against
+    // the files that are really there. Final files nothing references are
+    // kept.
+    unawaited(
+      () async {
+        final vault = container.read(localVaultProvider);
+        await vault.removeStaleTempFiles();
+        await MediaVersionsRepository(
+          container.read(appDatabaseProvider),
+        ).reconcile(vault);
+      }().catchError((Object error, StackTrace stack) {
+        Log.e(
+          'Échec de la vérification du coffre au démarrage',
+          error,
+          stack,
+          'Vault',
+        );
+      }),
+    );
     unawaited(
       container
           .read(localVaultProvider)
