@@ -4,8 +4,7 @@
 exposing a provider, endpoint, table or wire format. An application adapter
 implements `SyncProtocolBackend` and owns encoding, authentication, family
 resolution and protocol compatibility. The previous row-upsert interface,
-`SyncBackend` in `src/contracts/sync_backend.dart`, is deprecated and remains
-only until the engine and adapters migrate.
+`SyncBackend`, no longer exists.
 
 The public contract does not assume an account or network. The local journey is
 complete with `AppCapabilities.local`.
@@ -113,7 +112,3 @@ All protocol errors extend the sealed `SyncProtocolException`:
 `SyncRateLimitedException`, `SyncAuthException`, `MediaIntegrityException`,
 `MediaUnavailableException`. Any other I/O failure means "outcome unknown":
 replay the same `opId`. No error is ever a reason to clear local data.
-
-## Versioned audio writes (v2, deprecated)
-
-`AudioWrite` carries keep/replace/delete and the expected revision. A missing cache means keep, never delete. Replacement uploads immutable bytes before committing metadata; the first photo row is committed before its audio reservation. Conflicts retain local files and pending writes for an explicit choice. An acknowledgement cannot clear a newer local edit. Drift v4 migrates all supported v1–v3 vaults forward without clearing files.

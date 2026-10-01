@@ -96,11 +96,12 @@ public contracts only. Rules: `dependency-rules.md`.
   `MediaDescriptor` versions, and a journal read as `SyncChangePage`s with an
   opaque `ChangeCursor` and a generation. When a `protocolBackend` is
   supplied, the engine pushes operations through it (ADR 0018) and reads its
-  journal (`ChangeJournalPull`, rules in `docs/sync-contract.md`); media
-  transfers still use the deprecated `SyncBackend` object keys. Without one,
-  the deprecated timestamp pull (`LegacyTimestampPull`) runs.
-- `SyncBackend` (deprecated), `ObjectUploader`/`ObjectDownloader` (opaque
-  object keys), `RemoteMediaFetcher` (local default fetches nothing).
+  journal (`ChangeJournalPull`, rules in `docs/sync-contract.md`). The engine
+  requires one: the former `SyncBackend`, the timestamp pull and the key-based
+  transfers are removed. Media bytes (upload, download) belong to the
+  composition, which sends and fetches them around the engine.
+- `ObjectUploader`/`ObjectDownloader` (opaque object keys, no longer used by
+  the engine), `RemoteMediaFetcher` (local default fetches nothing).
 - `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress`
   (`sending` with a known count, then `receiving` with no total).
 - `FamilyApi`: membership and invites. `redeemInvite(discardPrevious:)` and

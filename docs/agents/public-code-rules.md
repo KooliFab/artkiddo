@@ -24,7 +24,7 @@ all code in the public repository after the split.
   identifiers in public contracts, comments, fixtures, and logs.
 - Prohibit untyped wire payloads across the boundary. Private adapters decode
   wire data and return typed public DTOs or domain results.
-- Name concepts by their role (`objectKey`, `remoteRevision`, `SyncBackend`), not
+- Name concepts by their role (`remoteRevision`, `SyncProtocolBackend`), not
   by their current vendor.
 - A public dependency must be necessary for the offline product, license
   compatible, actively maintained, and free of required telemetry or network

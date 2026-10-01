@@ -9,7 +9,6 @@ import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
 
-import 'fakes.dart';
 import 'operation_sync_test.dart' show FakeProtocolBackend, Node;
 import 'sync_engine_test.dart' show makeTestImage;
 
@@ -159,19 +158,7 @@ void main() {
 
     test('without a session nothing is read', () async {
       remoteChild();
-      node.engine = SyncEngine(
-        db: node.db,
-        vault: node.vault,
-        uploader: node.uploader,
-        downloader: FakeObjectDownloader(node.uploader.objects),
-        childrenRepo: node.children,
-        artworksRepo: node.artworks,
-        cloudApi: node.legacy,
-        outbox: node.outbox,
-        vaultMeta: VaultMetaRepository(node.db),
-        currentUserId: () => null,
-        protocolBackend: backend,
-      );
+      node.engine = node.newEngine(currentUserId: () => null);
 
       await node.sync();
 

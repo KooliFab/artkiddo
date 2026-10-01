@@ -11,7 +11,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-import 'fakes.dart';
 import 'sync_engine_test.dart' show makeTestImage;
 
 class ServerEntity {
@@ -331,8 +330,9 @@ class FakeProtocolBackend implements SyncProtocolBackend {
 class Node {
   final Directory root;
   final FakeProtocolBackend backend;
-  final FakeHomeCloudApi legacy = FakeHomeCloudApi()..currentUserId = 'user';
-  final uploader = FakeObjectUploader();
+
+  /// The family the signed-in account belongs to.
+  String familyId = 'family-a';
   late AppDatabase db;
   late LocalVault vault;
   late SyncOutboxRepository outbox;
@@ -358,20 +358,20 @@ class Node {
     outbox = SyncOutboxRepository(db);
     children = DriftChildrenRepository(db, vault, outbox: outbox);
     artworks = DriftArtworksRepository(db, vault, outbox: outbox);
-    engine = SyncEngine(
-      db: db,
-      vault: vault,
-      uploader: uploader,
-      downloader: FakeObjectDownloader(uploader.objects),
-      childrenRepo: children,
-      artworksRepo: artworks,
-      cloudApi: legacy,
-      outbox: outbox,
-      vaultMeta: VaultMetaRepository(db),
-      currentUserId: () => 'user',
-      protocolBackend: backend,
-    );
+    engine = newEngine();
   }
+
+  /// An engine over this node's files; [userId] null means signed out.
+  SyncEngine newEngine({String? Function()? currentUserId}) => SyncEngine(
+    db: db,
+    vault: vault,
+    artworksRepo: artworks,
+    protocolBackend: backend,
+    ensureMyFamily: () async => familyId,
+    outbox: outbox,
+    vaultMeta: VaultMetaRepository(db),
+    currentUserId: currentUserId ?? () => 'user',
+  );
 
   /// Process restart: the database file is reopened, nothing else survives.
   Future<void> restart() async {
@@ -670,7 +670,7 @@ void main() {
       op: SyncOutboxOp.upsert,
     );
     final op = (await node.ops(id)).single;
-    // Marked by the legacy path: in flight, no patch.
+    // Left in flight without a patch by an earlier version of the engine.
     await node.outbox.markInFlight(op.seq);
     expect((await node.ops(id)).single.patchJson, isNull);
     final before = backend.received.length;

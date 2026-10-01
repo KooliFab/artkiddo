@@ -60,17 +60,16 @@ implementations at its composition root:
 
 ```text
 application composition
-  ├─ implements SyncBackend       ← metadata sync and remote mutations
-  ├─ implements ObjectUploader    ← opaque object-key upload
-  ├─ implements ObjectDownloader  ← authorized object-key download
+  ├─ implements SyncProtocolBackend ← operations, change journal, media versions
+  ├─ implements RemoteMediaFetcher   ← on-demand media the vault does not hold
   └─ enables explicit capabilities
              ↓
 artkiddo_core
   domain + local database + local vault + vendor-neutral contracts
 ```
 
-`SyncBackend` transports domain records; `ObjectUploader` and
-`ObjectDownloader` deal only in bytes and opaque object keys. Their API makes
+`SyncProtocolBackend` transports identified operations and a change journal and
+describes media only as immutable, hashed versions. Their API makes
 no assumption about a database, object store, authentication system, or cloud
 vendor. The public core does not silently change between local and remote
 behavior: the application composition must enable a capability and supply

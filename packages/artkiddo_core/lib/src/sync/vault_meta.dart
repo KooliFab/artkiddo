@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 
 import '../local/database/app_database.dart';
-import '../contracts/sync_backend.dart';
 import '../contracts/sync_protocol.dart';
 
 /// Thrown when the authenticated user's household does not match the
@@ -35,9 +34,6 @@ class FamilyMismatchException implements Exception {
 /// ([FamilyMismatchException]). The journal cursor ([getChangeCursor]) is
 /// opaque and written only with the page it ends; a null cursor means
 /// "never pulled", which is exactly the join/restore starting point.
-///
-/// The three timestamp cursors belong to the deprecated `SyncBackend` pull
-/// and stay until the private adapter moves to the journal.
 class VaultMetaRepository {
   static const _singletonId = 'singleton';
 
@@ -115,43 +111,6 @@ class VaultMetaRepository {
         );
   }
 
-  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
-  Future<PullCursorSet> getPullCursors() async {
-    final row = await _readOrCreate();
-    return PullCursorSet(
-      children: row.childrenPullCursor,
-      artworks: row.artworksPullCursor,
-      purged: row.purgedPullCursor,
-    );
-  }
-
-  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
-  Future<DateTime?> getChildrenPullCursor() async =>
-      (await getPullCursors()).children;
-
-  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
-  Future<DateTime?> getArtworksPullCursor() async =>
-      (await getPullCursors()).artworks;
-
-  @Deprecated('Timestamp pull of SyncBackend; use getChangeCursor.')
-  Future<DateTime?> getPurgedPullCursor() async =>
-      (await getPullCursors()).purged;
-
-  /// Compatibility read for pre-independent-cursor callers. New code
-  /// must use [getPullCursors]; returning the maximum independent
-  /// cursor preserves the old "last activity" status without coupling
-  /// the streams again.
-  Future<DateTime?> getLastPullCursor() async {
-    final cursors = await getPullCursors();
-    final values = [
-      if (cursors.children != null) cursors.children!,
-      if (cursors.artworks != null) cursors.artworks!,
-      if (cursors.purged != null) cursors.purged!,
-    ];
-    if (values.isEmpty) return null;
-    return values.reduce((a, b) => a.isAfter(b) ? a : b);
-  }
-
   /// Writes `familyId` for the first time. A no-op (not an error) if
   /// this vault is already attached to the *same* household (restoring
   /// a reinstalled app). Throws [FamilyMismatchException] if the vault
@@ -189,71 +148,6 @@ class VaultMetaRepository {
         authenticatedFamilyId: familyId,
       );
     }
-  }
-
-  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
-  Future<void> setPullCursor({required PullCursorSet cursors}) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            childrenPullCursor: Value(cursors.children),
-            artworksPullCursor: Value(cursors.artworks),
-            purgedPullCursor: Value(cursors.purged),
-          ),
-        );
-  }
-
-  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
-  Future<void> setChildrenPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            childrenPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
-  Future<void> setArtworksPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            artworksPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
-  Future<void> setPurgedPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            purgedPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  /// Compatibility bridge for old integrations. It deliberately writes
-  /// all streams only when explicitly requested by a legacy caller;
-  /// migrations never call it, so the single legacy cursor is not
-  /// copied into the independent ones.
-  @Deprecated('Timestamp pull of SyncBackend; use setChangeCursor.')
-  Future<void> setLastPullCursor(DateTime cursor) async {
-    await setPullCursor(
-      cursors: PullCursorSet(
-        children: cursor,
-        artworks: cursor,
-        purged: cursor,
-      ),
-    );
   }
 
   /// Called after a successful account deletion when the member chose
