@@ -1775,6 +1775,95 @@
   "@trashRestoring": {
     "description": "Localized user-facing copy."
   },
+  "trashRestoredOnlyHere": "Œuvre restaurée. Elle n'existe plus que sur ce téléphone : elle ne sera plus sauvegardée ni visible sur vos autres appareils.",
+  "@trashRestoredOnlyHere": {
+    "description": "Localized user-facing copy."
+  },
+  "unsavedArtworksWarning": "{count, plural, =1{1 dessin n'est pas encore sauvegardé : il sera définitivement perdu.} other{{count} dessins ne sont pas encore sauvegardés : ils seront définitivement perdus.}}",
+  "@unsavedArtworksWarning": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "backupStateOnDevice": "Sur cet appareil",
+  "@backupStateOnDevice": {
+    "description": "Backup status of an artwork: nothing protects it but this device."
+  },
+  "backupStateInProgress": "Sauvegarde en cours",
+  "@backupStateInProgress": {
+    "description": "Backup status of an artwork: an operation is waiting or being retried."
+  },
+  "backupStateSaved": "Sauvegardé (qualité optimisée)",
+  "@backupStateSaved": {
+    "description": "Backup status of an artwork: acknowledged by the server with its optimized photo and audio. Never means the original is saved."
+  },
+  "backupStateActionNeeded": "Action nécessaire",
+  "@backupStateActionNeeded": {
+    "description": "Backup status of an artwork: a file is missing or sending failed repeatedly."
+  },
+  "backupOriginalStaysOnDevice": "La photo d'origine reste uniquement sur cet appareil.",
+  "@backupOriginalStaysOnDevice": {
+    "description": "Short note shown under a backup status."
+  },
+  "backupReasonMissingFile": "Un fichier de ce dessin est introuvable sur cet appareil. Le dessin reste dans la galerie.",
+  "@backupReasonMissingFile": {
+    "description": "Detail of the action-needed status when a file is gone from the device."
+  },
+  "backupReasonRepeatedFailure": "L'envoi a échoué plusieurs fois. Vérifiez la connexion, puis lancez une sauvegarde.",
+  "@backupReasonRepeatedFailure": {
+    "description": "Detail of the action-needed status after repeated failures."
+  },
+  "backupReasonRemotePurged": "Ce dessin a été supprimé sur les autres appareils. Il n'existe plus que sur celui-ci.",
+  "@backupReasonRemotePurged": {
+    "description": "Detail of the on-device status of an artwork purged remotely then restored here."
+  },
+  "backupSummaryHeading": "État des sauvegardes",
+  "@backupSummaryHeading": {
+    "description": "Heading of the backup summary in the cloud settings."
+  },
+  "backupSummarySaved": "{count, plural, =1{1 dessin sauvegardé} other{{count} dessins sauvegardés}}",
+  "@backupSummarySaved": {
+    "description": "Backup summary line.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "backupSummaryInProgress": "{count, plural, =1{1 dessin en cours de sauvegarde} other{{count} dessins en cours de sauvegarde}}",
+  "@backupSummaryInProgress": {
+    "description": "Backup summary line.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "backupSummaryActionNeeded": "{count, plural, =1{1 dessin demande une action} other{{count} dessins demandent une action}}",
+  "@backupSummaryActionNeeded": {
+    "description": "Backup summary line.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "backupSummaryOnDevice": "{count, plural, =1{1 dessin uniquement sur cet appareil} other{{count} dessins uniquement sur cet appareil}}",
+  "@backupSummaryOnDevice": {
+    "description": "Backup summary line.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "backupSummaryIssueHeading": "Dernier problème rencontré",
+  "@backupSummaryIssueHeading": {
+    "description": "Heading above the failure of the last synchronization run, shown in the backup summary."
+  },
   "trashRestoreError": "L'œuvre n'a pas pu être restaurée.",
   "@trashRestoreError": {
     "description": "Localized user-facing copy."
@@ -2110,5 +2199,99 @@
   "pushChannelFamilyActivityDescription": "Nouvelles œuvres ajoutées par les membres de votre famille.",
   "@pushChannelFamilyActivityDescription": {
     "description": "Localized user-facing copy."
+  },
+  "vaultArchiveTitle": "Exporter et importer",
+  "@vaultArchiveTitle": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveIntro": "L’archive est un seul fichier avec tous vos enfants, œuvres, photos d’origine et histoires vocales. La partager ne la garde nulle part pour vous : placez-la dans un endroit sûr.",
+  "@vaultArchiveIntro": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveExportAction": "Créer une archive",
+  "@vaultArchiveExportAction": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveExportProgress": "Préparation de l’archive… {completed} sur {total}",
+  "@vaultArchiveExportProgress": {
+    "description": "Archive export and import (settings).",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultArchiveExportDone": "Archive créée et envoyée vers le partage. Vérifiez que vous l’avez enregistrée à un endroit sûr : rien n’est conservé pour vous automatiquement.",
+  "@vaultArchiveExportDone": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveExportPartial": "Export partiel : {count, plural, =1{1 fichier n’a} other{{count} fichiers n’ont}} pas pu être inclus. L’archive est quand même créée ; vérifiez que vous l’avez enregistrée à un endroit sûr.",
+  "@vaultArchiveExportPartial": {
+    "description": "Archive export and import (settings).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultArchiveExportFailed": "L’archive n’a pas pu être créée. Rien n’a été modifié.",
+  "@vaultArchiveExportFailed": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportAction": "Importer une archive",
+  "@vaultArchiveImportAction": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportProgress": "Importation…",
+  "@vaultArchiveImportProgress": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportNothingNew": "Tout ce que contient cette archive est déjà sur cet appareil. Rien n’a été modifié.",
+  "@vaultArchiveImportNothingNew": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportDone": "Importation terminée : {artworks, plural, =1{1 œuvre ajoutée} other{{artworks} œuvres ajoutées}} et {children, plural, =1{1 enfant ajouté} other{{children} enfants ajoutés}}.",
+  "@vaultArchiveImportDone": {
+    "description": "Archive export and import (settings).",
+    "placeholders": {
+      "artworks": {
+        "type": "int"
+      },
+      "children": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultArchiveImportRestored": "Importation terminée : les fichiers manquants ont été rendus aux œuvres existantes.",
+  "@vaultArchiveImportRestored": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportKeptAside": "{count, plural, =1{1 valeur différait} other{{count} valeurs différaient}} de celles de cet appareil. Les vôtres sont conservées ; les valeurs importées sont mises de côté pendant 30 jours.",
+  "@vaultArchiveImportKeptAside": {
+    "description": "Archive export and import (settings).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultArchiveImportInvalid": "Ce fichier n’est pas une archive ArtKiddo valide. Rien n’a été importé.",
+  "@vaultArchiveImportInvalid": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportUnsupported": "Cette archive vient d’une version plus récente d’ArtKiddo. Mettez l’application à jour, puis réessayez.",
+  "@vaultArchiveImportUnsupported": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportCorrupted": "L’archive est incomplète ou abîmée : un fichier ne correspond pas à son empreinte. Rien n’a été importé.",
+  "@vaultArchiveImportCorrupted": {
+    "description": "Archive export and import (settings)."
+  },
+  "vaultArchiveImportFailed": "L’importation a échoué. Rien n’a été importé.",
+  "@vaultArchiveImportFailed": {
+    "description": "Archive export and import (settings)."
   }
 }

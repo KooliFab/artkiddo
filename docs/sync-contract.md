@@ -77,6 +77,20 @@ resurrects the entity. A lifecycle change carries no other field.
   A purged artwork with no local file and no operation (a copy of what is
   gone, e.g. on a new device) is removed, with its waiting downloads; a hidden
   child goes when nothing depends on it any more.
+- Deleting an artwork here is a trash, never a removal: the row, its files and
+  its queued operations stay for 30 days, sent or not. With an account a
+  `lifecycle: trashed` patch follows the operations already queued (a creation
+  that never went out is not dropped). The only physical deletion is
+  `deleteVaultFileIfUnreferenced`, reached by the 30-day purge and by an
+  explicit "delete forever" or child deletion; it asks `isMediaReferenced`
+  first, so a version named by `replaced_values` or a queued operation stays
+  and its cleanup is retried at the next start. No sync error path (network,
+  auth, `CURSOR_INVALID`) reaches it.
+- Restoring an artwork marked `remote_purged_at` (or whose child was purged)
+  brings it back active on this phone only: its hidden child is shown again,
+  nothing is queued (the server refuses `lifecycle: active` for a purged
+  artwork), and the person is told it will no longer be backed up or visible
+  on other devices (`TrashedArtwork.existsOnlyHere`).
 - An artwork received before its child waits in `deferred_remote_changes` and
   is applied when the child arrives.
 - A new remote media version is registered in `media_versions` as

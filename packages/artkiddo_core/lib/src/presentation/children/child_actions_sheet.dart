@@ -7,6 +7,7 @@ import '../theme/app_tokens.dart';
 import '../ui/error_presenter.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../providers/core_providers.dart';
 import '../gallery/gallery_providers.dart';
 import '../../domain/child.dart';
 import 'child_editor_controller.dart';
@@ -273,7 +274,15 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Only with a remote backup does "not saved yet" mean anything. The
+    // count is shown before the person confirms; the button waits for it.
+    final countsUnsaved = ref.watch(appCapabilitiesProvider).remoteBackup;
+    final unsavedAsync = countsUnsaved
+        ? ref.watch(unsavedArtworkCountProvider(widget.child.id))
+        : null;
+    final unsaved = unsavedAsync?.value ?? 0;
     final busy = _state.isBusy;
+    final countPending = unsavedAsync?.isLoading ?? false;
 
     return PopScope(
       canPop: !busy,
@@ -287,6 +296,17 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.childrenDeleteBody(widget.artworkCount)),
+            if (unsaved > 0) ...[
+              const SizedBox(height: AppSpacing.s3),
+              Text(
+                l10n.unsavedArtworksWarning(unsaved),
+                style: const TextStyle(
+                  fontFamily: AppTypography.family,
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             if (_state case ActionError(failure: final f)) ...[
               const SizedBox(height: AppSpacing.s3),
               StateBlock(
@@ -305,8 +325,10 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: busy ? null : _delete,
-            child: busy ? Text(l10n.commonDeleting) : Text(l10n.commonDelete),
+            onPressed: (busy || countPending) ? null : _delete,
+            child: _state.isBusy
+                ? Text(l10n.commonDeleting)
+                : Text(l10n.commonDelete),
           ),
         ],
       ),

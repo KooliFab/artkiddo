@@ -26,6 +26,10 @@ class TrashState {
   /// *which* row, not just whether one is busy.
   final String? busyItemId;
 
+  /// Counts the restores that left an artwork existing on this phone only
+  /// (purged remotely). The screen reacts to each increase by saying so.
+  final int onlyHereRestores;
+
   const TrashState({
     this.loading = true,
     this.items = const [],
@@ -36,6 +40,7 @@ class TrashState {
     this.purge = const ActionIdle(),
     this.purgeAll = const ActionIdle(),
     this.busyItemId,
+    this.onlyHereRestores = 0,
   });
 
   TrashState copyWith({
@@ -50,6 +55,7 @@ class TrashState {
     AsyncAction? purgeAll,
     String? busyItemId,
     bool clearBusyItemId = false,
+    int? onlyHereRestores,
   }) {
     return TrashState(
       loading: loading ?? this.loading,
@@ -61,6 +67,7 @@ class TrashState {
       purge: purge ?? this.purge,
       purgeAll: purgeAll ?? this.purgeAll,
       busyItemId: clearBusyItemId ? null : (busyItemId ?? this.busyItemId),
+      onlyHereRestores: onlyHereRestores ?? this.onlyHereRestores,
     );
   }
 }
@@ -157,6 +164,9 @@ class TrashController extends Notifier<TrashState> {
     if (state.restore.isBusy) return;
     state = state.copyWith(restore: const ActionBusy(), busyItemId: artworkId);
     await _refreshing;
+    final onlyHere = state.items.any(
+      (i) => i.id == artworkId && i.existsOnlyHere,
+    );
     final result = await ref.read(trashRepositoryProvider).restore(artworkId);
     switch (result) {
       case ActionSuccess():
@@ -165,6 +175,9 @@ class TrashController extends Notifier<TrashState> {
           restore: const ActionDone(),
           items: remaining,
           clearBusyItemId: true,
+          onlyHereRestores: onlyHere
+              ? state.onlyHereRestores + 1
+              : state.onlyHereRestores,
         );
         // Remote restore needs a prompt sync so the shared gallery
         // reappears immediately. Local restore already changed the durable

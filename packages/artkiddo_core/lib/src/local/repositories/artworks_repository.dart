@@ -764,96 +764,61 @@ class DriftArtworksRepository implements ArtworksRepository {
     return const ActionSuccess(null);
   }
 
+  /// Puts the artwork in the trash: the row, its files and its pending
+  /// operations all stay for 30 days, whether or not it was ever sent. Only
+  /// the trash purge ([LocalTrashRepository]) or an explicit "delete forever"
+  /// removes the row and its files.
+  ///
+  /// With an account, a `lifecycle: trashed` patch follows the operations
+  /// already queued (a creation that never went out is not dropped), so the
+  /// server trash mirrors it.
   @override
   Future<ActionResult<void>> delete(String id) async {
-    final current = await getById(id);
+    final current = await (_db.select(
+      _db.artworksTable,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (current == null) {
       return const ActionFailed(NotFoundFailure());
     }
 
-    if (deletionStrategy == ArtworkDeletionStrategy.localRecoverable) {
-      final deletedAt = _now();
-      try {
+    final deletedAt = _now();
+    try {
+      final trashed = await _db.transaction(() async {
         final rows =
             await (_db.update(_db.artworksTable)
                   ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
                 .write(ArtworksTableCompanion(deletedAt: Value(deletedAt)));
-        if (rows == 0) return const ActionFailed(NotFoundFailure());
-        final persisted = await (_db.select(
-          _db.artworksTable,
-        )..where((t) => t.id.equals(id))).getSingleOrNull();
-        if (persisted?.deletedAt == null ||
-            !persisted!.deletedAt!.isAtSameMomentAs(deletedAt)) {
-          return const ActionFailed(LocalWriteFailure());
+        if (rows == 0) return false;
+        if (deletionStrategy == ArtworkDeletionStrategy.remoteTombstone) {
+          await _outbox.enqueuePatch(
+            EntityPatch(
+              opId: _outbox.newOpId(),
+              entityType: SyncEntityType.artwork,
+              entityId: id,
+              baseRevisions: {
+                ArtworkSyncFields.lifecycle: current.lifecycleRev,
+              },
+              fields: {ArtworkSyncFields.lifecycle: SyncLifecycle.trashed.name},
+              createdAt: deletedAt,
+            ),
+            supersedePending: false,
+          );
         }
-        // Local trash deliberately keeps the original and derivative
-        // files; purge owns their eventual cleanup after the 30-day
-        // window.
-        return const ActionSuccess(null);
-      } catch (e, st) {
-        Log.e(
-          'Mise à la Corbeille locale impossible ($id)',
-          e,
-          st,
-          'ArtworksRepo',
-        );
-        return ActionFailed(_mapWriteException(e, st));
-      }
-    }
-
-    try {
-      await _db.transaction(() async {
-        final rows = await (_db.delete(
-          _db.artworksTable,
-        )..where((t) => t.id.equals(id))).go();
-        if (rows == 0) {
-          throw StateError('artwork row disappeared during delete transaction');
-        }
-        // Pushed as `deleted_at = now()`, never a real `DELETE` — a hard
-        // delete on the server would be resurrected by another device's
-        // next `pull`. The local row is still hard-deleted
-        // unconditionally in the remote-tombstone composition: the
-        // local vault is never a cache of the remote side.
-        await _outbox.enqueue(
-          entity: SyncEntityKind.artwork,
-          entityId: id,
-          op: SyncOutboxOp.delete,
-        );
+        return true;
       });
+      if (!trashed) return const ActionFailed(NotFoundFailure());
+      final persisted = await (_db.select(
+        _db.artworksTable,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      // The column keeps whole seconds: only its presence is checked.
+      if (persisted?.deletedAt == null) {
+        return const ActionFailed(LocalWriteFailure());
+      }
+      return const ActionSuccess(null);
     } catch (e, st) {
-      Log.e(
-        'Suppression locale de l’œuvre impossible ($id)',
-        e,
-        st,
-        'ArtworksRepo',
-      );
+      Log.e('Mise à la Corbeille impossible ($id)', e, st, 'ArtworksRepo');
       return ActionFailed(_mapWriteException(e, st));
     }
-
-    // The row is durably gone; a file cleanup failure does not undo that
-    // success but is recorded for retry. No-op when there was no local
-    // original to begin with (a restored/converged row).
-    if (current.relativeImagePath != null) {
-      await _vault.deleteFileOrEnqueueCleanup(
-        relativePath: current.relativeImagePath!,
-        db: _db,
-      );
-    }
-    if (current.relativeAudioPath != null) {
-      await _vault.deleteAudioFileOrEnqueueCleanup(
-        relativeAudioPath: current.relativeAudioPath,
-        db: _db,
-      );
-    }
-    // The derivatives (if any were ever generated) are cleaned up the
-    // same way — otherwise they'd survive as orphans with no row left
-    // to reference them.
-    await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-      displayRelativePath: current.displayImagePath,
-      thumbnailRelativePath: current.thumbnailImagePath,
-      db: _db,
-    );
-    return const ActionSuccess(null);
   }
 
   @override
@@ -1054,7 +1019,9 @@ class DriftArtworksRepository implements ArtworksRepository {
 
   @override
   Future<ActionResult<void>> applyRemoteTombstone(String id) async {
-    final current = await getById(id);
+    final current = await (_db.select(
+      _db.artworksTable,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (current == null) {
       // Idempotent: already applied (or never pulled), and either way
       // the desired end state — "this row does not exist locally" —
@@ -1072,23 +1039,7 @@ class DriftArtworksRepository implements ArtworksRepository {
       );
       return ActionFailed(_mapWriteException(e, st));
     }
-    if (current.relativeImagePath != null) {
-      await _vault.deleteFileOrEnqueueCleanup(
-        relativePath: current.relativeImagePath!,
-        db: _db,
-      );
-    }
-    if (current.relativeAudioPath != null) {
-      await _vault.deleteAudioFileOrEnqueueCleanup(
-        relativeAudioPath: current.relativeAudioPath,
-        db: _db,
-      );
-    }
-    await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-      displayRelativePath: current.displayImagePath,
-      thumbnailRelativePath: current.thumbnailImagePath,
-      db: _db,
-    );
+    await _vault.deleteArtworkFilesOrEnqueueCleanup(current, db: _db);
     return const ActionSuccess(null);
   }
 

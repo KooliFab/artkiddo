@@ -129,6 +129,17 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
     final ratio = MosaicArtworkTile.ratioOf(widget.tile);
     final extreme = ratio != widget.tile.aspectRatio;
     final l10n = AppLocalizations.of(context);
+    // Without a remote backup every card would say "on this device": the
+    // marker then only appears when something needs the parent's action.
+    final remoteBackup = ref.watch(appCapabilitiesProvider).remoteBackup;
+    final backup = ref.watch(
+      artworkBackupStatusProvider(widget.tile.artworkId),
+    );
+    final backupBadge =
+        backup != null &&
+            (remoteBackup || backup.state == ArtworkBackupState.actionNeeded)
+        ? backup.state
+        : null;
     final date = widget.tile.drawnAt ?? widget.tile.addedAt;
     final label = widget.tile.story == null || widget.tile.story!.isEmpty
         ? l10n.a11yGalleryCard(widget.tile.childName, date, widget.tile.age)
@@ -180,6 +191,12 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
                           child: const ExcludeSemantics(
                             child: _TileAudioBadge(),
                           ),
+                        ),
+                      if (backupBadge != null)
+                        Positioned(
+                          left: AppSpacing.s2,
+                          top: AppSpacing.s2,
+                          child: BackupStatusBadge(state: backupBadge),
                         ),
                     ],
                   ),
