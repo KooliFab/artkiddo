@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017).
+Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018).
 
 ## Repository shape
 
@@ -70,12 +70,14 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-- `AppDatabase` is Drift schema v4: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state. Each version
+- `AppDatabase` is Drift schema v5: v1 clean baseline (ADR 0007), v2 adds
+  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018). Each version
   has a snapshot in `drift_schemas/`, covered by
   `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
   vaults.
-- Tables: `children`, `artworks`, `sync_outbox`, `vault_meta`,
+- Tables: `children`, `artworks`, `sync_outbox` (identified operations),
+  `replaced_values` (local-only history of values that lost a conflict, 30
+  days), `vault_meta`,
   `pending_file_cleanups`, `share_link_url_cache`. Artworks store neutral
   opaque object keys only.
 - `LocalVault` owns image and audio files. Local deletion is recoverable for 30
@@ -90,7 +92,8 @@ public contracts only. Rules: `dependency-rules.md`.
 - `SyncProtocolBackend` (sync protocol v3, ADR 0017): `EntityPatch` operations
   replayed by `opId`, `MutationReceipt` with per-field `FieldConflict`s,
   `MediaDescriptor` versions, and a journal read as `SyncChangePage`s with an
-  opaque `ChangeCursor` and a generation. Not wired yet: the engine still uses
+  opaque `ChangeCursor` and a generation. The engine pushes operations through
+  it when a `protocolBackend` is supplied (ADR 0018); pull and media still use
   the deprecated `SyncBackend`.
 - `SyncBackend` (deprecated), `ObjectUploader`/`ObjectDownloader` (opaque
   object keys), `RemoteMediaFetcher` (local default fetches nothing).

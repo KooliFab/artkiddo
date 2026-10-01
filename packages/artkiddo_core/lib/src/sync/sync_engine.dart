@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../contracts/object_storage.dart';
 import '../contracts/sync_backend.dart';
+import '../contracts/sync_protocol.dart';
 import '../debug/demo_seed.dart';
 import '../domain/action_result.dart';
 import '../domain/app_failure.dart';
@@ -11,6 +12,8 @@ import '../local/repositories/children_repository.dart';
 import '../local/repositories/artworks_repository.dart';
 import '../local/storage/local_vault.dart';
 import 'conflict_resolution.dart';
+import 'operation_receipts.dart';
+import 'replaced_values.dart';
 import 'sync_outbox.dart';
 import 'vault_meta.dart';
 
@@ -108,9 +111,23 @@ class SyncEngine {
   final ChildrenRepository childrenRepo;
   final ArtworksRepository artworksRepo;
   final SyncBackend cloudApi;
+
+  /// When set, operations are sent as [EntityPatch]es through this backend
+  /// and their receipts applied field by field. Otherwise [cloudApi] sends
+  /// the row an operation points at (the interface the compositions use
+  /// until they move to sync protocol v3).
+  ///
+  /// An operation that has no field snapshot and cannot get one from its row
+  /// (an artwork, whose photo and audio need media descriptors) waits in the
+  /// queue instead of being sent incomplete.
+  final SyncProtocolBackend? protocolBackend;
   final SyncOutboxRepository outbox;
+
+  /// Values that lost a conflict, kept for 30 days.
+  final ReplacedValuesRepository replacedValues;
   final VaultMetaRepository vaultMeta;
   final String? Function() currentUserId;
+  late final OutboxReceiptHandler _receipts;
 
   /// Optional composition hook used by a provider-specific transport to keep
   /// an entry out of the classic drain while a durable native task owns it.
@@ -129,7 +146,11 @@ class SyncEngine {
     required this.vaultMeta,
     required this.currentUserId,
     this.isEntryDeferred,
-  });
+    this.protocolBackend,
+    ReplacedValuesRepository? replacedValues,
+  }) : replacedValues = replacedValues ?? ReplacedValuesRepository(db) {
+    _receipts = OutboxReceiptHandler(db, outbox, this.replacedValues);
+  }
 
   /// The whole convergence cycle: attach/verify the family, push every
   /// pending local change, then pull everything new since this vault's
@@ -173,6 +194,7 @@ class SyncEngine {
   Future<SyncRunSummary> _runSync({
     void Function(SyncProgress progress)? onProgress,
   }) async {
+    await replacedValues.purgeExpired();
     final userId = currentUserId();
     if (userId == null) {
       Log.w('Synchronisation ignorée : session absente', 'Sync');
@@ -259,156 +281,296 @@ class SyncEngine {
   // Push — drain the outbox
   // =====================================================================
 
+  /// Upper bound of drain rounds in one run. A round sends the oldest
+  /// operation of each entity; the next round sends the operations, queued
+  /// before the run started, that the acknowledgements of the previous one
+  /// unblocked. An operation queued while the run is sending waits for the
+  /// next run.
+  static const _maxPushRounds = 10;
+
   /// Returns (succeeded, failed, lastError).
   Future<(int, int, AppFailure?)> _push({
     required String userId,
     required String familyId,
     void Function(SyncProgress progress)? onProgress,
   }) async {
-    final ready = await outbox.listReady();
-    Log.i('${ready.length} entrée(s) prêtes à envoyer', 'Sync');
     var succeeded = 0;
     var failed = 0;
     AppFailure? lastError;
 
-    for (var index = 0; index < ready.length; index++) {
-      final entry = ready[index];
-      // Reported before each entry, so deferred and skipped entries (which
-      // `continue`) still advance the count.
+    final horizon = await outbox.lastSeq();
+    for (var round = 1; round <= _maxPushRounds; round++) {
+      final ready = [
+        for (final entry in await outbox.listReady())
+          if (round == 1 || entry.seq <= horizon) entry,
+      ];
+      if (round == 1) {
+        Log.i('${ready.length} entrée(s) prêtes à envoyer', 'Sync');
+      } else if (ready.isEmpty) {
+        break;
+      }
+      final succeededBefore = succeeded;
+      for (var index = 0; index < ready.length; index++) {
+        final entry = ready[index];
+        // Reported before each entry, so deferred and skipped entries (which
+        // `continue`) still advance the count.
+        onProgress?.call(
+          SyncProgress(
+            phase: SyncPhase.sending,
+            done: index,
+            total: ready.length,
+          ),
+        );
+        if (isEntryDeferred != null && await isEntryDeferred!(entry)) {
+          Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
+          continue;
+        }
+        if (entry.entity == SyncEntityKind.child.wireName &&
+            isDebugDemoId(entry.entityId)) {
+          await outbox.markSucceeded(entry.seq);
+          continue;
+        }
+        try {
+          if (protocolBackend != null) {
+            if (!await _pushOperation(entry)) continue;
+            // The operation is already removed (acknowledged, dropped or
+            // replaced inside `_pushOperation`).
+            succeeded++;
+            continue;
+          } else {
+            // Persisted before the send: from now on this operation never
+            // changes, and an edit made while it is out becomes another one.
+            await outbox.markInFlight(entry.seq);
+            if (entry.entity == SyncEntityKind.child.wireName) {
+              await _pushChild(entry, familyId: familyId);
+            } else {
+              if (!await _pushArtwork(
+                entry,
+                familyId: familyId,
+                userId: userId,
+              )) {
+                continue;
+              }
+            }
+          }
+          await outbox.markSucceeded(entry.seq);
+          succeeded++;
+        } on DeletedRowUpdateRejectedException {
+          // D9: a delete already won elsewhere. This upsert is moot, not a
+          // failure — drop it rather than retrying something that can never
+          // succeed differently.
+          await outbox.markSucceeded(entry.seq);
+          Log.w(
+            'Entrée ${entry.seq} abandonnée : suppression déjà gagnante',
+            'Sync',
+          );
+        } on _TerminalOutboxFailure catch (e) {
+          if (e.preservePending) {
+            await outbox.markFailed(
+              entry.seq,
+              error: 'audioFileMissing',
+              retryAfter: const Duration(hours: 1),
+            );
+          } else {
+            await outbox.markTerminal(entry.seq);
+          }
+          if (e.preservePending &&
+              entry.entity == SyncEntityKind.artwork.wireName) {
+            await (db.update(
+              db.artworksTable,
+            )..where((t) => t.id.equals(entry.entityId))).write(
+              const ArtworksTableCompanion(syncState: Value('syncError')),
+            );
+          }
+          Log.w(
+            'Entrée ${entry.seq} en échec terminal : ${e.failure.runtimeType}',
+            'Sync',
+          );
+          failed++;
+          lastError = e.failure;
+        } on AudioConflictException {
+          await (db.update(
+            db.artworksTable,
+          )..where((t) => t.id.equals(entry.entityId))).write(
+            const ArtworksTableCompanion(
+              audioConflict: Value(true),
+              syncState: Value('syncError'),
+            ),
+          );
+          await outbox.markFailed(entry.seq, error: 'audioConflict');
+          failed++;
+          lastError = const NetworkFailure();
+        } on RateLimitedException catch (e) {
+          await outbox.markFailed(
+            entry.seq,
+            error: 'rate limited (429)',
+            retryAfter: e.retryAfter,
+          );
+          Log.w('Entrée ${entry.seq} limitée par le service', 'Sync');
+          failed++;
+          lastError = const RateLimitedFailure();
+        } on SyncRateLimitedException catch (e) {
+          await outbox.markFailed(
+            entry.seq,
+            error: 'rate limited (429)',
+            retryAfter: e.retryAfter,
+          );
+          Log.w('Entrée ${entry.seq} limitée par le service', 'Sync');
+          failed++;
+          lastError = const RateLimitedFailure();
+        } on QuotaExceededException catch (e) {
+          // C-08: never terminal — a purge or an expiry (C-12) frees space
+          // without any other change, so the next retry of this same entry
+          // can simply succeed. The local write already happened; only the
+          // send is refused (spec's own "l'enregistrement local réussit").
+          final retryAfter = e.resetsAt != null
+              ? (e.resetsAt!.isAfter(DateTime.now())
+                    ? e.resetsAt!.difference(DateTime.now())
+                    : Duration.zero)
+              : null;
+          await outbox.markFailed(
+            entry.seq,
+            error: 'quotaExceeded',
+            retryAfter: retryAfter,
+          );
+          Log.w(
+            'Entrée ${entry.seq} refusée : quota atteint (reset: ${e.resetsAt})',
+            'Sync',
+          );
+          failed++;
+          lastError = QuotaExceededFailure(resetsAt: e.resetsAt);
+        } on GlobalUploadsSuspendedException catch (e) {
+          await outbox.markFailed(entry.seq, error: 'globalUploadsSuspended');
+          Log.w(
+            'Entrée ${entry.seq} refusée : sauvegardes globales suspendues',
+            'Sync',
+          );
+          failed++;
+          lastError = GlobalUploadsSuspendedFailure(message: e.message);
+        } catch (e, st) {
+          Log.e('Échec de l’envoi de l’entrée ${entry.seq}', e, st, 'Sync');
+          await outbox.markFailed(entry.seq, error: e.toString());
+          if (entry.entity == SyncEntityKind.artwork.wireName) {
+            await (db.update(
+              db.artworksTable,
+            )..where((t) => t.id.equals(entry.entityId))).write(
+              const ArtworksTableCompanion(syncState: Value('syncError')),
+            );
+          }
+          failed++;
+          lastError = NetworkFailure(cause: e, stack: st);
+        }
+        // Isolation: one entry's exception never stops the loop (spec §5 —
+        // "échecs isolés par entrée").
+      }
       onProgress?.call(
         SyncProgress(
           phase: SyncPhase.sending,
-          done: index,
+          done: ready.length,
           total: ready.length,
         ),
       );
-      if (isEntryDeferred != null && await isEntryDeferred!(entry)) {
-        Log.d('Entrée ${entry.seq} différée par un job natif', 'Sync');
-        continue;
-      }
-      if (entry.entity == SyncEntityKind.child.wireName &&
-          isDebugDemoId(entry.entityId)) {
-        await outbox.markSucceeded(entry.seq);
-        continue;
-      }
-      try {
-        if (entry.entity == SyncEntityKind.child.wireName) {
-          await _pushChild(entry, familyId: familyId);
-        } else {
-          if (!await _pushArtwork(entry, familyId: familyId, userId: userId)) {
-            continue;
-          }
-        }
-        await outbox.markSucceeded(entry.seq);
-        succeeded++;
-      } on DeletedRowUpdateRejectedException {
-        // D9: a delete already won elsewhere. This upsert is moot, not a
-        // failure — drop it rather than retrying something that can never
-        // succeed differently.
-        await outbox.markSucceeded(entry.seq);
-        Log.w(
-          'Entrée ${entry.seq} abandonnée : suppression déjà gagnante',
-          'Sync',
-        );
-      } on _TerminalOutboxFailure catch (e) {
-        if (e.preservePending) {
-          await outbox.markFailed(
-            entry.seq,
-            error: 'audioFileMissing',
-            retryAfter: const Duration(hours: 1),
-          );
-        } else {
-          await outbox.markTerminal(entry.seq);
-        }
-        if (e.preservePending &&
-            entry.entity == SyncEntityKind.artwork.wireName) {
-          await (db.update(
-            db.artworksTable,
-          )..where((t) => t.id.equals(entry.entityId))).write(
-            const ArtworksTableCompanion(syncState: Value('syncError')),
-          );
-        }
-        Log.w(
-          'Entrée ${entry.seq} en échec terminal : ${e.failure.runtimeType}',
-          'Sync',
-        );
-        failed++;
-        lastError = e.failure;
-      } on AudioConflictException {
-        await (db.update(
-          db.artworksTable,
-        )..where((t) => t.id.equals(entry.entityId))).write(
-          const ArtworksTableCompanion(
-            audioConflict: Value(true),
-            syncState: Value('syncError'),
-          ),
-        );
-        await outbox.markFailed(entry.seq, error: 'audioConflict');
-        failed++;
-        lastError = const NetworkFailure();
-      } on RateLimitedException catch (e) {
-        await outbox.markFailed(
-          entry.seq,
-          error: 'rate limited (429)',
-          retryAfter: e.retryAfter,
-        );
-        Log.w('Entrée ${entry.seq} limitée par le service', 'Sync');
-        failed++;
-        lastError = const RateLimitedFailure();
-      } on QuotaExceededException catch (e) {
-        // C-08: never terminal — a purge or an expiry (C-12) frees space
-        // without any other change, so the next retry of this same entry
-        // can simply succeed. The local write already happened; only the
-        // send is refused (spec's own "l'enregistrement local réussit").
-        final retryAfter = e.resetsAt != null
-            ? (e.resetsAt!.isAfter(DateTime.now())
-                  ? e.resetsAt!.difference(DateTime.now())
-                  : Duration.zero)
-            : null;
-        await outbox.markFailed(
-          entry.seq,
-          error: 'quotaExceeded',
-          retryAfter: retryAfter,
-        );
-        Log.w(
-          'Entrée ${entry.seq} refusée : quota atteint (reset: ${e.resetsAt})',
-          'Sync',
-        );
-        failed++;
-        lastError = QuotaExceededFailure(resetsAt: e.resetsAt);
-      } on GlobalUploadsSuspendedException catch (e) {
-        await outbox.markFailed(entry.seq, error: 'globalUploadsSuspended');
-        Log.w(
-          'Entrée ${entry.seq} refusée : sauvegardes globales suspendues',
-          'Sync',
-        );
-        failed++;
-        lastError = GlobalUploadsSuspendedFailure(message: e.message);
-      } catch (e, st) {
-        Log.e('Échec de l’envoi de l’entrée ${entry.seq}', e, st, 'Sync');
-        await outbox.markFailed(entry.seq, error: e.toString());
-        if (entry.entity == SyncEntityKind.artwork.wireName) {
-          await (db.update(
-            db.artworksTable,
-          )..where((t) => t.id.equals(entry.entityId))).write(
-            const ArtworksTableCompanion(syncState: Value('syncError')),
-          );
-        }
-        failed++;
-        lastError = NetworkFailure(cause: e, stack: st);
-      }
-      // Isolation: one entry's exception never stops the loop (spec §5 —
-      // "échecs isolés par entrée").
+      // Only an acknowledgement can unblock a later operation of the same
+      // entity; without one, another round would find the same entries.
+      if (succeeded == succeededBefore) break;
     }
-    onProgress?.call(
-      SyncProgress(
-        phase: SyncPhase.sending,
-        done: ready.length,
-        total: ready.length,
-      ),
-    );
 
     return (succeeded, failed, lastError);
+  }
+
+  /// Sends one operation as an [EntityPatch] and applies its receipt.
+  /// Returns false when the operation cannot be sent yet and stays queued.
+  Future<bool> _pushOperation(SyncOutboxEntryEntity entry) async {
+    if (entry.entity == SyncEntityKind.artwork.wireName) {
+      final artwork = await artworksRepo.getById(entry.entityId);
+      if (artwork != null && isDebugDemoId(artwork.childId)) {
+        // Demo fixture, never uploaded.
+        await outbox.markSucceeded(entry.seq);
+        return true;
+      }
+    }
+    // The listed entry may be stale (an edit can have been merged into it
+    // since): claim re-reads it, builds the snapshot patch from the current
+    // row when it has none, and persists patch + `in_flight` in one
+    // transaction, so a crash replays the same `opId` with the same patch.
+    final claimed = await outbox.claim(entry.seq, buildPatch: _snapshotPatch);
+    final patch = claimed?.patch;
+    if (claimed == null || patch == null) {
+      final current = await outbox.entryBySeq(entry.seq);
+      if (current == null) return true; // acknowledged or dropped meanwhile
+      if (entry.entity == SyncEntityKind.child.wireName) {
+        // Deleted locally before this upsert ever went out.
+        await outbox.markSucceeded(entry.seq);
+        return true;
+      }
+      Log.w(
+        'Entrée ${entry.seq} en attente : les médias de l’œuvre ne sont pas '
+            'décrits',
+        'Sync',
+      );
+      return false;
+    }
+    final receipt = await protocolBackend!.applyPatch(patch);
+    final outcome = await _receipts.apply(
+      entry: claimed,
+      patch: patch,
+      receipt: receipt,
+    );
+    if (outcome.conflicts > 0) {
+      Log.w(
+        'Entrée ${entry.seq} : ${outcome.conflicts} champ(s) en conflit, '
+            'valeurs remplacées conservées',
+        'Sync',
+      );
+    }
+    return true;
+  }
+
+  /// The patch of an operation queued without one, built from its row, or
+  /// null when the row is gone or the operation needs media descriptors.
+  Future<EntityPatch?> _snapshotPatch(SyncOutboxEntryEntity entry) async {
+    if (entry.entity != SyncEntityKind.child.wireName) {
+      // A purge needs no row; an artwork edit is not expressible without its
+      // media descriptors.
+      return entry.op == SyncOutboxOp.delete.wireName
+          ? _purgePatch(entry, SyncEntityType.artwork)
+          : null;
+    }
+    if (entry.op == SyncOutboxOp.delete.wireName) {
+      return _purgePatch(entry, SyncEntityType.child);
+    }
+    final row = await (db.select(
+      db.childrenTable,
+    )..where((t) => t.id.equals(entry.entityId))).getSingleOrNull();
+    if (row == null) return null;
+    return EntityPatch(
+      opId: entry.opId,
+      entityType: SyncEntityType.child,
+      entityId: row.id,
+      baseRevisions: {
+        ChildSyncFields.name: row.nameRev,
+        ChildSyncFields.birthDate: row.birthDateRev,
+      },
+      fields: {
+        ChildSyncFields.name: row.name,
+        ChildSyncFields.birthDate: syncDateValue(row.birthDate),
+      },
+      createdAt: entry.createdAt,
+    );
+  }
+
+  EntityPatch _purgePatch(SyncOutboxEntryEntity entry, SyncEntityType type) {
+    final lifecycle = type == SyncEntityType.child
+        ? ChildSyncFields.lifecycle
+        : ArtworkSyncFields.lifecycle;
+    return EntityPatch(
+      opId: entry.opId,
+      entityType: type,
+      entityId: entry.entityId,
+      baseRevisions: {lifecycle: 0},
+      fields: {lifecycle: SyncLifecycle.purged.name},
+      createdAt: entry.createdAt,
+    );
   }
 
   Future<void> _pushChild(
@@ -436,7 +598,15 @@ class SyncEngine {
       birthDate: child.birthDate,
       createdAt: child.createdAt,
     );
-    await childrenRepo.markSynced(child.id);
+    // Acknowledge this operation only. The row is `synced` only when no
+    // other operation of the child is left: an edit made while this one was
+    // in flight is another operation, still queued.
+    await db.transaction(() async {
+      await outbox.markSucceeded(entry.seq);
+      if (!await outbox.hasOperations(SyncEntityKind.child, child.id)) {
+        await childrenRepo.markSynced(child.id);
+      }
+    });
   }
 
   Future<bool> _pushArtwork(
@@ -613,6 +783,15 @@ class SyncEngine {
           latest.drawnAt == current.drawnAt &&
           latest.audioRevision == revision &&
           latest.audioSyncIntent == intent.name;
+      // Acknowledge this operation only. Whatever changed while it was in
+      // flight is another operation, still queued; if the row moved without
+      // one, queue a fresh one so nothing waits on a state that is never
+      // sent.
+      await outbox.markSucceeded(entry.seq);
+      final queued = await outbox.hasOperations(
+        SyncEntityKind.artwork,
+        current.id,
+      );
       await (db.update(
         db.artworksTable,
       )..where((t) => t.id.equals(current.id))).write(
@@ -626,11 +805,17 @@ class SyncEngine {
             intent == AudioSyncIntent.keep ? revision : revision + 1,
           ),
           audioSyncIntent: matches ? const Value('keep') : const Value.absent(),
-          syncState: Value(matches ? 'synced' : 'localOnly'),
+          syncState: Value(matches && !queued ? 'synced' : 'localOnly'),
         ),
       );
-      if (matches) await outbox.markSucceeded(entry.seq);
-      return matches;
+      if (!matches && !queued) {
+        await outbox.enqueue(
+          entity: SyncEntityKind.artwork,
+          entityId: current.id,
+          op: SyncOutboxOp.upsert,
+        );
+      }
+      return true;
     });
   }
 

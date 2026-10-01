@@ -20,6 +20,11 @@ complete with `AppCapabilities.local`.
 - `applyPatch` returns a `MutationReceipt`: `accepted` (field → new revision),
   `conflicts` and `alreadyApplied`. Replaying an `opId` returns the same
   receipt with `alreadyApplied` and has no second effect.
+- The device keeps these operations in a durable queue (ADR 0018): a sent
+  operation is marked `in_flight` before the send and replayed unchanged;
+  acknowledging it removes only that operation, and a later local edit of the
+  same field rebases on the accepted revision. Values that lose a conflict
+  are kept locally for 30 days.
 - A receipt answers exactly the fields of its own patch. Call
   `ensureAnswers(patch)` before acknowledging anything; a mismatch leaves the
   operation pending.

@@ -33,6 +33,7 @@ export 'src/domain/child.dart';
 export 'src/local/repositories/artworks_repository.dart';
 export 'src/domain/artwork.dart';
 export 'src/sync/conflict_resolution.dart';
+export 'src/sync/replaced_values.dart';
 export 'src/sync/sync_outbox.dart';
 export 'src/sync/vault_meta.dart';
 export 'src/sync/sync_engine.dart';

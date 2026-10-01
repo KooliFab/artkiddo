@@ -1,13 +1,13 @@
 // Reproduction of data loss #1: renaming a child while its push is in flight.
 //
-// The push reads the child row (old name), sends it, and only then clears the
-// outbox entry by `seq`. A rename made during the send is collapsed into that
-// still-present entry by `SyncOutboxRepository.enqueue`, so the acknowledgement
-// removes the only record of the rename. The pull that follows then sees no
-// pending entry and overwrites the new name with the server's old one.
+// Before the fix, the push read the child row (old name), sent it, and only
+// then cleared the outbox entry by `seq`. A rename made during the send was
+// collapsed into that still-present entry, so the acknowledgement removed the
+// only record of the rename and the pull that followed overwrote the new name
+// with the server's old one.
 //
-// Expected red until the outbox acknowledges the exact operation it sent.
-// Run without the skip: flutter test --run-skipped --tags known-loss
+// Fixed by the operation outbox (L02): the rename is its own operation, and
+// the acknowledgement removes only the operation that was sent.
 
 import 'dart:async';
 
@@ -120,7 +120,5 @@ void main() {
             '(pending=$pending, server=${server.name})',
       );
     },
-    tags: ['known-loss'],
-    skip: 'Attendu rouge jusqu’à L02/L09',
   );
 }

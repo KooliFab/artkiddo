@@ -5,6 +5,7 @@ import '../storage/local_vault.dart';
 import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
+import '../../contracts/sync_protocol.dart';
 import '../../sync/sync_outbox.dart';
 import '../../domain/child.dart';
 
@@ -156,17 +157,28 @@ class DriftChildrenRepository implements ChildrenRepository {
                 syncState: const Value('localOnly'),
               ),
             );
-        // A single outbox entry for the child. The sync engine
+        // A single operation for the child. The sync engine
         // cascades the server-side tombstone to every artwork of
         // this child itself — the logical deletion of a child
         // logically marks its artworks too, never a database
         // cascade — so enqueueing one entry per orphaned artwork
         // here would be redundant, and wrong for any artwork
         // never pushed at all.
-        await _outbox.enqueue(
-          entity: SyncEntityKind.child,
-          entityId: id,
-          op: SyncOutboxOp.upsert,
+        await _outbox.enqueuePatch(
+          EntityPatch(
+            opId: _outbox.newOpId(),
+            entityType: SyncEntityType.child,
+            entityId: id,
+            baseRevisions: {
+              ChildSyncFields.name: 0,
+              ChildSyncFields.birthDate: 0,
+            },
+            fields: {
+              ChildSyncFields.name: name,
+              ChildSyncFields.birthDate: syncDateValue(birthDate),
+            },
+            createdAt: now,
+          ),
         );
       });
     } catch (e, st) {
@@ -188,23 +200,43 @@ class DriftChildrenRepository implements ChildrenRepository {
     }
     try {
       await _db.transaction(() async {
-        final rows =
-            await (_db.update(
-              _db.childrenTable,
-            )..where((t) => t.id.equals(id))).write(
-              ChildrenTableCompanion(
-                name: Value(name),
-                birthDate: Value(birthDate),
-                updatedAt: Value(DateTime.now()),
-              ),
-            );
-        if (rows == 0) {
+        // Read inside the transaction: the base revisions of the operation
+        // must be the ones of the row it changes.
+        final row = await (_db.select(
+          _db.childrenTable,
+        )..where((t) => t.id.equals(id))).getSingleOrNull();
+        if (row == null) {
           throw StateError('child row disappeared during update transaction');
         }
-        await _outbox.enqueue(
-          entity: SyncEntityKind.child,
-          entityId: id,
-          op: SyncOutboxOp.upsert,
+        await (_db.update(
+          _db.childrenTable,
+        )..where((t) => t.id.equals(id))).write(
+          ChildrenTableCompanion(
+            name: Value(name),
+            birthDate: Value(birthDate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+        final fields = <String, Object?>{
+          if (name != row.name) ChildSyncFields.name: name,
+          if (syncDateValue(birthDate) != syncDateValue(row.birthDate))
+            ChildSyncFields.birthDate: syncDateValue(birthDate),
+        };
+        if (fields.isEmpty) return;
+        await _outbox.enqueuePatch(
+          EntityPatch(
+            opId: _outbox.newOpId(),
+            entityType: SyncEntityType.child,
+            entityId: id,
+            baseRevisions: {
+              if (fields.containsKey(ChildSyncFields.name))
+                ChildSyncFields.name: row.nameRev,
+              if (fields.containsKey(ChildSyncFields.birthDate))
+                ChildSyncFields.birthDate: row.birthDateRev,
+            },
+            fields: fields,
+            createdAt: DateTime.now(),
+          ),
         );
       });
     } catch (e, st) {
@@ -253,19 +285,29 @@ class DriftChildrenRepository implements ChildrenRepository {
         orphaned = await (_db.select(
           _db.artworksTable,
         )..where((t) => t.childId.equals(id))).get();
+        final row = await (_db.select(
+          _db.childrenTable,
+        )..where((t) => t.id.equals(id))).getSingleOrNull();
         await (_db.delete(
           _db.artworksTable,
         )..where((t) => t.childId.equals(id))).go();
         final rows = await (_db.delete(
           _db.childrenTable,
         )..where((t) => t.id.equals(id))).go();
-        if (rows == 0) {
+        if (rows == 0 || row == null) {
           throw StateError('child row disappeared during delete transaction');
         }
-        await _outbox.enqueue(
-          entity: SyncEntityKind.child,
-          entityId: id,
-          op: SyncOutboxOp.delete,
+        // Explicit deletion is a `lifecycle` change that supersedes the
+        // still-pending operations of the child.
+        await _outbox.enqueuePatch(
+          EntityPatch(
+            opId: _outbox.newOpId(),
+            entityType: SyncEntityType.child,
+            entityId: id,
+            baseRevisions: {ChildSyncFields.lifecycle: row.lifecycleRev},
+            fields: {ChildSyncFields.lifecycle: SyncLifecycle.purged.name},
+            createdAt: DateTime.now(),
+          ),
         );
       });
     } catch (e, st) {
