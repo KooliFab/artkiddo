@@ -85,6 +85,14 @@ class _TrashScreenState extends ConsumerState<TrashScreen>
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.trashRestoreError)));
       }
+      if (next.onlyHereRestores > (previous?.onlyHereRestores ?? 0)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.trashRestoredOnlyHere),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
       if (!wasPurgeError && next.purge is ActionError) {
         ScaffoldMessenger.of(
           context,

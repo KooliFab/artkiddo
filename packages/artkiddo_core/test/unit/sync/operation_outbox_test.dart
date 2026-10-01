@@ -18,8 +18,10 @@ class _ThrowingOutbox extends SyncOutboxRepository {
   _ThrowingOutbox(super.db);
 
   @override
-  Future<String> enqueuePatch(EntityPatch patch) =>
-      throw StateError('outbox write failed');
+  Future<String> enqueuePatch(
+    EntityPatch patch, {
+    bool supersedePending = true,
+  }) => throw StateError('outbox write failed');
 }
 
 final _uuidV4 = RegExp(

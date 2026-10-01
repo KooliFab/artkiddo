@@ -6,6 +6,7 @@ import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
 import '../storage/local_vault.dart';
+import '../../sync/sync_outbox.dart';
 
 /// The account-free artwork trash. It owns only local rows and files; it has
 /// no household, auth, network, or provider dependency.
@@ -44,6 +45,10 @@ class LocalTrashRepository implements TrashRepository {
         _db.childrenTable,
       )..where((t) => t.id.isIn(childIds))).get();
       final names = {for (final child in children) child.id: child.name};
+      final hiddenChildren = {
+        for (final child in children)
+          if (child.deletedAt != null) child.id,
+      };
 
       return ActionSuccess([
         for (final row in rows)
@@ -58,6 +63,9 @@ class LocalTrashRepository implements TrashRepository {
                 row.thumbnailImagePath ??
                 row.displayImagePath ??
                 row.relativeImagePath,
+            existsOnlyHere:
+                row.remotePurgedAt != null ||
+                hiddenChildren.contains(row.childId),
           ),
       ]);
     } catch (e, st) {
@@ -77,21 +85,40 @@ class LocalTrashRepository implements TrashRepository {
       if (row == null || row.deletedAt == null) {
         return const ActionSuccess(null);
       }
-      final count =
-          await (_db.update(
-                _db.artworksTable,
-              )..where((t) => t.id.equals(artworkId) & t.deletedAt.isNotNull()))
-              .write(
-                const ArtworksTableCompanion(
-                  deletedAt: Value(null),
-                  syncState: Value('localOnly'),
-                ),
-              );
-      if (count == 0) return const ActionSuccess(null);
-      final restored = await (_db.select(
+      // An artwork the remote side purged (or whose child it purged) comes
+      // back active on this phone only: it is marked so, its hidden child is
+      // shown again, and nothing is queued for the server, which refuses
+      // `lifecycle: active` for a purged artwork.
+      final restored = await _db.transaction(() async {
+        final child = await (_db.select(
+          _db.childrenTable,
+        )..where((t) => t.id.equals(row.childId))).getSingleOrNull();
+        final onlyHere = row.remotePurgedAt != null || child?.deletedAt != null;
+        final count =
+            await (_db.update(_db.artworksTable)..where(
+                  (t) => t.id.equals(artworkId) & t.deletedAt.isNotNull(),
+                ))
+                .write(
+                  ArtworksTableCompanion(
+                    deletedAt: const Value(null),
+                    syncState: const Value('localOnly'),
+                    remotePurgedAt: onlyHere
+                        ? Value(row.remotePurgedAt ?? _now())
+                        : const Value.absent(),
+                  ),
+                );
+        if (count > 0 && child?.deletedAt != null) {
+          await (_db.update(_db.childrenTable)
+                ..where((t) => t.id.equals(row.childId)))
+              .write(const ChildrenTableCompanion(deletedAt: Value(null)));
+        }
+        return count;
+      });
+      if (restored == 0) return const ActionSuccess(null);
+      final after = await (_db.select(
         _db.artworksTable,
       )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
-      if (restored?.deletedAt != null) {
+      if (after?.deletedAt != null) {
         return const ActionFailed(LocalWriteFailure());
       }
       return const ActionSuccess(null);
@@ -153,40 +180,78 @@ class LocalTrashRepository implements TrashRepository {
     }
   }
 
+  /// The trash purge: the 30-day expiry, "delete forever" and "empty the
+  /// trash". The rows go first, in one transaction with the operations that
+  /// only described them; the files follow through
+  /// [LocalVault.deleteArtworkFilesOrEnqueueCleanup], which asks
+  /// `isMediaReferenced` for each one. A child hidden after a remote purge
+  /// goes with its last artwork.
   Future<ActionResult<void>> _purgeRows(List<ArtworkEntity> rows) async {
-    if (rows.isEmpty) return const ActionSuccess(null);
+    if (rows.isEmpty) return await _dropChildlessHiddenChildren();
     try {
       await _db.transaction(() async {
+        final ids = rows.map((row) => row.id).toList();
         await (_db.delete(
           _db.artworksTable,
-        )..where((t) => t.id.isIn(rows.map((row) => row.id)))).go();
+        )..where((t) => t.id.isIn(ids))).go();
+        // What was still queued for an artwork that no longer exists could
+        // never be sent: it would only show as "waiting" for ever.
+        await (_db.delete(_db.syncOutboxTable)..where(
+              (t) =>
+                  t.entity.equals(SyncEntityKind.artwork.wireName) &
+                  t.entityId.isIn(ids),
+            ))
+            .go();
+        await (_db.delete(
+          _db.deferredRemoteChangesTable,
+        )..where((t) => t.artworkId.isIn(ids))).go();
       });
     } catch (e, st) {
       Log.e('Suppression des lignes de Corbeille impossible', e, st, 'Trash');
       return ActionFailed(_mapException(e, st));
     }
 
-    // Database truth is durable before file work starts. Any failed file
-    // deletion is journaled by LocalVault and retried at the next startup.
+    // Database truth is durable before file work starts. Any failed or
+    // still-referenced file is journaled by LocalVault and retried at the
+    // next startup.
     for (final row in rows) {
-      if (row.relativeImagePath != null) {
-        await _vault.deleteFileOrEnqueueCleanup(
-          relativePath: row.relativeImagePath!,
-          db: _db,
-        );
-      }
-      if (row.relativeAudioPath != null) {
-        await _vault.deleteAudioFileOrEnqueueCleanup(
-          relativeAudioPath: row.relativeAudioPath!,
-          db: _db,
-        );
-      }
-      await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-        displayRelativePath: row.displayImagePath,
-        thumbnailRelativePath: row.thumbnailImagePath,
-        db: _db,
-      );
+      await _vault.deleteArtworkFilesOrEnqueueCleanup(row, db: _db);
     }
-    return const ActionSuccess(null);
+    return await _dropChildlessHiddenChildren();
+  }
+
+  /// A child hidden because the remote side purged it stays only while an
+  /// artwork or an operation depends on it.
+  Future<ActionResult<void>> _dropChildlessHiddenChildren() async {
+    try {
+      final hidden = await (_db.select(
+        _db.childrenTable,
+      )..where((t) => t.deletedAt.isNotNull())).get();
+      for (final child in hidden) {
+        final artworks =
+            await (_db.select(_db.artworksTable)
+                  ..where((t) => t.childId.equals(child.id))
+                  ..limit(1))
+                .get();
+        if (artworks.isNotEmpty) continue;
+        final ops =
+            await (_db.select(_db.syncOutboxTable)
+                  ..where(
+                    (t) =>
+                        t.entity.equals(SyncEntityKind.child.wireName) &
+                        t.entityId.equals(child.id),
+                  )
+                  ..limit(1))
+                .get();
+        if (ops.isNotEmpty) continue;
+        await (_db.delete(
+          _db.childrenTable,
+        )..where((t) => t.id.equals(child.id))).go();
+      }
+      return const ActionSuccess(null);
+    } catch (e, st) {
+      Log.e('Nettoyage des enfants masqués impossible', e, st, 'Trash');
+      return ActionFailed(_mapException(e, st));
+    }
   }
 }

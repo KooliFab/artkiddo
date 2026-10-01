@@ -128,13 +128,22 @@ class SyncOutboxRepository {
   ///   `pending` snapshot-less `upsert`, which reads the row when it is sent.
   /// * Otherwise, in particular when the last operation is `in_flight`, it is
   ///   a new operation.
-  Future<String> enqueuePatch(EntityPatch patch) async {
+  ///
+  /// With [supersedePending] false, a trash patch leaves the operations
+  /// already queued where they are and follows them: used when the entity is
+  /// trashed (kept for 30 days) rather than deleted, so a creation that never
+  /// went out still goes out.
+  Future<String> enqueuePatch(
+    EntityPatch patch, {
+    bool supersedePending = true,
+  }) async {
     final entity = SyncEntityKind.of(patch.entityType);
     final existing = await operationsOf(entity, patch.entityId);
     final isLifecycle = patch.fields.containsKey(_lifecycle);
 
     if (isLifecycle) {
-      if (patch.fields[_lifecycle] != SyncLifecycle.active.name) {
+      if (supersedePending &&
+          patch.fields[_lifecycle] != SyncLifecycle.active.name) {
         await _deletePending(entity, patch.entityId);
       }
     } else if (existing.isNotEmpty && !existing.last.isInFlight) {

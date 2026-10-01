@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../contracts/remote_media.dart';
 import '../../local/audio/audio_player_service.dart';
@@ -7,6 +9,8 @@ import '../config/bootstrap_configuration.dart';
 import '../config/cloud_services.dart';
 import '../../local/database/app_database.dart';
 import '../../local/storage/local_vault.dart';
+import '../../local/storage/vault_archive_export.dart';
+import '../../local/storage/vault_archive_import.dart';
 import '../../local/storage/vault_rescue_export.dart';
 
 final appCapabilitiesProvider = Provider<AppCapabilities>((ref) {
@@ -39,6 +43,29 @@ final vaultRescueExportProvider = Provider<VaultRescueExport>((ref) {
         ref.read(localVaultProvider).documentsDirectory,
   );
 });
+
+/// Complete export: `manifest.json` plus every media file in one ZIP.
+final vaultArchiveExporterProvider = Provider<VaultArchiveExporter>((ref) {
+  return VaultArchiveExporter(
+    ref.read(appDatabaseProvider),
+    ref.read(localVaultProvider),
+    // Same label as the About screen.
+    appVersion: '1.0.0+1',
+  );
+});
+
+final vaultArchiveImporterProvider = Provider<VaultArchiveImporter>((ref) {
+  return VaultArchiveImporter(
+    ref.read(appDatabaseProvider),
+    ref.read(localVaultProvider),
+  );
+});
+
+/// Lets the parent choose an archive file; `null` when the app binds no file
+/// chooser. The import control is hidden then rather than shown disabled.
+typedef VaultArchivePicker = Future<File?> Function();
+
+final vaultArchivePickerProvider = Provider<VaultArchivePicker?>((ref) => null);
 
 final audioRecorderServiceProvider = Provider<AudioRecorderService>((ref) {
   final service = RecordAudioRecorderService();

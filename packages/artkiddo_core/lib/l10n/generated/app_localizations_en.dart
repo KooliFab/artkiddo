@@ -1404,6 +1404,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trashRestoring => 'Restoring…';
 
   @override
+  String get trashRestoredOnlyHere =>
+      'Artwork restored. It now exists only on this phone: it will no longer be backed up or visible on your other devices.';
+
+  @override
+  String unsavedArtworksWarning(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count drawings are not backed up yet: they will be lost for good.',
+      one: '1 drawing is not backed up yet: it will be lost for good.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupStateOnDevice => 'On this device';
+
+  @override
+  String get backupStateInProgress => 'Backup in progress';
+
+  @override
+  String get backupStateSaved => 'Backed up (optimized quality)';
+
+  @override
+  String get backupStateActionNeeded => 'Action needed';
+
+  @override
+  String get backupOriginalStaysOnDevice =>
+      'The original photo stays on this device only.';
+
+  @override
+  String get backupReasonMissingFile =>
+      'A file of this drawing can\'t be found on this device. The drawing stays in the gallery.';
+
+  @override
+  String get backupReasonRepeatedFailure =>
+      'Sending failed several times. Check your connection, then start a backup.';
+
+  @override
+  String get backupReasonRemotePurged =>
+      'This drawing was deleted on your other devices. It now exists on this one only.';
+
+  @override
+  String get backupSummaryHeading => 'Backup status';
+
+  @override
+  String backupSummarySaved(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drawings backed up',
+      one: '1 drawing backed up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryInProgress(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drawings being backed up',
+      one: '1 drawing being backed up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryActionNeeded(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drawings need action',
+      one: '1 drawing needs action',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryOnDevice(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drawings on this device only',
+      one: '1 drawing on this device only',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSummaryIssueHeading => 'Last problem encountered';
+
+  @override
   String get trashRestoreError => 'This artwork couldn\'t be restored.';
 
   @override
@@ -1690,4 +1784,96 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pushChannelFamilyActivityDescription =>
       'New artworks added by your family members.';
+
+  @override
+  String get vaultArchiveTitle => 'Export and import';
+
+  @override
+  String get vaultArchiveIntro =>
+      'The archive is one file with all your children, artworks, original photos and voice stories. Sharing it does not keep it anywhere for you: put it in a place you trust.';
+
+  @override
+  String get vaultArchiveExportAction => 'Create an archive';
+
+  @override
+  String vaultArchiveExportProgress(int completed, int total) {
+    return 'Preparing the archive… $completed of $total';
+  }
+
+  @override
+  String get vaultArchiveExportDone =>
+      'Archive created and sent to the share sheet. Check that you saved it in a safe place: nothing is kept for you automatically.';
+
+  @override
+  String vaultArchiveExportPartial(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return 'Partial export: $_temp0 could not be included. The archive was still created; check that you saved it in a safe place.';
+  }
+
+  @override
+  String get vaultArchiveExportFailed =>
+      'The archive could not be created. Nothing was changed.';
+
+  @override
+  String get vaultArchiveImportAction => 'Import an archive';
+
+  @override
+  String get vaultArchiveImportProgress => 'Importing…';
+
+  @override
+  String get vaultArchiveImportNothingNew =>
+      'Everything in this archive is already on this device. Nothing was changed.';
+
+  @override
+  String vaultArchiveImportDone(int artworks, int children) {
+    String _temp0 = intl.Intl.pluralLogic(
+      artworks,
+      locale: localeName,
+      other: '$artworks artworks',
+      one: '1 artwork',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      children,
+      locale: localeName,
+      other: '$children children',
+      one: '1 child',
+    );
+    return 'Import complete: $_temp0 and $_temp1 added.';
+  }
+
+  @override
+  String get vaultArchiveImportRestored =>
+      'Import complete: missing files were given back to existing artworks.';
+
+  @override
+  String vaultArchiveImportKeptAside(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count values differed',
+      one: '1 value differed',
+    );
+    return '$_temp0 from this device. Yours were kept; the imported ones are set aside for 30 days.';
+  }
+
+  @override
+  String get vaultArchiveImportInvalid =>
+      'This file is not a valid ArtKiddo archive. Nothing was imported.';
+
+  @override
+  String get vaultArchiveImportUnsupported =>
+      'This archive comes from a newer version of ArtKiddo. Update the app, then try again.';
+
+  @override
+  String get vaultArchiveImportCorrupted =>
+      'The archive is incomplete or damaged: a file does not match its checksum. Nothing was imported.';
+
+  @override
+  String get vaultArchiveImportFailed =>
+      'The import failed. Nothing was imported.';
 }

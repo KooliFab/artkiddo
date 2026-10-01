@@ -325,22 +325,7 @@ class DriftChildrenRepository implements ChildrenRepository {
     }
 
     for (final artwork in orphaned) {
-      if (artwork.relativeImagePath != null) {
-        await _vault.deleteFileOrEnqueueCleanup(
-          relativePath: artwork.relativeImagePath!,
-          db: _db,
-        );
-      }
-      // The cascade must also take each artwork's derivatives
-      // with it — otherwise they survive as orphans with no row
-      // left to reference them, exactly the leak
-      // `DriftArtworksRepository.delete` already avoids for a
-      // single artwork.
-      await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-        displayRelativePath: artwork.displayImagePath,
-        thumbnailRelativePath: artwork.thumbnailImagePath,
-        db: _db,
-      );
+      await _vault.deleteArtworkFilesOrEnqueueCleanup(artwork, db: _db);
     }
     return const ActionSuccess(null);
   }
@@ -411,17 +396,7 @@ class DriftChildrenRepository implements ChildrenRepository {
     }
 
     for (final artwork in orphaned) {
-      if (artwork.relativeImagePath != null) {
-        await _vault.deleteFileOrEnqueueCleanup(
-          relativePath: artwork.relativeImagePath!,
-          db: _db,
-        );
-      }
-      await _vault.deleteDerivativeFilesOrEnqueueCleanup(
-        displayRelativePath: artwork.displayImagePath,
-        thumbnailRelativePath: artwork.thumbnailImagePath,
-        db: _db,
-      );
+      await _vault.deleteArtworkFilesOrEnqueueCleanup(artwork, db: _db);
     }
     return const ActionSuccess(null);
   }

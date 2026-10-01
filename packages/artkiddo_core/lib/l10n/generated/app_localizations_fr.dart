@@ -1429,6 +1429,101 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trashRestoring => 'Restauration…';
 
   @override
+  String get trashRestoredOnlyHere =>
+      'Œuvre restaurée. Elle n\'existe plus que sur ce téléphone : elle ne sera plus sauvegardée ni visible sur vos autres appareils.';
+
+  @override
+  String unsavedArtworksWarning(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dessins ne sont pas encore sauvegardés : ils seront définitivement perdus.',
+      one:
+          '1 dessin n\'est pas encore sauvegardé : il sera définitivement perdu.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupStateOnDevice => 'Sur cet appareil';
+
+  @override
+  String get backupStateInProgress => 'Sauvegarde en cours';
+
+  @override
+  String get backupStateSaved => 'Sauvegardé (qualité optimisée)';
+
+  @override
+  String get backupStateActionNeeded => 'Action nécessaire';
+
+  @override
+  String get backupOriginalStaysOnDevice =>
+      'La photo d\'origine reste uniquement sur cet appareil.';
+
+  @override
+  String get backupReasonMissingFile =>
+      'Un fichier de ce dessin est introuvable sur cet appareil. Le dessin reste dans la galerie.';
+
+  @override
+  String get backupReasonRepeatedFailure =>
+      'L\'envoi a échoué plusieurs fois. Vérifiez la connexion, puis lancez une sauvegarde.';
+
+  @override
+  String get backupReasonRemotePurged =>
+      'Ce dessin a été supprimé sur les autres appareils. Il n\'existe plus que sur celui-ci.';
+
+  @override
+  String get backupSummaryHeading => 'État des sauvegardes';
+
+  @override
+  String backupSummarySaved(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dessins sauvegardés',
+      one: '1 dessin sauvegardé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryInProgress(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dessins en cours de sauvegarde',
+      one: '1 dessin en cours de sauvegarde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryActionNeeded(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dessins demandent une action',
+      one: '1 dessin demande une action',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupSummaryOnDevice(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dessins uniquement sur cet appareil',
+      one: '1 dessin uniquement sur cet appareil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSummaryIssueHeading => 'Dernier problème rencontré';
+
+  @override
   String get trashRestoreError => 'L\'œuvre n\'a pas pu être restaurée.';
 
   @override
@@ -1718,4 +1813,96 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get pushChannelFamilyActivityDescription =>
       'Nouvelles œuvres ajoutées par les membres de votre famille.';
+
+  @override
+  String get vaultArchiveTitle => 'Exporter et importer';
+
+  @override
+  String get vaultArchiveIntro =>
+      'L’archive est un seul fichier avec tous vos enfants, œuvres, photos d’origine et histoires vocales. La partager ne la garde nulle part pour vous : placez-la dans un endroit sûr.';
+
+  @override
+  String get vaultArchiveExportAction => 'Créer une archive';
+
+  @override
+  String vaultArchiveExportProgress(int completed, int total) {
+    return 'Préparation de l’archive… $completed sur $total';
+  }
+
+  @override
+  String get vaultArchiveExportDone =>
+      'Archive créée et envoyée vers le partage. Vérifiez que vous l’avez enregistrée à un endroit sûr : rien n’est conservé pour vous automatiquement.';
+
+  @override
+  String vaultArchiveExportPartial(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers n’ont',
+      one: '1 fichier n’a',
+    );
+    return 'Export partiel : $_temp0 pas pu être inclus. L’archive est quand même créée ; vérifiez que vous l’avez enregistrée à un endroit sûr.';
+  }
+
+  @override
+  String get vaultArchiveExportFailed =>
+      'L’archive n’a pas pu être créée. Rien n’a été modifié.';
+
+  @override
+  String get vaultArchiveImportAction => 'Importer une archive';
+
+  @override
+  String get vaultArchiveImportProgress => 'Importation…';
+
+  @override
+  String get vaultArchiveImportNothingNew =>
+      'Tout ce que contient cette archive est déjà sur cet appareil. Rien n’a été modifié.';
+
+  @override
+  String vaultArchiveImportDone(int artworks, int children) {
+    String _temp0 = intl.Intl.pluralLogic(
+      artworks,
+      locale: localeName,
+      other: '$artworks œuvres ajoutées',
+      one: '1 œuvre ajoutée',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      children,
+      locale: localeName,
+      other: '$children enfants ajoutés',
+      one: '1 enfant ajouté',
+    );
+    return 'Importation terminée : $_temp0 et $_temp1.';
+  }
+
+  @override
+  String get vaultArchiveImportRestored =>
+      'Importation terminée : les fichiers manquants ont été rendus aux œuvres existantes.';
+
+  @override
+  String vaultArchiveImportKeptAside(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count valeurs différaient',
+      one: '1 valeur différait',
+    );
+    return '$_temp0 de celles de cet appareil. Les vôtres sont conservées ; les valeurs importées sont mises de côté pendant 30 jours.';
+  }
+
+  @override
+  String get vaultArchiveImportInvalid =>
+      'Ce fichier n’est pas une archive ArtKiddo valide. Rien n’a été importé.';
+
+  @override
+  String get vaultArchiveImportUnsupported =>
+      'Cette archive vient d’une version plus récente d’ArtKiddo. Mettez l’application à jour, puis réessayez.';
+
+  @override
+  String get vaultArchiveImportCorrupted =>
+      'L’archive est incomplète ou abîmée : un fichier ne correspond pas à son empreinte. Rien n’a été importé.';
+
+  @override
+  String get vaultArchiveImportFailed =>
+      'L’importation a échoué. Rien n’a été importé.';
 }

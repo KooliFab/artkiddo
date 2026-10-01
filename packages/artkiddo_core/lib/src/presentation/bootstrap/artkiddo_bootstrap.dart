@@ -16,6 +16,7 @@ import '../family/family_controller.dart' show familyApiProvider;
 import '../sharing/share_controller.dart'
     show sharingServiceProvider, shareBackupProvider;
 import '../../local/repositories/trash_repository.dart';
+import '../../local/repositories/local_trash_repository.dart';
 import '../../local/storage/media_versions.dart';
 
 /// Creates the provider graph after validating capabilities and services.
@@ -161,28 +162,35 @@ abstract final class ArtKiddoBootstrap {
             );
           }),
     );
-    if (container.read(appCapabilitiesProvider).trash ==
-        TrashCapability.local) {
-      unawaited(
-        container
-            .read(trashRepositoryProvider)
-            .purgeExpired()
-            .then((result) {
-              if (result case ActionSuccess(value: final count)) {
-                if (count > 0) {
-                  Log.i('$count œuvre(s) purgée(s) automatiquement', 'Trash');
-                }
+    // The 30-day expiry of the local trash runs in every composition: with an
+    // account the rows trashed here (or by a remote trash the pull mirrored)
+    // are still local rows holding local files. The shared trash itself is
+    // purged only by the server (`expire-trash`).
+    final localTrash =
+        container.read(appCapabilitiesProvider).trash == TrashCapability.local
+        ? container.read(trashRepositoryProvider)
+        : LocalTrashRepository(
+            container.read(appDatabaseProvider),
+            container.read(localVaultProvider),
+          );
+    unawaited(
+      localTrash
+          .purgeExpired()
+          .then((result) {
+            if (result case ActionSuccess(value: final count)) {
+              if (count > 0) {
+                Log.i('$count œuvre(s) purgée(s) automatiquement', 'Trash');
               }
-            })
-            .catchError((Object error, StackTrace stack) {
-              Log.e(
-                'Échec de la purge automatique de la Corbeille locale',
-                error,
-                stack,
-                'Trash',
-              );
-            }),
-      );
-    }
+            }
+          })
+          .catchError((Object error, StackTrace stack) {
+            Log.e(
+              'Échec de la purge automatique de la Corbeille locale',
+              error,
+              stack,
+              'Trash',
+            );
+          }),
+    );
   }
 }

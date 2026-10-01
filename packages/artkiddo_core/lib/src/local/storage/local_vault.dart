@@ -7,6 +7,7 @@ import '../logging/log.dart';
 import 'atomic_file.dart';
 import 'image_derivatives.dart';
 import 'local_vault_paths.dart';
+import 'physical_delete.dart';
 
 /// Result of [LocalVault.generateDerivatives]: either relative path is
 /// `null` when that particular derivative could not be produced (a
@@ -177,7 +178,7 @@ class LocalVault {
   /// already failed or never ran. Removes every original and
   /// derivative image and audio recording this vault holds; a missing
   /// directory is not an error (idempotent, same discipline as
-  /// [deleteFile]). Does not touch the Drift database — the caller is
+  /// [_removeFile]). Does not touch the Drift database — the caller is
   /// responsible for clearing [AppDatabase]'s own tables alongside
   /// this, since this class has no reference to it.
   Future<void> eraseEverything() async {
@@ -208,18 +209,23 @@ class LocalVault {
     }
   }
 
-  /// Deletes a file from the vault. A missing file is not an error
-  /// (idempotent). Throws if the file exists but cannot be removed.
-  Future<void> deleteFile(String relativePath) async {
+  /// Raw removal of a vault file. A missing file is not an error
+  /// (idempotent); throws if it exists but cannot be removed. Never call it
+  /// directly: [deleteFileOrEnqueueCleanup] and [retryPendingCleanups] go
+  /// through [deleteVaultFileIfUnreferenced], which checks the references
+  /// first.
+  Future<void> _removeFile(String relativePath) async {
     final file = await resolveFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }
   }
 
-  /// Deletes a file, recording a [PendingFileCleanupsTable] entry
-  /// instead of throwing when the deletion fails. This is the
-  /// recovery strategy required by the durability contract: a failed
+  /// The one physical deletion of a vault file: removes it unless something
+  /// still references it ([deleteVaultFileIfUnreferenced]). A failed removal
+  /// or a still-referenced file records a [PendingFileCleanupsTable] entry
+  /// instead of throwing, so the cleanup is retried at the next start. This
+  /// is the recovery strategy required by the durability contract: a failed
   /// file cleanup must never turn an otherwise-successful durable
   /// operation into a failure, but it must also never be silently
   /// forgotten.
@@ -228,7 +234,12 @@ class LocalVault {
     required AppDatabase db,
   }) async {
     try {
-      await deleteFile(relativePath);
+      final outcome = await deleteVaultFileIfUnreferenced(
+        db: db,
+        relativePath: relativePath,
+        removeFile: _removeFile,
+      );
+      if (outcome == PhysicalDeleteOutcome.deleted) return;
     } catch (e, st) {
       Log.e(
         'Suppression différée : fichier conservé pour une nouvelle tentative',
@@ -236,25 +247,54 @@ class LocalVault {
         st,
         'Vault',
       );
-      await db
-          .into(db.pendingFileCleanupsTable)
-          .insertOnConflictUpdate(
-            PendingFileCleanupsTableCompanion(
-              relativePath: Value(relativePath),
-              failedAt: Value(DateTime.now()),
-            ),
-          );
+    }
+    await db
+        .into(db.pendingFileCleanupsTable)
+        .insertOnConflictUpdate(
+          PendingFileCleanupsTableCompanion(
+            relativePath: Value(relativePath),
+            failedAt: Value(DateTime.now()),
+          ),
+        );
+  }
+
+  /// Removes every file an artwork row owned, after the row is gone: its
+  /// original, its audio, its derivatives and every other version the
+  /// registry lists under its id (a replaced audio). Each goes through
+  /// [deleteFileOrEnqueueCleanup], so a version still referenced elsewhere
+  /// (`replaced_values`, an operation in the outbox) stays.
+  Future<void> deleteArtworkFilesOrEnqueueCleanup(
+    ArtworkEntity artwork, {
+    required AppDatabase db,
+  }) async {
+    final paths = <String>{
+      if (artwork.relativeImagePath != null) artwork.relativeImagePath!,
+      if (artwork.relativeAudioPath != null) artwork.relativeAudioPath!,
+      if (artwork.displayImagePath != null) artwork.displayImagePath!,
+      if (artwork.thumbnailImagePath != null) artwork.thumbnailImagePath!,
+      for (final version in await (db.select(
+        db.mediaVersionsTable,
+      )..where((t) => t.mediaId.equals(artwork.id))).get())
+        version.localPath,
+    };
+    for (final path in paths) {
+      await deleteFileOrEnqueueCleanup(relativePath: path, db: db);
     }
   }
 
   /// Retries every pending cleanup entry, silently. Intended to be
-  /// called once at app startup. Entries that still fail are left in
-  /// place for the next attempt.
+  /// called once at app startup. Entries that still fail, or whose file is
+  /// still referenced, are left in place for the next attempt.
   Future<void> retryPendingCleanups(AppDatabase db) async {
     final pending = await db.select(db.pendingFileCleanupsTable).get();
     for (final entry in pending) {
       try {
-        await deleteFile(entry.relativePath);
+        final outcome = await deleteVaultFileIfUnreferenced(
+          db: db,
+          relativePath: entry.relativePath,
+          removeFile: _removeFile,
+        );
+        if (outcome == PhysicalDeleteOutcome.stillReferenced) continue;
         await (db.delete(
           db.pendingFileCleanupsTable,
         )..where((t) => t.relativePath.equals(entry.relativePath))).go();
