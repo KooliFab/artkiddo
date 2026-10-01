@@ -15,94 +15,56 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'fakes.dart';
-import 'sync_engine_test.dart' show Device;
-
-/// Records the upsert like the real backend does (the server row now holds the
-/// sent values, with a fresh `updated_at`), then parks the response until
-/// [release] so the test can edit locally while the push is in flight.
-class _GatedUpsertBackend extends FakeHomeCloudApi {
-  final entered = Completer<void>();
-  final _gate = Completer<void>();
-
-  void release() => _gate.complete();
-
-  @override
-  Future<void> upsertChild({
-    required String id,
-    required String familyId,
-    required String name,
-    required DateTime birthDate,
-    required DateTime createdAt,
-  }) async {
-    await super.upsertChild(
-      id: id,
-      familyId: familyId,
-      name: name,
-      birthDate: birthDate,
-      createdAt: createdAt,
-    );
-    if (!entered.isCompleted) entered.complete();
-    await _gate.future;
-  }
-}
+import 'operation_sync_test.dart' show FakeProtocolBackend, Node;
 
 void main() {
-  late _GatedUpsertBackend backend;
-  late FakeObjectUploader uploader;
-  late FakeObjectDownloader downloader;
-  Device? device;
+  late FakeProtocolBackend backend;
+  late Node node;
 
-  setUpAll(() {
-    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  setUpAll(() => driftRuntimeOptions.dontWarnAboutMultipleDatabases = true);
+
+  setUp(() async {
+    backend = FakeProtocolBackend();
+    node = await Node.create(backend);
   });
 
-  setUp(() {
-    backend = _GatedUpsertBackend();
-    uploader = FakeObjectUploader();
-    downloader = FakeObjectDownloader(uploader.objects);
-  });
-
-  tearDown(() async {
-    await device?.close();
-    device = null;
-  });
+  tearDown(() => node.close());
 
   test(
     'a rename made while the child is being pushed survives the sync',
     () async {
-      final a = device = await Device.create(
-        cloudApi: backend,
-        uploader: uploader,
-        downloader: downloader,
-        userId: 'user-a',
-      );
-      backend.currentUserId = a.userId;
-      final familyId = await a.engine.ensureFamily();
-
       final birthDate = DateTime(2019, 3, 1);
-      final id =
-          (await a.children.create(name: 'Ancien', birthDate: birthDate)
-                  as ActionSuccess<String>)
-              .value;
+      final id = await node.newChild('Ancien');
+
+      // The server applies the patch, then the answer is parked until the
+      // test has edited locally while the push is in flight.
+      final entered = Completer<void>();
+      final gate = Completer<void>();
+      backend.beforeReply = (_) async {
+        if (!entered.isCompleted) entered.complete();
+        await gate.future;
+      };
 
       // Start the full sync (push then pull) and stop it inside the push.
-      final sync = a.sync();
-      await backend.entered.future;
+      final sync = node.sync();
+      await entered.future;
 
       expect(
-        await a.children.update(id: id, name: 'Nouveau', birthDate: birthDate),
+        await node.children.update(
+          id: id,
+          name: 'Nouveau',
+          birthDate: birthDate,
+        ),
         isA<ActionSuccess<void>>(),
       );
 
-      backend.release();
+      backend.beforeReply = null;
+      gate.complete();
       await sync;
 
-      final local = await a.children.getById(id);
-      final pending = await SyncOutboxRepository(a.db).countPending();
-      final server = (await backend.pullChildren(
-        familyId: familyId,
-      )).singleWhere((row) => row.id == id);
+      final local = await node.children.getById(id);
+      final pending = await node.outbox.countPending();
+      final server = backend.entity(SyncEntityType.child, id)!;
 
       expect(
         local?.name,
@@ -110,14 +72,14 @@ void main() {
         reason:
             'the pull must not bring back the pre-rename value '
             '(syncState=${local?.syncState}, pending=$pending, '
-            'server=${server.name})',
+            'server=${server.values['name']})',
       );
       expect(
-        pending > 0 || server.name == 'Nouveau',
+        pending > 0 || server.values['name'] == 'Nouveau',
         isTrue,
         reason:
             'the rename must still be pending or already on the server '
-            '(pending=$pending, server=${server.name})',
+            '(pending=$pending, server=${server.values['name']})',
       );
     },
   );

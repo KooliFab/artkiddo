@@ -11,19 +11,69 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-import 'fakes.dart';
 import 'sync_engine_test.dart' show makeTestImage;
 
 class ServerEntity {
+  final SyncEntityType type;
+  final String id;
   final values = <String, Object?>{};
   final revisions = <String, int>{};
-  bool purged = false;
+  final media = <MediaDescriptor>[];
+  final unavailable = <MediaRef>[];
+  String lifecycle = 'active';
+
+  ServerEntity(this.type, this.id);
+
+  bool get purged => lifecycle == 'purged';
+
+  EntitySnapshot snapshot() {
+    final fields = {...values, 'lifecycle': lifecycle};
+    final referenced = {
+      for (final entry in fields.entries)
+        if (syncFieldSpecs(type)[entry.key]!.type == SyncValueType.mediaRef &&
+            entry.value != null)
+          MediaRef.fromJson(entry.value),
+    };
+    return EntitySnapshot(
+      fields: fields,
+      revisions: {
+        for (final entry in revisions.entries)
+          if (entry.value >= 1) entry.key: entry.value,
+      },
+      media: [
+        for (final m in media)
+          if (referenced.contains(m.ref)) m,
+      ],
+      unavailableMedia: [
+        for (final ref in unavailable)
+          if (referenced.contains(ref)) ref,
+      ],
+    );
+  }
 }
 
-/// In-memory remote side applying the merge rules of the sync protocol.
+/// In-memory remote side applying the merge rules of the sync protocol and
+/// keeping an ordered change journal: a change gets its `seq` when it is
+/// committed, never before.
 class FakeProtocolBackend implements SyncProtocolBackend {
   final entities = <String, ServerEntity>{};
   final receipts = <String, MutationReceipt>{};
+
+  final journal = <SyncChange>[];
+  int generation = 1;
+
+  /// Largest page served, whatever the device asks for.
+  int pageSize = kMaxChangePageSize;
+
+  /// Cursor value of every `pullChanges` call, in order (null = beginning).
+  final pulledAfter = <String?>[];
+
+  /// Runs right after a page is handed out, where a concurrent write lands.
+  void Function(int pageIndex)? onPageServed;
+  int _pagesServed = 0;
+
+  /// Thrown by the next `pullChanges` call, after it is recorded.
+  Object? failNextPull;
 
   /// Every `opId` received, replays included.
   final received = <String>[];
@@ -41,10 +91,92 @@ class FakeProtocolBackend implements SyncProtocolBackend {
       entities['${type.name}/$id'];
 
   /// Another device changes [field].
-  void remoteEdit(SyncEntityType type, String id, String field, Object? value) {
+  void remoteEdit(
+    SyncEntityType type,
+    String id,
+    String field,
+    Object? value, {
+    List<MediaDescriptor> media = const [],
+  }) {
     final e = entities['${type.name}/$id']!;
     e.values[field] = value;
     e.revisions[field] = (e.revisions[field] ?? 0) + 1;
+    e.media.addAll(media);
+    commit(e);
+  }
+
+  /// Another device creates an entity.
+  ServerEntity remoteCreate(
+    SyncEntityType type,
+    String id,
+    Map<String, Object?> values, {
+    List<MediaDescriptor> media = const [],
+  }) {
+    final e = entities['${type.name}/$id'] = ServerEntity(type, id);
+    e.values.addAll(values);
+    for (final field in values.keys) {
+      if (field != ArtworkSyncFields.addedBy) e.revisions[field] = 1;
+    }
+    e.revisions['lifecycle'] = 1;
+    e.media.addAll(media);
+    commit(e);
+    return e;
+  }
+
+  /// Another device trashes, restores or purges an entity. Purging a child
+  /// first trashes its active artworks, as the remote side does.
+  void remoteLifecycle(SyncEntityType type, String id, String lifecycle) {
+    final e = entities['${type.name}/$id']!;
+    if (type == SyncEntityType.child && lifecycle == 'purged') {
+      for (final artwork in entities.values) {
+        if (artwork.type == SyncEntityType.artwork &&
+            artwork.values['childId'] == id &&
+            artwork.lifecycle == 'active') {
+          remoteLifecycle(SyncEntityType.artwork, artwork.id, 'trashed');
+        }
+      }
+    }
+    final from = e.lifecycle;
+    e.lifecycle = lifecycle;
+    e.revisions['lifecycle'] = (e.revisions['lifecycle'] ?? 0) + 1;
+    commit(e, from: from);
+  }
+
+  /// Appends the change that [e] just went through to the journal.
+  void commit(ServerEntity e, {String? opId, String? from}) {
+    final kind = switch (e.lifecycle) {
+      'purged' => SyncChangeKind.purge,
+      'trashed' when from != 'trashed' => SyncChangeKind.trash,
+      'active' when from == 'trashed' => SyncChangeKind.restore,
+      _ => SyncChangeKind.upsert,
+    };
+    journal.add(
+      SyncChange(
+        seq: journal.isEmpty ? 1 : journal.last.seq + 1,
+        kind: kind,
+        entityType: e.type,
+        entityId: e.id,
+        snapshot: kind == SyncChangeKind.purge ? null : e.snapshot(),
+        opId: opId,
+      ),
+    );
+  }
+
+  /// The remote history is rebuilt (a restore): new generation, one change
+  /// per entity still there, children first. Older cursors become invalid.
+  void rebuildHistory({bool Function(ServerEntity e)? keep}) {
+    generation++;
+    journal.clear();
+    for (final type in SyncEntityType.values) {
+      for (final e in entities.values.toList()) {
+        if (e.type != type || e.purged) continue;
+        if (keep != null && !keep(e)) {
+          entities.remove('${e.type.name}/${e.id}');
+          continue;
+        }
+        commit(e);
+      }
+    }
   }
 
   @override
@@ -70,7 +202,10 @@ class FakeProtocolBackend implements SyncProtocolBackend {
   MutationReceipt _apply(EntityPatch patch) {
     final key = '${patch.entityType.name}/${patch.entityId}';
     final current = entities[key];
-    if (current == null && !patch.isCreation || (current?.purged ?? false)) {
+    final edit = !patch.fields.containsKey('lifecycle');
+    if (current == null && !patch.isCreation ||
+        (current?.purged ?? false) ||
+        (edit && current?.lifecycle == 'trashed')) {
       return MutationReceipt(
         opId: patch.opId,
         accepted: {},
@@ -87,16 +222,30 @@ class FakeProtocolBackend implements SyncProtocolBackend {
         ],
       );
     }
-    final e = current ?? (entities[key] = ServerEntity());
+    final e =
+        current ??
+        (entities[key] = ServerEntity(patch.entityType, patch.entityId));
+    if (current == null) e.revisions['lifecycle'] = 1;
+    final from = e.lifecycle;
     final accepted = <String, int>{};
     final conflicts = <FieldConflict>[];
+    var changed = current == null;
     for (final f in patch.fields.entries) {
       final revision = e.revisions[f.key] ?? 0;
       if (f.key == 'lifecycle') {
-        e.purged = true;
+        if (patch.entityType == SyncEntityType.child && f.value == 'purged') {
+          remoteLifecycle(SyncEntityType.child, patch.entityId, 'purged');
+          return MutationReceipt(
+            opId: patch.opId,
+            accepted: {'lifecycle': e.revisions['lifecycle']!},
+          );
+        }
+        e.lifecycle = f.value as String;
         e.revisions[f.key] = revision + 1;
         accepted[f.key] = revision + 1;
+        changed = true;
       } else if (patch.baseRevisions[f.key] == revision) {
+        changed |= e.values[f.key] != f.value || revision == 0;
         e.values[f.key] = f.value;
         e.revisions[f.key] = revision + 1;
         accepted[f.key] = revision + 1;
@@ -115,6 +264,8 @@ class FakeProtocolBackend implements SyncProtocolBackend {
         );
       }
     }
+    e.media.addAll(patch.media);
+    if (changed) commit(e, opId: patch.opId, from: from);
     return MutationReceipt(
       opId: patch.opId,
       accepted: accepted,
@@ -123,8 +274,41 @@ class FakeProtocolBackend implements SyncProtocolBackend {
   }
 
   @override
-  Future<SyncChangePage> pullChanges(ChangeCursor? cursor, {int limit = 200}) =>
-      throw UnimplementedError();
+  Future<SyncChangePage> pullChanges(
+    ChangeCursor? cursor, {
+    int limit = kMaxChangePageSize,
+  }) async {
+    pulledAfter.add(cursor?.value);
+    final failure = failNextPull;
+    if (failure != null) {
+      failNextPull = null;
+      throw failure;
+    }
+    if (cursor != null && cursor.generation != generation) {
+      throw ChangeCursorInvalidException(
+        reason: ChangeCursorInvalidReason.generationChanged,
+        currentGeneration: generation,
+      );
+    }
+    final after = cursor == null ? 0 : int.parse(cursor.value);
+    final size = limit < pageSize ? limit : pageSize;
+    final rest = [
+      for (final change in journal)
+        if (change.seq > after) change,
+    ];
+    final changes = rest.take(size).toList();
+    final page = SyncChangePage(
+      changes: changes,
+      nextCursor: ChangeCursor(
+        value: '${changes.isEmpty ? after : changes.last.seq}',
+        generation: generation,
+      ),
+      hasMore: rest.length > size,
+      generation: generation,
+    );
+    onPageServed?.call(_pagesServed++);
+    return page;
+  }
 
   @override
   Future<MediaReservation> reserveMedia({
@@ -146,8 +330,9 @@ class FakeProtocolBackend implements SyncProtocolBackend {
 class Node {
   final Directory root;
   final FakeProtocolBackend backend;
-  final FakeHomeCloudApi legacy = FakeHomeCloudApi()..currentUserId = 'user';
-  final uploader = FakeObjectUploader();
+
+  /// The family the signed-in account belongs to.
+  String familyId = 'family-a';
   late AppDatabase db;
   late LocalVault vault;
   late SyncOutboxRepository outbox;
@@ -173,20 +358,20 @@ class Node {
     outbox = SyncOutboxRepository(db);
     children = DriftChildrenRepository(db, vault, outbox: outbox);
     artworks = DriftArtworksRepository(db, vault, outbox: outbox);
-    engine = SyncEngine(
-      db: db,
-      vault: vault,
-      uploader: uploader,
-      downloader: FakeObjectDownloader(uploader.objects),
-      childrenRepo: children,
-      artworksRepo: artworks,
-      cloudApi: legacy,
-      outbox: outbox,
-      vaultMeta: VaultMetaRepository(db),
-      currentUserId: () => 'user',
-      protocolBackend: backend,
-    );
+    engine = newEngine();
   }
+
+  /// An engine over this node's files; [userId] null means signed out.
+  SyncEngine newEngine({String? Function()? currentUserId}) => SyncEngine(
+    db: db,
+    vault: vault,
+    artworksRepo: artworks,
+    protocolBackend: backend,
+    ensureMyFamily: () async => familyId,
+    outbox: outbox,
+    vaultMeta: VaultMetaRepository(db),
+    currentUserId: currentUserId ?? () => 'user',
+  );
 
   /// Process restart: the database file is reopened, nothing else survives.
   Future<void> restart() async {
@@ -293,10 +478,12 @@ void main() {
     final id = await node.newChild();
     final opId = (await node.ops(id)).single.opId;
     backend.loseNextResponse = true;
+    // The app dies before reading the journal, where the echo of the
+    // operation would acknowledge it.
+    backend.failNextPull = const SocketException('killed');
 
-    final summary = await node.sync();
+    await expectLater(node.sync(), throwsA(isA<SocketException>()));
 
-    expect(summary.pushFailed, 1);
     var op = (await node.ops(id)).single;
     expect((op.opId, op.state, op.attempts), (opId, 'in_flight', 1));
     expect(backend.effects, 1, reason: 'the server did apply it');
@@ -380,8 +567,9 @@ void main() {
       final id = await node.newChild();
       final opId = (await node.ops(id)).single.opId;
       backend.beforeReply = (_) => throw const SocketException('offline');
+      backend.failNextPull = const SocketException('offline');
 
-      await node.sync();
+      await expectLater(node.sync(), throwsA(isA<SocketException>()));
       backend.beforeReply = null;
       await (node.db.update(
         node.db.syncOutboxTable,
@@ -482,7 +670,7 @@ void main() {
       op: SyncOutboxOp.upsert,
     );
     final op = (await node.ops(id)).single;
-    // Marked by the legacy path: in flight, no patch.
+    // Left in flight without a patch by an earlier version of the engine.
     await node.outbox.markInFlight(op.seq);
     expect((await node.ops(id)).single.patchJson, isNull);
     final before = backend.received.length;
@@ -576,6 +764,26 @@ void main() {
       final left = await history.listReplacedValues('c');
       expect(left.map((v) => v.value), ['Récent']);
       expect(left.single.source, ReplacedValueSource.local);
+    });
+
+    test('a value replaced again is kept 30 days from its last '
+        'replacement', () async {
+      var now = DateTime(2026, 9, 1);
+      final history = ReplacedValuesRepository(node.db, now: () => now);
+      Future<void> replace() => history.record(
+        entityType: SyncEntityType.child,
+        entityId: 'c',
+        field: 'name',
+        value: 'Encore',
+        source: ReplacedValueSource.remote,
+      );
+      await replace();
+      now = DateTime(2026, 9, 29);
+      await replace();
+
+      expect(await history.purgeExpired(now: DateTime(2026, 10, 5)), 0);
+      final left = await history.listReplacedValues('c');
+      expect(left.single.createdAt, DateTime(2026, 9, 29));
     });
 
     test('a synchronization run purges the expired entries', () async {

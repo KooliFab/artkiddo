@@ -1,8 +1,8 @@
 # ADR 0017: Sync protocol v3
 
 Status: accepted 2026-10-01; contracts in `src/contracts/sync_protocol.dart`,
-engine and adapters not migrated yet. Supersedes the row-upsert and
-timestamp-cursor parts of `SyncBackend`.
+engine and private adapter migrated. Supersedes the row-upsert and
+timestamp-cursor parts of the former `SyncBackend`, since removed.
 
 ## Context
 
@@ -72,9 +72,10 @@ Two losses were reproduced with the v2 contract
 
 - The local schema gains per-field revisions and an operation table, written
   in the same transaction as the edit; conflicts become durable local state.
-- The old `SyncBackend` is `@Deprecated` and stays until the engine and the
-  adapters move to `SyncProtocolBackend`. Consumers outside this package see
-  deprecation diagnostics in the meantime.
+- The old `SyncBackend` (row upserts, timestamp cursors, key-based transfers)
+  was deprecated and has since been removed, with the timestamp pull, the
+  legacy push and the engine's key-based downloads. The engine takes a
+  `SyncProtocolBackend` and a family resolver; nothing else.
 - A device restored on new hardware rebuilds its state from the start of the
   journal; the journal is not compacted.
 - Remote restores must bump the generation so devices reconcile instead of

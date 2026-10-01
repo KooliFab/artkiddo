@@ -19,6 +19,11 @@ class ChildrenTable extends Table {
   IntColumn get birthDateRev => integer().withDefault(const Constant(0))();
   IntColumn get lifecycleRev => integer().withDefault(const Constant(0))();
 
+  /// Set when the child was purged remotely while artworks of it are still
+  /// in the local trash: the row stays as their parent, hidden from every
+  /// list, until the last of them is gone.
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
   @override
   String get tableName => 'children';
 
@@ -78,6 +83,11 @@ class ArtworksTable extends Table {
   IntColumn get lifecycleRev => integer().withDefault(const Constant(0))();
 
   DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  /// Set when the artwork was purged remotely while this device kept it in
+  /// its trash (its files or operations). Restored here, it exists on this
+  /// device only: the remote side refuses to bring it back.
+  DateTimeColumn get remotePurgedAt => dateTime().nullable()();
 
   @override
   String get tableName => 'artworks';
@@ -189,6 +199,44 @@ class MediaVersionsTable extends Table {
   Set<Column> get primaryKey => {mediaId, version, role};
 }
 
+/// Remote artwork changes received before the child they belong to. Only the
+/// latest change of an artwork is kept (it carries the whole state); it is
+/// applied as soon as the child arrives.
+@DataClassName('DeferredRemoteChangeEntity')
+class DeferredRemoteChangesTable extends Table {
+  TextColumn get artworkId => text()();
+  TextColumn get childId => text()();
+
+  /// `SyncChange.toJson`.
+  TextColumn get changeJson => text()();
+
+  @override
+  String get tableName => 'deferred_remote_changes';
+
+  @override
+  Set<Column> get primaryKey => {artworkId};
+}
+
+/// Remote field values older than the revision this device holds, met while
+/// reading the journal with no local operation on the field. That only
+/// lasts when the remote history went back (a restore); otherwise a newer
+/// change of the field follows and removes the entry. What is left when the
+/// read ends is applied, the local value kept in `replaced_values`.
+@DataClassName('OlderRemoteValueEntity')
+class OlderRemoteValuesTable extends Table {
+  TextColumn get entityId => text()();
+  TextColumn get field => text()();
+
+  /// `SyncChange.toJson` of the latest such change of the field.
+  TextColumn get changeJson => text()();
+
+  @override
+  String get tableName => 'older_remote_values';
+
+  @override
+  Set<Column> get primaryKey => {entityId, field};
+}
+
 @DataClassName('VaultMetaEntity')
 class VaultMetaTable extends Table {
   TextColumn get id => text()();
@@ -204,6 +252,12 @@ class VaultMetaTable extends Table {
       dateTime().nullable().named('artworks_pull_cursor')();
   DateTimeColumn get purgedPullCursor =>
       dateTime().nullable().named('purged_pull_cursor')();
+
+  /// Position in the remote change journal (`ChangeCursor.value`) and its
+  /// generation, written in the transaction that applies the page they end.
+  TextColumn get changeCursor => text().nullable().named('change_cursor')();
+  IntColumn get changeGeneration =>
+      integer().nullable().named('change_generation')();
 
   @override
   String get tableName => 'vault_meta';
@@ -244,6 +298,8 @@ class ShareLinkUrlCacheTable extends Table {
     SyncOutboxTable,
     ReplacedValuesTable,
     MediaVersionsTable,
+    DeferredRemoteChangesTable,
+    OlderRemoteValuesTable,
     VaultMetaTable,
     ShareLinkUrlCacheTable,
   ],
@@ -259,9 +315,12 @@ class AppDatabase extends _$AppDatabase {
   /// adds added_by attribution to artworks. Schema v4 adds the audio revision
   /// baseline. Schema v5 adds per-field revisions, turns the outbox into an
   /// operation queue and adds the local `replaced_values` history. Schema v6 adds
-  /// `media_versions`, the registry of the vault's media files.
+  /// `media_versions`, the registry of the vault's media files. Schema v7 adds
+  /// the change journal cursor, `children.deleted_at`,
+  /// `artworks.remote_purged_at`,
+  /// `deferred_remote_changes` and `older_remote_values`.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -326,6 +385,14 @@ INSERT INTO media_versions (media_id, version, role, local_path, byte_size, stat
 SELECT id, 1, 'audio', relative_audio_path, audio_byte_size, 'present'
 FROM artworks WHERE relative_audio_path IS NOT NULL''');
       }
+      if (from < 7) {
+        await m.addColumn(childrenTable, childrenTable.deletedAt);
+        await m.addColumn(artworksTable, artworksTable.remotePurgedAt);
+        await m.addColumn(vaultMetaTable, vaultMetaTable.changeCursor);
+        await m.addColumn(vaultMetaTable, vaultMetaTable.changeGeneration);
+        await m.createTable(deferredRemoteChangesTable);
+        await m.createTable(olderRemoteValuesTable);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -343,6 +410,8 @@ FROM artworks WHERE relative_audio_path IS NOT NULL''');
       await delete(syncOutboxTable).go();
       await delete(replacedValuesTable).go();
       await delete(mediaVersionsTable).go();
+      await delete(deferredRemoteChangesTable).go();
+      await delete(olderRemoteValuesTable).go();
       await delete(pendingFileCleanupsTable).go();
       await delete(shareLinkUrlCacheTable).go();
       await delete(vaultMetaTable).go();

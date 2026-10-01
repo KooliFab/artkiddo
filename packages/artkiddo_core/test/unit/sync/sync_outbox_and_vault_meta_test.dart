@@ -1,6 +1,6 @@
 // Focused unit tests for `SyncOutboxRepository` and `VaultMetaRepository`
 // — the two new local tables C-06 adds — covering behaviors not already
-// exercised end-to-end by `sync_engine_test.dart`.
+// exercised end-to-end by `operation_sync_test.dart`.
 
 import 'dart:io';
 
@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:artkiddo_core/src/contracts/sync_protocol.dart';
 import 'package:artkiddo_core/src/local/database/app_database.dart';
 import 'package:artkiddo_core/src/sync/sync_outbox.dart';
 import 'package:artkiddo_core/src/sync/vault_meta.dart';
@@ -188,10 +189,10 @@ void main() {
   });
 
   group('VaultMetaRepository', () {
-    test('a fresh vault has no family and no pull cursor', () async {
+    test('a fresh vault has no family and no journal cursor', () async {
       final vaultMeta = VaultMetaRepository(db);
       expect(await vaultMeta.getFamilyId(), isNull);
-      expect(await vaultMeta.getLastPullCursor(), isNull);
+      expect(await vaultMeta.getChangeCursor(), isNull);
       expect(await vaultMeta.isJoinResetPending(), isFalse);
     });
 
@@ -250,43 +251,13 @@ void main() {
       },
     );
 
-    test(
-      'setLastPullCursor is readable back and reflects the maximal server timestamp applied',
-      () async {
-        final vaultMeta = VaultMetaRepository(db);
-        final cursor = DateTime.utc(2026, 1, 1, 12, 0, 0);
-        await vaultMeta.setLastPullCursor(cursor);
-        // SQLite round-trips a `DateTime` as a local-time unix timestamp
-        // (drift's default `DateTimeColumn`), so the *instant* survives
-        // exactly — the type's timezone flag does not.
-        expect(
-          (await vaultMeta.getLastPullCursor())!.isAtSameMomentAs(cursor),
-          isTrue,
-        );
-      },
-    );
-
-    test(
-      'v10 persists children, artworks, and purge cursors independently',
-      () async {
-        final vaultMeta = VaultMetaRepository(db);
-        final children = DateTime.utc(2026, 1, 1);
-        final artworks = DateTime.utc(2026, 1, 3);
-        final purged = DateTime.utc(2026, 1, 2);
-
-        await vaultMeta.setChildrenPullCursor(children);
-        await vaultMeta.setArtworksPullCursor(artworks);
-        await vaultMeta.setPurgedPullCursor(purged);
-
-        final stored = await vaultMeta.getPullCursors();
-        expect(stored.children!.isAtSameMomentAs(children), isTrue);
-        expect(stored.artworks!.isAtSameMomentAs(artworks), isTrue);
-        expect(stored.purged!.isAtSameMomentAs(purged), isTrue);
-        expect(
-          (await vaultMeta.getLastPullCursor())!.isAtSameMomentAs(artworks),
-          isTrue,
-        );
-      },
-    );
+    test('the journal cursor is readable back with its generation', () async {
+      final vaultMeta = VaultMetaRepository(db);
+      await vaultMeta.setChangeCursor(ChangeCursor(value: '42', generation: 3));
+      expect(
+        await vaultMeta.getChangeCursor(),
+        ChangeCursor(value: '42', generation: 3),
+      );
+    });
   });
 }

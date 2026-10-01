@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018).
+Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
 
 ## Repository shape
 
@@ -70,14 +70,16 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-- `AppDatabase` is Drift schema v5: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018), v6 adds `media_versions`. Each version
+- `AppDatabase` is Drift schema v7: v1 clean baseline (ADR 0007), v2 adds
+  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018), v6 adds `media_versions`, v7 adds the change journal cursor (`vault_meta.change_cursor`/`change_generation`), `children.deleted_at` (child purged remotely, kept hidden while its artworks are in the trash), `artworks.remote_purged_at` (purged remotely, kept here only), `deferred_remote_changes` and `older_remote_values`. Each version
   has a snapshot in `drift_schemas/`, covered by
   `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
   vaults.
 - Tables: `children`, `artworks`, `sync_outbox` (identified operations),
   `replaced_values` (local-only history of values that lost a conflict, 30
-  days), `vault_meta`,
+  days), `media_versions`, `deferred_remote_changes` (artworks received
+  before their child), `older_remote_values` (remote values older than the
+  local revision, settled when a journal read ends), `vault_meta`,
   `pending_file_cleanups`, `share_link_url_cache`. Artworks store neutral
   opaque object keys only.
 - `LocalVault` owns image and audio files. Every write goes through `writeFileAtomically` (temporary file in the same folder, flush, size check, rename); `*.tmp` leftovers are removed at start-up and an unreferenced final file is kept. Audio lives at `audio/<artworkId>/v<N>.m4a`, a new recording is a new version and the old file stays; `media_versions` registers the files and `isMediaReferenced` tells a cleanup whether one is still needed. Local deletion is recoverable for 30
@@ -92,11 +94,14 @@ public contracts only. Rules: `dependency-rules.md`.
 - `SyncProtocolBackend` (sync protocol v3, ADR 0017): `EntityPatch` operations
   replayed by `opId`, `MutationReceipt` with per-field `FieldConflict`s,
   `MediaDescriptor` versions, and a journal read as `SyncChangePage`s with an
-  opaque `ChangeCursor` and a generation. The engine pushes operations through
-  it when a `protocolBackend` is supplied (ADR 0018); pull and media still use
-  the deprecated `SyncBackend`.
-- `SyncBackend` (deprecated), `ObjectUploader`/`ObjectDownloader` (opaque
-  object keys), `RemoteMediaFetcher` (local default fetches nothing).
+  opaque `ChangeCursor` and a generation. When a `protocolBackend` is
+  supplied, the engine pushes operations through it (ADR 0018) and reads its
+  journal (`ChangeJournalPull`, rules in `docs/sync-contract.md`). The engine
+  requires one: the former `SyncBackend`, the timestamp pull and the key-based
+  transfers are removed. Media bytes (upload, download) belong to the
+  composition, which sends and fetches them around the engine.
+- `ObjectUploader`/`ObjectDownloader` (opaque object keys, no longer used by
+  the engine), `RemoteMediaFetcher` (local default fetches nothing).
 - `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress`
   (`sending` with a known count, then `receiving` with no total).
 - `FamilyApi`: membership and invites. `redeemInvite(discardPrevious:)` and

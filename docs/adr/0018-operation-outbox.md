@@ -34,11 +34,12 @@ loss of ADR 0017).
   be purged remotely) and never sends it again. There is no resolution screen.
 - **`replaced_values`** is local only, never sent, cleaned after 30 days,
   read through `ReplacedValuesRepository.listReplacedValues(entityId)`.
-- **Compatibility.** Without a `protocolBackend` the engine sends rows through
-  the deprecated `SyncBackend` exactly as before, with the same operation
-  bookkeeping. The `entity`, `entity_id`, `op`, `attempts` columns keep their
-  names. Artwork operations that need media descriptors (creation, audio)
-  have no patch yet and wait in protocol mode.
+- **Compatibility.** The `entity`, `entity_id`, `op`, `attempts` columns keep
+  their names. Artwork operations that need media descriptors (creation,
+  audio) are queued without a patch; the engine does not send them until their
+  patch is stored with them. The private composition builds it (hashes,
+  dimensions, a dedicated photo `mediaId`) before a run and stores it
+  `in_flight`, so a replay carries the same `opId` and the same hashes.
 
 ## Consequences
 

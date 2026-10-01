@@ -4,8 +4,7 @@
 exposing a provider, endpoint, table or wire format. An application adapter
 implements `SyncProtocolBackend` and owns encoding, authentication, family
 resolution and protocol compatibility. The previous row-upsert interface,
-`SyncBackend` in `src/contracts/sync_backend.dart`, is deprecated and remains
-only until the engine and adapters migrate.
+`SyncBackend`, no longer exists.
 
 The public contract does not assume an account or network. The local journey is
 complete with `AppCapabilities.local`.
@@ -55,11 +54,39 @@ resurrects the entity. A lifecycle change carries no other field.
   (none for `purge`), plus `nextCursor`, `hasMore` and `generation`.
 - Apply a page and store its `nextCursor` in one local transaction, then pull
   again while `hasMore`.
-- A remote change that collides with a pending local operation is kept as a
-  conflict or held for later; it is never dropped.
+- A field no pending local operation changes takes the remote value and
+  revision. A remote revision older than the local one is held
+  (`older_remote_values`) until the read ends: a newer change normally
+  follows; if none does, the remote history went back (a restore) and the
+  remote value is applied, the local one kept in `replaced_values` (`local`).
+  The same revision with another value is that case too. No conflict screen
+  in V1. A field a pending operation changes keeps its local value; the
+  remote value goes to `replaced_values` unless the device already knows it
+  (a revision the operation is based on, the same value). Nothing is dropped
+  silently.
+- A change carrying the `opId` of an in-flight operation (its echo, when the
+  answer was lost) acknowledges that operation as its receipt would: a field
+  holding the operation's value is accepted, another one lost a conflict. The
+  operation is never replayed, so a later remote change of the same field
+  applies normally.
+- A remote trash or purge moves the artwork to the local trash and keeps its
+  files and pending operations; a remote child purge does the same with its
+  artworks and hides the child. Physical deletion belongs to the local trash.
+  An artwork kept here after a remote purge gets `remote_purged_at` (it
+  exists on this device only; cleared if a later snapshot brings it back).
+  A purged artwork with no local file and no operation (a copy of what is
+  gone, e.g. on a new device) is removed, with its waiting downloads; a hidden
+  child goes when nothing depends on it any more.
+- An artwork received before its child waits in `deferred_remote_changes` and
+  is applied when the child arrives.
+- A new remote media version is registered in `media_versions` as
+  `pendingDownload` (`missing` when listed in `unavailableMedia`); the
+  download queue reads those rows. At most one audio version of an artwork
+  waits; the photo waits at the artwork's display derivative path.
 - `ChangeCursorInvalidException` (unreadable cursor or new generation) means:
   reconcile from a null cursor while keeping local data and pending
-  operations. Never erase the vault.
+  operations. Never erase the vault, and never delete an entity because it
+  is absent remotely.
 
 ## Media
 
@@ -85,7 +112,3 @@ All protocol errors extend the sealed `SyncProtocolException`:
 `SyncRateLimitedException`, `SyncAuthException`, `MediaIntegrityException`,
 `MediaUnavailableException`. Any other I/O failure means "outcome unknown":
 replay the same `opId`. No error is ever a reason to clear local data.
-
-## Versioned audio writes (v2, deprecated)
-
-`AudioWrite` carries keep/replace/delete and the expected revision. A missing cache means keep, never delete. Replacement uploads immutable bytes before committing metadata; the first photo row is committed before its audio reservation. Conflicts retain local files and pending writes for an explicit choice. An acknowledgement cannot clear a newer local edit. Drift v4 migrates all supported v1–v3 vaults forward without clearing files.
