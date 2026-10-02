@@ -331,6 +331,9 @@ class Node {
   final Directory root;
   final FakeProtocolBackend backend;
 
+  /// Disk primitives of the vault (a test makes them fail on demand).
+  final VaultFileOps fileOps;
+
   /// The family the signed-in account belongs to.
   String familyId = 'family-a';
   late AppDatabase db;
@@ -340,12 +343,15 @@ class Node {
   late DriftArtworksRepository artworks;
   late SyncEngine engine;
 
-  Node._(this.root, this.backend);
+  Node._(this.root, this.backend, this.fileOps);
 
-  static Future<Node> create(FakeProtocolBackend backend) async {
+  static Future<Node> create(
+    FakeProtocolBackend backend, {
+    VaultFileOps fileOps = const DiskVaultFileOps(),
+  }) async {
     final root = await Directory.systemTemp.createTemp('artkiddo_opsync_');
     Directory(p.join(root.path, 'docs')).createSync();
-    return Node._(root, backend).._open();
+    return Node._(root, backend, fileOps).._open();
   }
 
   void _open() {
@@ -354,6 +360,7 @@ class Node {
     );
     vault = LocalVault(
       documentsDirProvider: () async => Directory(p.join(root.path, 'docs')),
+      fileOps: fileOps,
     );
     outbox = SyncOutboxRepository(db);
     children = DriftChildrenRepository(db, vault, outbox: outbox);

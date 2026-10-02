@@ -102,7 +102,7 @@ Input fingerprint: `6ff4d3dbb34df02a`
 - Provider/composition files: 5
 - Drift schema version: `7`
 - Dart source files: 100
-- Tests: 54
+- Tests: 61
 
 ## Test files
 
@@ -145,6 +145,13 @@ Input fingerprint: `6ff4d3dbb34df02a`
 - `packages/artkiddo_core/test/unit/presentation/trash_preview_test.dart`
 - `packages/artkiddo_core/test/unit/presentation/vault_archive_screen_test.dart`
 - `packages/artkiddo_core/test/unit/presentation/vault_error_states_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/concurrent_edit_scenarios_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/core_independence_scenario_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/pull_scenarios_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/push_interruption_scenarios_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/remote_failure_scenarios_test.dart`
+- `packages/artkiddo_core/test/unit/scenarios/scenario_harness.dart`
+- `packages/artkiddo_core/test/unit/scenarios/trash_and_files_scenarios_test.dart`
 - `packages/artkiddo_core/test/unit/sync/backup_status_test.dart`
 - `packages/artkiddo_core/test/unit/sync/change_journal_pull_test.dart`
 - `packages/artkiddo_core/test/unit/sync/loss_repro_pagination_test.dart`
