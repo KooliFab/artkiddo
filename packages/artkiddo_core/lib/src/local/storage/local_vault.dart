@@ -101,6 +101,20 @@ class LocalVault {
     return removed;
   }
 
+  /// Deletes every file of the vault (originals, derivatives, audio). Used
+  /// only when a pre-baseline database is erased. Idempotent.
+  Future<void> eraseAllFiles() async {
+    final docs = await _documentsDirProvider();
+    for (final folder in const [
+      artworksFolder,
+      derivativesFolder,
+      audioFolder,
+    ]) {
+      final dir = Directory(p.join(docs.path, folder));
+      if (await dir.exists()) await dir.delete(recursive: true);
+    }
+  }
+
   /// The documents directory used by this vault. Exposed for file-only
   /// recovery services that must share the vault's injected test location.
   Future<Directory> get documentsDirectory => _documentsDirProvider();

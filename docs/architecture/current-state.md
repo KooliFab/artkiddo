@@ -70,11 +70,17 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-- `AppDatabase` is Drift schema v7: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state, v5 adds per-field revisions, the operation queue and `replaced_values` (ADR 0018), v6 adds `media_versions`, v7 adds the change journal cursor (`vault_meta.change_cursor`/`change_generation`), `children.deleted_at` (child purged remotely, kept hidden while its artworks are in the trash), `artworks.remote_purged_at` (purged remotely, kept here only), `deferred_remote_changes` and `older_remote_values`. Each version
-  has a snapshot in `drift_schemas/`, covered by
-  `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
-  vaults.
+- `AppDatabase` is Drift schema v1, the launch baseline: `onCreate`
+  builds every table and there is no `onUpgrade` yet. The pre-launch steps
+  (join-reset marker, `added_by`, audio revisions, per-field revisions and the
+  operation queue, `media_versions`, the change journal cursor,
+  `deferred_remote_changes`, `older_remote_values`) are part of that baseline.
+  `drift_schemas/drift_schema_v1.json` is its snapshot, generated test helpers
+  are in `test/generated/migrations/`, and
+  `test/unit/local_data/migration_test.dart` pins that `onCreate` builds the
+  snapshot and documents how to add v2 (dump the schema, regenerate the
+  helpers, add an `onUpgrade` step and a v1 -> v2 test). After launch a schema
+  change is a new version, never an edit of v1.
 - Tables: `children`, `artworks`, `sync_outbox` (identified operations),
   `replaced_values` (local-only history of values that lost a conflict, 30
   days), `media_versions`, `deferred_remote_changes` (artworks received

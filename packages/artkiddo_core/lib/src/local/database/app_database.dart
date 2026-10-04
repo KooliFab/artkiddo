@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../logging/log.dart';
+
 part 'app_database.g.dart';
 
 @DataClassName('ChildEntity')
@@ -95,14 +97,6 @@ class ArtworksTable extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
-
-/// SQLite expression producing a random UUID v4 per row. Same text as the
-/// default of `sync_outbox.op_id` (a schema snapshot cannot reference it).
-const _uuidV4Sql =
-    "(lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || "
-    "substr(hex(randomblob(2)), 2) || '-' || "
-    "substr('89ab', 1 + (abs(random()) % 4), 1) || "
-    "substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))))";
 
 /// The durable operation queue.
 ///
@@ -305,99 +299,85 @@ class ShareLinkUrlCacheTable extends Table {
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase({this.onPreBaselineWipe}) : super(_openConnection());
 
-  AppDatabase.forTesting(super.executor);
+  /// [onPreBaselineWipe] empties the local vault files; it runs after a
+  /// pre-baseline database was erased (see [migration]).
+  AppDatabase.forTesting(super.executor, {this.onPreBaselineWipe});
 
-  /// Schema v1 is a deliberate clean baseline. Schema v2 adds the durable
-  /// join-reset marker used to recover if the process dies after the server
-  /// commits a family switch but before the local vault is erased. Schema v3
-  /// adds added_by attribution to artworks. Schema v4 adds the audio revision
-  /// baseline. Schema v5 adds per-field revisions, turns the outbox into an
-  /// operation queue and adds the local `replaced_values` history. Schema v6 adds
-  /// `media_versions`, the registry of the vault's media files. Schema v7 adds
-  /// the change journal cursor, `children.deleted_at`,
-  /// `artworks.remote_purged_at`,
-  /// `deferred_remote_changes` and `older_remote_values`.
+  final Future<void> Function()? onPreBaselineWipe;
+
+  /// Table that only the launch baseline has: the pre-baseline schema 1 (the
+  /// state before the schema baseline reset) did not know it.
+  static const String baselineMarkerTable = 'media_versions';
+
+  /// Schema v1 is the launch baseline: every table is created by `onCreate`.
+  /// Once a vault exists in the field, any schema change bumps this number,
+  /// adds a step here, a snapshot in `drift_schemas/` and a case in
+  /// `test/unit/local_data/migration_test.dart`.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 1;
 
+  /// Pre-baseline databases are erased, never migrated (the only tester's
+  /// data was disposable). They are recognised by two rules only:
+  /// - a stored `user_version` above [schemaVersion] (old schemas 2 to 7),
+  ///   which Drift reports as `from > to`;
+  /// - `user_version == 1` without [baselineMarkerTable] (old schema 1).
+  ///
+  /// The wipe never applies to a database that carries the marker. A real
+  /// future v2 must add an `onUpgrade` step that migrates, and must replace
+  /// the downgrade rule with one that cannot mistake a pre-baseline v2..v7
+  /// database for it (for example a new marker), before bumping the version.
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
     },
+    // Drift reports a downgrade through `onUpgrade` too (`from > to`).
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 2) {
-        await m.addColumn(vaultMetaTable, vaultMetaTable.joinResetPending);
-      }
-      if (from < 3) {
-        await m.addColumn(artworksTable, artworksTable.addedBy);
-      }
-      if (from < 4) {
-        await m.addColumn(artworksTable, artworksTable.audioRevision);
-        await m.addColumn(artworksTable, artworksTable.audioSyncIntent);
-        await m.addColumn(artworksTable, artworksTable.audioConflict);
-        // Recover edits queued by the previous schema without losing files.
-        await customStatement(
-          "UPDATE artworks SET audio_sync_intent = 'replace' WHERE relative_audio_path IS NOT NULL AND audio_object_key IS NULL",
-        );
-        await customStatement(
-          "UPDATE artworks SET audio_sync_intent = 'delete' WHERE audio_duration_ms IS NULL AND relative_audio_path IS NULL AND display_object_key IS NOT NULL AND sync_state = 'localOnly'",
-        );
-      }
-      if (from < 5) {
-        await m.addColumn(childrenTable, childrenTable.nameRev);
-        await m.addColumn(childrenTable, childrenTable.birthDateRev);
-        await m.addColumn(childrenTable, childrenTable.lifecycleRev);
-        await m.addColumn(artworksTable, artworksTable.storyRev);
-        await m.addColumn(artworksTable, artworksTable.drawnAtRev);
-        await m.addColumn(artworksTable, artworksTable.lifecycleRev);
-        await m.createTable(replacedValuesTable);
-        // Entries queued by the previous schema become pending operations
-        // without a field snapshot: their content is still read from the row
-        // when they are sent, exactly as before. Each gets its own UUID v4.
-        await m.alterTable(
-          TableMigration(
-            syncOutboxTable,
-            columnTransformer: {
-              syncOutboxTable.opId: const CustomExpression<String>(_uuidV4Sql),
-            },
-            newColumns: [
-              syncOutboxTable.opId,
-              syncOutboxTable.patchJson,
-              syncOutboxTable.state,
-            ],
-          ),
-        );
-      }
-      if (from < 6) {
-        await m.createTable(mediaVersionsTable);
-        // Register the files the rows already point at. Whether they still
-        // exist is checked at start-up (`MediaVersionsRepository.reconcile`),
-        // which marks the absent ones `missing` without touching the artwork.
-        await customStatement('''
-INSERT INTO media_versions (media_id, version, role, local_path, byte_size, state)
-SELECT id, 1, 'original', relative_image_path, 0, 'present'
-FROM artworks WHERE relative_image_path IS NOT NULL''');
-        await customStatement('''
-INSERT INTO media_versions (media_id, version, role, local_path, byte_size, state)
-SELECT id, 1, 'audio', relative_audio_path, audio_byte_size, 'present'
-FROM artworks WHERE relative_audio_path IS NOT NULL''');
-      }
-      if (from < 7) {
-        await m.addColumn(childrenTable, childrenTable.deletedAt);
-        await m.addColumn(artworksTable, artworksTable.remotePurgedAt);
-        await m.addColumn(vaultMetaTable, vaultMetaTable.changeCursor);
-        await m.addColumn(vaultMetaTable, vaultMetaTable.changeGeneration);
-        await m.createTable(deferredRemoteChangesTable);
-        await m.createTable(olderRemoteValuesTable);
-      }
+      if (from > to) await _wipeSchema(m);
     },
     beforeOpen: (details) async {
+      if (!details.wasCreated &&
+          details.versionBefore == 1 &&
+          details.versionNow == 1 &&
+          !await _hasTable(baselineMarkerTable)) {
+        await _wipeSchema(createMigrator());
+      }
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  Future<bool> _hasTable(String name) async {
+    final rows = await customSelect(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+      variables: [Variable.withString(name)],
+    ).get();
+    return rows.isNotEmpty;
+  }
+
+  /// Drops every table, view, trigger and index, recreates the baseline
+  /// schema, then empties the vault files. Safe to repeat.
+  Future<void> _wipeSchema(Migrator m) async {
+    await customStatement('PRAGMA defer_foreign_keys = ON');
+    final rows = await customSelect(
+      'SELECT type, name FROM sqlite_master '
+      "WHERE name NOT LIKE 'sqlite_%' "
+      "AND type IN ('trigger', 'view', 'index', 'table')",
+    ).get();
+    for (final type in const ['trigger', 'view', 'index', 'table']) {
+      for (final row in rows.where((r) => r.read<String>('type') == type)) {
+        final name = row.read<String>('name').replaceAll('"', '""');
+        await customStatement('DROP ${type.toUpperCase()} IF EXISTS "$name"');
+      }
+    }
+    await m.createAll();
+    try {
+      await onPreBaselineWipe?.call();
+    } catch (e, st) {
+      Log.e('Effacement des fichiers du coffre impossible', e, st, 'Vault');
+    }
+  }
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'artkiddo_vault');

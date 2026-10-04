@@ -28,7 +28,9 @@ final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
 
 /// Global singletons for local storage and local database.
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
+  final db = AppDatabase(
+    onPreBaselineWipe: () => ref.read(localVaultProvider).eraseAllFiles(),
+  );
   ref.onDispose(() => db.close());
   return db;
 });
