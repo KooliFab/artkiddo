@@ -378,6 +378,23 @@ class SyncOutboxRepository {
     )..where((t) => t.seq.equals(seq))).go();
   }
 
+  /// Replaces the operation [seq] by [patch] (same entity, new `opId`) and
+  /// clears its failure state, so it is neither retried as failing nor shown
+  /// as such. Used to downgrade a refused purge to a trash.
+  Future<void> replacePatch(int seq, EntityPatch patch) async {
+    await (_db.update(
+      _db.syncOutboxTable,
+    )..where((t) => t.seq.equals(seq))).write(
+      SyncOutboxTableCompanion(
+        opId: Value(patch.opId),
+        patchJson: Value(_encode(patch)),
+        attempts: const Value(0),
+        nextAttemptAt: Value(DateTime.now()),
+        lastError: const Value(null),
+      ),
+    );
+  }
+
   /// A terminal failure (e.g. `missingFile`) exits the queue without
   /// being retried — retrying can never succeed on its own; the item
   /// needs a member's action.

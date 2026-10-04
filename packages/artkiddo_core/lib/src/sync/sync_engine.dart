@@ -415,10 +415,36 @@ class SyncEngine {
       );
       return false;
     }
-    final receipt = await protocolBackend.applyPatch(patch);
+    var sent = patch;
+    MutationReceipt receipt;
+    try {
+      receipt = await protocolBackend.applyPatch(sent);
+    } on SyncAuthException catch (e) {
+      if (e.failure != SyncAuthFailure.notFamilyMember ||
+          !_isArtworkPurge(patch)) {
+        rethrow;
+      }
+      // A purge is refused to anyone but an active parent. The artwork is
+      // already gone here, so the operation becomes a plain trash (open to
+      // every member): the server keeps it and expires it after 30 days.
+      sent = EntityPatch(
+        opId: outbox.newOpId(),
+        entityType: SyncEntityType.artwork,
+        entityId: patch.entityId,
+        baseRevisions: {ArtworkSyncFields.lifecycle: 0},
+        fields: {ArtworkSyncFields.lifecycle: SyncLifecycle.trashed.name},
+        createdAt: patch.createdAt,
+      );
+      await outbox.replacePatch(entry.seq, sent);
+      Log.w(
+        'Entrée ${entry.seq} : purge refusée, envoyée en corbeille',
+        'Sync',
+      );
+      receipt = await protocolBackend.applyPatch(sent);
+    }
     final outcome = await _receipts.apply(
       entry: claimed,
-      patch: patch,
+      patch: sent,
       receipt: receipt,
     );
     if (outcome.conflicts > 0) {
@@ -430,6 +456,10 @@ class SyncEngine {
     }
     return true;
   }
+
+  bool _isArtworkPurge(EntityPatch patch) =>
+      patch.entityType == SyncEntityType.artwork &&
+      patch.fields[ArtworkSyncFields.lifecycle] == SyncLifecycle.purged.name;
 
   /// The patch of an operation queued without one, built from its row, or
   /// null when the row is gone or the operation needs media descriptors.

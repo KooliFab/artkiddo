@@ -1,8 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
-import '../logging/log.dart';
-
 part 'app_database.g.dart';
 
 @DataClassName('ChildEntity')
@@ -299,17 +297,9 @@ class ShareLinkUrlCacheTable extends Table {
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase({this.onPreBaselineWipe}) : super(_openConnection());
+  AppDatabase() : super(_openConnection());
 
-  /// [onPreBaselineWipe] empties the local vault files; it runs after a
-  /// pre-baseline database was erased (see [migration]).
-  AppDatabase.forTesting(super.executor, {this.onPreBaselineWipe});
-
-  final Future<void> Function()? onPreBaselineWipe;
-
-  /// Table that only the launch baseline has: the pre-baseline schema 1 (the
-  /// state before the schema baseline reset) did not know it.
-  static const String baselineMarkerTable = 'media_versions';
+  AppDatabase.forTesting(super.executor);
 
   /// Schema v1 is the launch baseline: every table is created by `onCreate`.
   /// Once a vault exists in the field, any schema change bumps this number,
@@ -318,66 +308,15 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
-  /// Pre-baseline databases are erased, never migrated (the only tester's
-  /// data was disposable). They are recognised by two rules only:
-  /// - a stored `user_version` above [schemaVersion] (old schemas 2 to 7),
-  ///   which Drift reports as `from > to`;
-  /// - `user_version == 1` without [baselineMarkerTable] (old schema 1).
-  ///
-  /// The wipe never applies to a database that carries the marker. A real
-  /// future v2 must add an `onUpgrade` step that migrates, and must replace
-  /// the downgrade rule with one that cannot mistake a pre-baseline v2..v7
-  /// database for it (for example a new marker), before bumping the version.
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
     },
-    // Drift reports a downgrade through `onUpgrade` too (`from > to`).
-    onUpgrade: (Migrator m, int from, int to) async {
-      if (from > to) await _wipeSchema(m);
-    },
     beforeOpen: (details) async {
-      if (!details.wasCreated &&
-          details.versionBefore == 1 &&
-          details.versionNow == 1 &&
-          !await _hasTable(baselineMarkerTable)) {
-        await _wipeSchema(createMigrator());
-      }
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
-
-  Future<bool> _hasTable(String name) async {
-    final rows = await customSelect(
-      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
-      variables: [Variable.withString(name)],
-    ).get();
-    return rows.isNotEmpty;
-  }
-
-  /// Drops every table, view, trigger and index, recreates the baseline
-  /// schema, then empties the vault files. Safe to repeat.
-  Future<void> _wipeSchema(Migrator m) async {
-    await customStatement('PRAGMA defer_foreign_keys = ON');
-    final rows = await customSelect(
-      'SELECT type, name FROM sqlite_master '
-      "WHERE name NOT LIKE 'sqlite_%' "
-      "AND type IN ('trigger', 'view', 'index', 'table')",
-    ).get();
-    for (final type in const ['trigger', 'view', 'index', 'table']) {
-      for (final row in rows.where((r) => r.read<String>('type') == type)) {
-        final name = row.read<String>('name').replaceAll('"', '""');
-        await customStatement('DROP ${type.toUpperCase()} IF EXISTS "$name"');
-      }
-    }
-    await m.createAll();
-    try {
-      await onPreBaselineWipe?.call();
-    } catch (e, st) {
-      Log.e('Effacement des fichiers du coffre impossible', e, st, 'Vault');
-    }
-  }
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'artkiddo_vault');

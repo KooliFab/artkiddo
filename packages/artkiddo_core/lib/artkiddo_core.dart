@@ -35,6 +35,7 @@ export 'src/presentation/providers/core_providers.dart';
 export 'l10n/generated/app_localizations.dart';
 export 'src/local/repositories/children_repository.dart';
 export 'src/local/repositories/local_trash_repository.dart';
+export 'src/local/repositories/queued_remote_trash_repository.dart';
 export 'src/domain/child.dart';
 export 'src/local/repositories/artworks_repository.dart';
 export 'src/domain/artwork.dart';

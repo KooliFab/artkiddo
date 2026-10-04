@@ -313,6 +313,19 @@ class DriftChildrenRepository implements ChildrenRepository {
             createdAt: DateTime.now(),
           ),
         );
+        // The child's artworks go with it (the remote side trashes them
+        // with the purge): what was still pending for them could never be
+        // sent and would only show as "waiting" for ever.
+        final artworkIds = [for (final artwork in orphaned) artwork.id];
+        if (artworkIds.isNotEmpty) {
+          await (_db.delete(_db.syncOutboxTable)..where(
+                (t) =>
+                    t.entity.equals(SyncEntityKind.artwork.wireName) &
+                    t.entityId.isIn(artworkIds) &
+                    t.state.equals(SyncOutboxState.pending.wireName),
+              ))
+              .go();
+        }
       });
     } catch (e, st) {
       Log.e(

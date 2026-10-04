@@ -172,6 +172,7 @@ abstract final class ArtKiddoBootstrap {
         : LocalTrashRepository(
             container.read(appDatabaseProvider),
             container.read(localVaultProvider),
+            queueRemoteDeletions: true,
           );
     unawaited(
       localTrash

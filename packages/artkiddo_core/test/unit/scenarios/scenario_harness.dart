@@ -29,6 +29,9 @@ class ScenarioBackend extends FakeProtocolBackend {
   /// session is gone, the quota is full, the service is unavailable).
   Object? outage;
 
+  /// Per-patch refusal: the returned error is thrown instead of applying it.
+  Object? Function(EntityPatch patch)? refuse;
+
   /// Every journal read fails with this until it is cleared.
   Object? pullOutage;
 
@@ -38,6 +41,11 @@ class ScenarioBackend extends FakeProtocolBackend {
     if (down != null) {
       received.add(patch.opId);
       throw down;
+    }
+    final refused = refuse?.call(patch);
+    if (refused != null) {
+      received.add(patch.opId);
+      throw refused;
     }
     final dropped = dropNextRequest;
     if (dropped != null) {

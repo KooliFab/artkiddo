@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../contracts/sync_protocol.dart';
 import '../../contracts/trash.dart';
 import '../database/app_database.dart';
 import '../../domain/app_failure.dart';
@@ -9,17 +10,34 @@ import '../storage/local_vault.dart';
 import '../../sync/replaced_values.dart';
 import '../../sync/sync_outbox.dart';
 
-/// The account-free artwork trash. It owns only local rows and files; it has
-/// no household, auth, network, or provider dependency.
+/// The artwork trash of this device. It owns only local rows and files; it
+/// has no household, auth, network, or provider dependency.
+///
+/// With [queueRemoteDeletions] (a composition with remote backup), a local
+/// deletion wins over the remote side and reaches it through the outbox:
+///
+/// * "delete forever" and "empty the trash" replace the artwork's pending
+///   operations by one `lifecycle: purged` operation, in the transaction
+///   that removes the row, even when no row is held here (an artwork only
+///   listed by the remote trash). The pull never brings back an artwork
+///   whose removal is still queued, and the operation survives a restart;
+/// * the 30-day expiry keeps a queued trash, so an artwork trashed here and
+///   never sent cannot come back from the remote side, which expires it on
+///   its own; it queues no purge.
 class LocalTrashRepository implements TrashRepository {
   static const retention = Duration(days: 30);
 
   final AppDatabase _db;
   final LocalVault _vault;
   final DateTime Function() _now;
+  final bool queueRemoteDeletions;
 
-  LocalTrashRepository(this._db, this._vault, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+  LocalTrashRepository(
+    this._db,
+    this._vault, {
+    DateTime Function()? now,
+    this.queueRemoteDeletions = false,
+  }) : _now = now ?? DateTime.now;
 
   AppFailure _mapException(Object error, StackTrace stack) =>
       LocalWriteFailure(cause: error, stack: stack);
@@ -135,9 +153,14 @@ class LocalTrashRepository implements TrashRepository {
       final row = await (_db.select(
         _db.artworksTable,
       )..where((t) => t.id.equals(artworkId))).getSingleOrNull();
-      if (row == null || row.deletedAt == null) {
+      if (row == null) {
+        // An artwork only the remote trash lists.
+        if (queueRemoteDeletions) {
+          await _db.transaction(() => _queuePurge(artworkId, 0));
+        }
         return const ActionSuccess(null);
       }
+      if (row.deletedAt == null) return const ActionSuccess(null);
       return await _purgeRows([row]);
     } catch (e, st) {
       Log.e('Purge locale impossible ($artworkId)', e, st, 'Trash');
@@ -169,7 +192,7 @@ class LocalTrashRepository implements TrashRepository {
                     t.deletedAt.isSmallerOrEqualValue(cutoff),
               ))
               .get();
-      final result = await _purgeRows(rows);
+      final result = await _purgeRows(rows, expiry: true);
       return switch (result) {
         ActionSuccess() => ActionSuccess(rows.length),
         ActionFailed(failure: final failure) => ActionFailed(failure),
@@ -187,7 +210,10 @@ class LocalTrashRepository implements TrashRepository {
   /// [LocalVault.deleteArtworkFilesOrEnqueueCleanup], which asks
   /// `isMediaReferenced` for each one. A child hidden after a remote purge
   /// goes with its last artwork.
-  Future<ActionResult<void>> _purgeRows(List<ArtworkEntity> rows) async {
+  Future<ActionResult<void>> _purgeRows(
+    List<ArtworkEntity> rows, {
+    bool expiry = false,
+  }) async {
     if (rows.isEmpty) return await _dropChildlessHiddenChildren();
     try {
       await _db.transaction(() async {
@@ -195,14 +221,29 @@ class LocalTrashRepository implements TrashRepository {
         await (_db.delete(
           _db.artworksTable,
         )..where((t) => t.id.isIn(ids))).go();
-        // What was still queued for an artwork that no longer exists could
-        // never be sent: it would only show as "waiting" for ever.
-        await (_db.delete(_db.syncOutboxTable)..where(
-              (t) =>
-                  t.entity.equals(SyncEntityKind.artwork.wireName) &
-                  t.entityId.isIn(ids),
-            ))
-            .go();
+        if (queueRemoteDeletions && !expiry) {
+          // The purge replaces whatever was still pending and goes out.
+          for (final row in rows) {
+            await _queuePurge(row.id, row.lifecycleRev);
+          }
+        } else {
+          // What was still queued for an artwork that no longer exists could
+          // never be sent: it would only show as "waiting" for ever. A trash
+          // still waiting to be sent is kept with an account, so the remote
+          // side cannot bring the artwork back.
+          final outbox = SyncOutboxRepository(_db);
+          for (final id in ids) {
+            for (final op in await outbox.operationsOf(
+              SyncEntityKind.artwork,
+              id,
+            )) {
+              if (queueRemoteDeletions && _removes(op)) continue;
+              await (_db.delete(
+                _db.syncOutboxTable,
+              )..where((t) => t.seq.equals(op.seq))).go();
+            }
+          }
+        }
         await (_db.delete(
           _db.deferredRemoteChangesTable,
         )..where((t) => t.artworkId.isIn(ids))).go();
@@ -223,6 +264,33 @@ class LocalTrashRepository implements TrashRepository {
       await _vault.deleteArtworkFilesOrEnqueueCleanup(row, db: _db);
     }
     return await _dropChildlessHiddenChildren();
+  }
+
+  /// Queues `lifecycle: purged` for [artworkId], superseding its pending
+  /// operations. The remote side applies a purge whatever its base revision.
+  Future<void> _queuePurge(String artworkId, int lifecycleRev) async {
+    final outbox = SyncOutboxRepository(_db);
+    await outbox.enqueuePatch(
+      EntityPatch(
+        opId: outbox.newOpId(),
+        entityType: SyncEntityType.artwork,
+        entityId: artworkId,
+        baseRevisions: {ArtworkSyncFields.lifecycle: lifecycleRev},
+        fields: {ArtworkSyncFields.lifecycle: SyncLifecycle.purged.name},
+        createdAt: _now(),
+      ),
+    );
+    await (_db.delete(
+      _db.deferredRemoteChangesTable,
+    )..where((t) => t.artworkId.equals(artworkId))).go();
+    await ReplacedValuesRepository(_db).release(artworkId);
+  }
+
+  /// The operation moves the artwork to the trash or deletes it.
+  static bool _removes(SyncOutboxEntryEntity op) {
+    if (op.op == SyncOutboxOp.delete.wireName) return true;
+    final lifecycle = op.patch?.fields[ArtworkSyncFields.lifecycle];
+    return lifecycle != null && lifecycle != SyncLifecycle.active.name;
   }
 
   /// A child hidden because the remote side purged it stays only while an

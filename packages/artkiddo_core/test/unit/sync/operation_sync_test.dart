@@ -203,6 +203,16 @@ class FakeProtocolBackend implements SyncProtocolBackend {
     final key = '${patch.entityType.name}/${patch.entityId}';
     final current = entities[key];
     final edit = !patch.fields.containsKey('lifecycle');
+    // Deleting an entity never created is accepted at revision 1; purged is
+    // terminal, so purging it again is the same value (entity-patch.json).
+    final removal = patch.fields['lifecycle'];
+    if (removal == 'purged' && (current == null || current.purged) ||
+        removal == 'trashed' && current == null) {
+      return MutationReceipt(
+        opId: patch.opId,
+        accepted: {'lifecycle': current?.revisions['lifecycle'] ?? 1},
+      );
+    }
     if (current == null && !patch.isCreation ||
         (current?.purged ?? false) ||
         (edit && current?.lifecycle == 'trashed')) {
