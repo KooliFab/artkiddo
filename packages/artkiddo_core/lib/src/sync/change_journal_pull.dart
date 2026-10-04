@@ -37,6 +37,9 @@ class PullApplyFailure implements Exception {
 ///   value);
 /// * the echo of an operation of this device whose answer has not arrived
 ///   acknowledges it, as its receipt would ([OutboxReceiptHandler]);
+/// * a field holding an edit refused by a remote trash
+///   ([ReplacedValuesRepository.hold]) keeps it; a remote restore sends it
+///   again as a new operation, a remote purge drops it;
 /// * a remote trash or purge moves the artwork to the local trash, keeping
 ///   its files and its operations (physical deletion is the local trash's
 ///   job); a remote child purge does the same with the child's artworks. A
@@ -295,6 +298,8 @@ class ChangeJournalPull {
       // Purged remotely: what this device holds (files, operations) stays in
       // the local trash; a row holding neither only mirrored what is gone.
       if (row == null) return;
+      // A held edit can never be sent again.
+      await _replaced.release(id);
       if (local.isEmpty && !_holdsFiles(row)) {
         await _dropArtwork(row);
         return;
@@ -364,8 +369,17 @@ class ChangeJournalPull {
           localValue: localValue,
         );
 
+    // An edit the remote side refused while the artwork was trashed there
+    // stays on the row (the contract keeps it until it is acknowledged).
+    final held = {
+      for (final MapEntry(:key, :value) in (await _replaced.heldValues(
+        id,
+      )).entries)
+        if (!local.changes(key)) key: value,
+    };
     final localAudio = await _localAudio(row);
     for (final field in _artworkFields) {
+      if (held.containsKey(field)) continue;
       final (revision, value) = _artworkLocal(row, field, localAudio);
       if (await remoteWins(field, revision, value)) {
         await _setArtwork(
@@ -399,6 +413,22 @@ class ChangeJournalPull {
       );
     }
     await _setArtwork(id, companion);
+    // Restored remotely: the held edit goes out on top of the remote
+    // revision, so this device and the remote side do not silently diverge.
+    if (!trashed && held.isNotEmpty && !local.removes) {
+      await _outbox.enqueuePatch(
+        EntityPatch(
+          opId: _outbox.newOpId(),
+          entityType: SyncEntityType.artwork,
+          entityId: id,
+          baseRevisions: {
+            for (final field in held.keys) field: revisions[field] ?? 0,
+          },
+          fields: held,
+          createdAt: _now(),
+        ),
+      );
+    }
     if (row.relativeImagePath == null && row.displayImagePath == null) {
       await _applyPhoto(id, snapshot);
     }

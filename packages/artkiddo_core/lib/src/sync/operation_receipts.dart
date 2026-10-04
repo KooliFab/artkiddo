@@ -40,8 +40,10 @@ class ReceiptOutcome {
 ///   its base (or, when a newer local edit of that field is already queued,
 ///   that edit simply takes the remote revision as its base);
 /// * `deleteVsEdit` → the edit stays on the local row, is also recorded in
-///   `replaced_values` (the entity may be purged remotely), and is never
-///   sent again, so nothing is resurrected;
+///   `replaced_values` (the entity may be purged remotely), and is not sent
+///   again, so nothing is resurrected. A story or date is also held
+///   ([ReplacedValuesRepository.hold]): the pull keeps it on the row, and a
+///   remote restore sends it again; an accepted field releases it;
 /// * the operation itself is removed. Operations of the same entity queued
 ///   after it are never touched.
 class OutboxReceiptHandler {
@@ -71,6 +73,8 @@ class OutboxReceiptHandler {
       for (final MapEntry(key: field, value: revision)
           in receipt.accepted.entries) {
         await _setRevision(patch, later, field, revision);
+        // A held edit (or a newer one) is now the remote value.
+        await _replaced.release(patch.entityId, field: field);
       }
 
       final resend = <String, Object?>{};
@@ -119,6 +123,15 @@ class OutboxReceiptHandler {
               ),
               source: ReplacedValueSource.local,
             );
+            if (patch.entityType == SyncEntityType.artwork &&
+                field != ArtworkSyncFields.audio) {
+              await _replaced.hold(
+                entityType: patch.entityType,
+                entityId: patch.entityId,
+                field: field,
+                value: conflict.localValue,
+              );
+            }
         }
       }
 

@@ -19,12 +19,6 @@ const _child = '00000000-0000-4000-8000-0000000000a1';
 const _artwork = '00000000-0000-4000-8000-0000000000b1';
 const _photo = '00000000-0000-4000-8000-0000000000c1';
 
-/// A scenario that fails on purpose: a bug of production code, sent back to
-/// the lot that owns it. `--dart-define=RUN_KNOWN_BUGS=true` runs it.
-const _knownBugs = bool.fromEnvironment('RUN_KNOWN_BUGS')
-    ? false
-    : 'known bug';
-
 void main() {
   late World world;
   late ScenarioBackend backend;
@@ -91,18 +85,63 @@ void main() {
       await a.expectNoDanglingReference();
     });
 
-    // KNOWN DIVERGENCE: the receipt
-    // handler's contract says a `deleteVsEdit` edit "stays on the local row",
-    // but the pull that follows in the same run takes the remote story back
-    // (no operation changes that field any more). Only `replaced_values`
-    // keeps the text, and no screen reads it in V1. Run with
-    // `--dart-define=RUN_KNOWN_BUGS=true` to see it fail.
+    // The pull that follows the `deleteVsEdit` refusal leaves the held edit
+    // on the local row (field-conflict.json: kept until acknowledged).
     test('S17b the offline edit is still the text of the artwork the parent '
         'finds in the trash (INV-11)', () async {
       final (a, _) = await editMeetsTrash();
 
       expect((await a.artworkRow(_artwork))!.story, 'Modifié hors ligne');
-    }, skip: _knownBugs);
+      expect(await a.engine.replacedValues.heldValues(_artwork), {
+        'story': 'Modifié hors ligne',
+      });
+    });
+
+    test('S17e restored remotely, the held edit is sent again on top of the '
+        'remote revision and released once acknowledged (INV-11)', () async {
+      final (a, b) = await editMeetsTrash();
+
+      backend.remoteLifecycle(SyncEntityType.artwork, _artwork, 'active');
+      await world.settle([a, b]);
+
+      final server = backend.artwork(_artwork);
+      expect(server.lifecycle, 'active');
+      expect(server.values['story'], 'Modifié hors ligne');
+      for (final node in [a, b]) {
+        final row = (await node.artworkRow(_artwork))!;
+        expect((row.deletedAt, row.story), (null, 'Modifié hors ligne'));
+        expect(await node.artworkOps(_artwork), isEmpty);
+      }
+      expect(await a.engine.replacedValues.heldValues(_artwork), isEmpty);
+
+      // Released: a later remote edit is applied as any other.
+      backend.remoteEdit(SyncEntityType.artwork, _artwork, 'story', 'Après');
+      await a.sync();
+      expect((await a.artworkRow(_artwork))!.story, 'Après');
+    });
+
+    test('S17f purged, the held edit is dropped and never sent', () async {
+      final (a, _) = await editMeetsTrash();
+      final sent = backend.received.length;
+
+      final trash = LocalTrashRepository(a.db, a.vault, now: () => day0);
+      expect(await trash.purge(_artwork), isA<ActionSuccess<void>>());
+
+      expect(await a.engine.replacedValues.heldValues(_artwork), isEmpty);
+      await a.sync();
+      expect(backend.received, hasLength(sent));
+      expect(backend.artwork(_artwork).lifecycle, 'trashed');
+    });
+
+    test('S17g purged remotely, the held edit is dropped', () async {
+      final (a, _) = await editMeetsTrash();
+
+      backend.remoteLifecycle(SyncEntityType.artwork, _artwork, 'purged');
+      await a.sync();
+
+      expect(await a.engine.replacedValues.heldValues(_artwork), isEmpty);
+      expect(await a.artworkOps(_artwork), isEmpty);
+    });
   });
 
   group('an artwork that never left the phone', () {

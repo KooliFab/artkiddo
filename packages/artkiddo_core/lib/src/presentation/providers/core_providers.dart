@@ -11,6 +11,7 @@ import '../../local/database/app_database.dart';
 import '../../local/storage/local_vault.dart';
 import '../../local/storage/vault_archive_export.dart';
 import '../../local/storage/vault_archive_import.dart';
+import '../../local/storage/vault_archive_picker.dart';
 import '../../local/storage/vault_rescue_export.dart';
 
 final appCapabilitiesProvider = Provider<AppCapabilities>((ref) {
@@ -61,11 +62,15 @@ final vaultArchiveImporterProvider = Provider<VaultArchiveImporter>((ref) {
   );
 });
 
-/// Lets the parent choose an archive file; `null` when the app binds no file
-/// chooser. The import control is hidden then rather than shown disabled.
+/// Lets the parent choose an archive file. Importing is `local-only`, so the
+/// default is the system document chooser and no composition has to bind it;
+/// a composition (or a test) may substitute it, or bind `null` to hide the
+/// import control rather than show it disabled.
 typedef VaultArchivePicker = Future<File?> Function();
 
-final vaultArchivePickerProvider = Provider<VaultArchivePicker?>((ref) => null);
+final vaultArchivePickerProvider = Provider<VaultArchivePicker?>(
+  (ref) => pickVaultArchiveFile,
+);
 
 final audioRecorderServiceProvider = Provider<AudioRecorderService>((ref) {
   final service = RecordAudioRecorderService();

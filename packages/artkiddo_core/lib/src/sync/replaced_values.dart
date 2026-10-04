@@ -56,6 +56,9 @@ class ReplacedValuesRepository {
   /// How long an entry is kept.
   static const retention = Duration(days: 30);
 
+  /// `source` of a [hold] entry: not a [ReplacedValueSource], never listed.
+  static const _held = 'held';
+
   final AppDatabase _db;
   final Uuid _uuid;
   final DateTime Function() _now;
@@ -108,11 +111,61 @@ class ReplacedValuesRepository {
         );
   }
 
+  /// Keeps [value] of [field] as the local edit the remote side refused
+  /// because [entityId] was trashed there (`deleteVsEdit`). Until it is
+  /// [release]d, the pull leaves that field on the local row and a remote
+  /// restore sends it again ([heldValues]). One entry per field.
+  Future<void> hold({
+    required SyncEntityType entityType,
+    required String entityId,
+    required String field,
+    required Object? value,
+  }) async {
+    await release(entityId, field: field);
+    await _db
+        .into(_db.replacedValuesTable)
+        .insert(
+          ReplacedValuesTableCompanion.insert(
+            id: _uuid.v4(),
+            entityType: entityType.name,
+            entityId: entityId,
+            field: field,
+            valueJson: jsonEncode(value),
+            source: _held,
+            createdAt: _now(),
+          ),
+        );
+  }
+
+  /// The edits held on [entityId] by [hold], by field.
+  Future<Map<String, Object?>> heldValues(String entityId) async {
+    final rows =
+        await (_db.select(_db.replacedValuesTable)..where(
+              (t) => t.entityId.equals(entityId) & t.source.equals(_held),
+            ))
+            .get();
+    return {for (final row in rows) row.field: jsonDecode(row.valueJson)};
+  }
+
+  /// Drops what [hold] kept on [entityId] ([field] only, when given): the
+  /// edit was acknowledged, or the entity is purged.
+  Future<void> release(String entityId, {String? field}) =>
+      (_db.delete(_db.replacedValuesTable)..where(
+            (t) =>
+                t.entityId.equals(entityId) &
+                t.source.equals(_held) &
+                (field == null ? const Constant(true) : t.field.equals(field)),
+          ))
+          .go();
+
   /// Values replaced on [entityId], newest first.
   Future<List<ReplacedValue>> listReplacedValues(String entityId) async {
     final rows =
         await (_db.select(_db.replacedValuesTable)
-              ..where((t) => t.entityId.equals(entityId))
+              ..where(
+                (t) =>
+                    t.entityId.equals(entityId) & t.source.equals(_held).not(),
+              )
               ..orderBy([
                 (t) => OrderingTerm.desc(t.createdAt),
                 (t) => OrderingTerm.desc(t.id),
@@ -121,12 +174,16 @@ class ReplacedValuesRepository {
     return rows.map(_toDomain).toList(growable: false);
   }
 
-  /// Removes the entries older than [retention]. Returns how many.
+  /// Removes the entries older than [retention]. Returns how many. A held
+  /// edit is not history: it lasts until it is released.
   Future<int> purgeExpired({DateTime? now}) {
     final cutoff = (now ?? _now()).subtract(retention);
-    return (_db.delete(
-      _db.replacedValuesTable,
-    )..where((t) => t.createdAt.isSmallerThanValue(cutoff))).go();
+    return (_db.delete(_db.replacedValuesTable)..where(
+          (t) =>
+              t.createdAt.isSmallerThanValue(cutoff) &
+              t.source.equals(_held).not(),
+        ))
+        .go();
   }
 
   ReplacedValue _toDomain(ReplacedValueEntity row) => ReplacedValue(

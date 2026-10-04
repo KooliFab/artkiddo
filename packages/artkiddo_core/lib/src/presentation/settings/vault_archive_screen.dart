@@ -98,7 +98,12 @@ class _VaultArchiveScreenState extends ConsumerState<VaultArchiveScreen> {
     try {
       final file = await picker();
       if (file == null) {
-        if (mounted) setState(() => _busy = false);
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _progress = null;
+          });
+        }
         return;
       }
       final result = await importer.importArchive(file);

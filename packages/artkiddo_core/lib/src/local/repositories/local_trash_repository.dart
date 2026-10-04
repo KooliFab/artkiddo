@@ -6,6 +6,7 @@ import '../../domain/app_failure.dart';
 import '../logging/log.dart';
 import '../../domain/action_result.dart';
 import '../storage/local_vault.dart';
+import '../../sync/replaced_values.dart';
 import '../../sync/sync_outbox.dart';
 
 /// The account-free artwork trash. It owns only local rows and files; it has
@@ -205,6 +206,10 @@ class LocalTrashRepository implements TrashRepository {
         await (_db.delete(
           _db.deferredRemoteChangesTable,
         )..where((t) => t.artworkId.isIn(ids))).go();
+        // An edit held after a remote trash can never be sent any more.
+        for (final id in ids) {
+          await ReplacedValuesRepository(_db).release(id);
+        }
       });
     } catch (e, st) {
       Log.e('Suppression des lignes de Corbeille impossible', e, st, 'Trash');
