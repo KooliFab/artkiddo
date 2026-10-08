@@ -71,7 +71,7 @@ sequenceDiagram
   M->>L: foreground resume or manual backup
   L->>L: read outbox + journal cursor
   L->>B: adapter SyncProtocolBackend
-  B->>S: RPC / Data API / Edge Function
+  B->>S: adapter-owned transport
   S-->>B: pages, states, URLs, or typed errors
   B-->>L: neutral DTOs
   L-->>M: local state + convergence status

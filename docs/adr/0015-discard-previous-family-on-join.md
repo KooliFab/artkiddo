@@ -31,9 +31,8 @@ isolation (`FamilyController.retryJoinReset`) without re-redeeming an
 already-consumed code — re-redeeming would now see `sameFamily: true`
 and silently skip the reset it was meant to retry.
 
-Whether a previous family is purged outright or merely left is a
-server-side decision (does the caller's departure leave zero active
-members?), never inferred client-side.
+Whether a previous family is purged outright or merely left is decided
+by the `FamilyApi` implementation, never inferred client-side.
 `FamilyController.isAloneInFamily()` mirrors
 `AccountController.isLastActiveFamilyMember()` exactly — both answer
 the same question for two different destructive actions — but it only

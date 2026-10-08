@@ -11,6 +11,5 @@
 - Record a non-obvious dependency in an ADR or feature matrix and refresh the
   generated boundary inventory after dependency changes.
 
-The dependency direction is `app -> artkiddo_core`. A private client may depend
-on public contracts and a pinned backend contract; no public code may depend on
-private code.
+The dependency direction is `app -> artkiddo_core`. A consuming app may depend
+on public contracts; no public code may depend on a consumer.

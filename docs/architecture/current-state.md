@@ -134,7 +134,7 @@ The gallery feed is one masonry wall, newest first, placed exactly by
 `SliverGridDelegateWithMasonryPlan` from known aspect ratios; its scroll extent
 is computed, never estimated (ADR 0006).
 
-The data-safety rules (operations, conflicts, deletions, trash, backup limits and the known V1.1 gaps) are summarized in `data-safety.md`.
+The data-safety rules (operations, conflicts, deletions, trash, backup limits and the known V1 gaps) are summarized in `data-safety.md`.
 
 ## Freshness protocol
 
