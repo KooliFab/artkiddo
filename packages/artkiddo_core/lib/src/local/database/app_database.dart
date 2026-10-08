@@ -12,6 +12,18 @@ class ChildrenTable extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncState => text().withDefault(const Constant('localOnly'))();
 
+  /// Last remote revision known for each synchronized field
+  /// (`ChildSyncFields`); `0` until the remote side has acknowledged it. A
+  /// new operation names these as its base revisions.
+  IntColumn get nameRev => integer().withDefault(const Constant(0))();
+  IntColumn get birthDateRev => integer().withDefault(const Constant(0))();
+  IntColumn get lifecycleRev => integer().withDefault(const Constant(0))();
+
+  /// Set when the child was purged remotely while artworks of it are still
+  /// in the local trash: the row stays as their parent, hidden from every
+  /// list, until the last of them is gone.
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
   @override
   String get tableName => 'children';
 
@@ -64,7 +76,18 @@ class ArtworksTable extends Table {
 
   TextColumn get addedBy => text().nullable().named('added_by')();
 
+  /// Last remote revision known for each synchronized field
+  /// (`ArtworkSyncFields`). The audio revision is [audioRevision].
+  IntColumn get storyRev => integer().withDefault(const Constant(0))();
+  IntColumn get drawnAtRev => integer().withDefault(const Constant(0))();
+  IntColumn get lifecycleRev => integer().withDefault(const Constant(0))();
+
   DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  /// Set when the artwork was purged remotely while this device kept it in
+  /// its trash (its files or operations). Restored here, it exists on this
+  /// device only: the remote side refuses to bring it back.
+  DateTimeColumn get remotePurgedAt => dateTime().nullable()();
 
   @override
   String get tableName => 'artworks';
@@ -73,12 +96,38 @@ class ArtworksTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The durable operation queue.
+///
+/// One row is one operation with a stable [opId]. While `pending` it may be
+/// merged with a later edit of the same entity; once `in_flight` (persisted
+/// before the send) it never changes, so a replay after a crash carries the
+/// same identifier and the same content.
 @DataClassName('SyncOutboxEntryEntity')
 class SyncOutboxTable extends Table {
   IntColumn get seq => integer().autoIncrement()();
+  TextColumn get opId => text()
+      .withDefault(
+        const CustomExpression<String>(
+          "(lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || "
+          "substr(hex(randomblob(2)), 2) || '-' || "
+          "substr('89ab', 1 + (abs(random()) % 4), 1) || "
+          "substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))))",
+        ),
+      )
+      .named('op_id')();
+
+  /// Kept as `entity` (the entity type) so existing readers of the table keep
+  /// working.
   TextColumn get entity => text()(); // 'child' | 'artwork'
   TextColumn get entityId => text()();
   TextColumn get op => text()(); // 'upsert' | 'delete'
+
+  /// `EntityPatch.toJson`. Null for an operation that has no field snapshot
+  /// yet: the content is then read from the row when the operation is sent.
+  TextColumn get patchJson => text().nullable()();
+
+  /// 'pending' | 'in_flight'.
+  TextColumn get state => text().withDefault(const Constant('pending'))();
   IntColumn get attempts => integer().withDefault(const Constant(0))();
   DateTimeColumn get nextAttemptAt => dateTime().nullable()();
   TextColumn get lastError => text().nullable()();
@@ -86,6 +135,98 @@ class SyncOutboxTable extends Table {
 
   @override
   String get tableName => 'sync_outbox';
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {opId},
+  ];
+}
+
+/// Values that lost a conflict, kept for 30 days. Local only: never sent.
+@DataClassName('ReplacedValueEntity')
+class ReplacedValuesTable extends Table {
+  TextColumn get id => text()(); // UUIDv4
+  TextColumn get entityType => text()(); // 'child' | 'artwork'
+  TextColumn get entityId => text()();
+  TextColumn get field => text()();
+  TextColumn get valueJson => text()();
+
+  /// `MediaRef.toJson` when the value is a media version.
+  TextColumn get mediaRef => text().nullable()();
+
+  /// Whose value was replaced: 'remote' | 'local'.
+  TextColumn get source => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  String get tableName => 'replaced_values';
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Every media file version the vault holds. A version is immutable: a new
+/// recording is a new row and a new file, never a rewrite. An artwork's
+/// original and its audio share its id as `media_id` and are told apart by
+/// `role`, each with its own version numbers.
+@DataClassName('MediaVersionEntity')
+class MediaVersionsTable extends Table {
+  TextColumn get mediaId => text()();
+  IntColumn get version => integer()();
+
+  /// 'original' | 'optimized' | 'audio'.
+  TextColumn get role => text()();
+
+  /// Path relative to the vault, so it survives container moves.
+  TextColumn get localPath => text()();
+  IntColumn get byteSize => integer().withDefault(const Constant(0))();
+
+  /// 'present' | 'missing' | 'pendingDownload'.
+  TextColumn get state => text().withDefault(const Constant('present'))();
+
+  @override
+  String get tableName => 'media_versions';
+
+  @override
+  Set<Column> get primaryKey => {mediaId, version, role};
+}
+
+/// Remote artwork changes received before the child they belong to. Only the
+/// latest change of an artwork is kept (it carries the whole state); it is
+/// applied as soon as the child arrives.
+@DataClassName('DeferredRemoteChangeEntity')
+class DeferredRemoteChangesTable extends Table {
+  TextColumn get artworkId => text()();
+  TextColumn get childId => text()();
+
+  /// `SyncChange.toJson`.
+  TextColumn get changeJson => text()();
+
+  @override
+  String get tableName => 'deferred_remote_changes';
+
+  @override
+  Set<Column> get primaryKey => {artworkId};
+}
+
+/// Remote field values older than the revision this device holds, met while
+/// reading the journal with no local operation on the field. That only
+/// lasts when the remote history went back (a restore); otherwise a newer
+/// change of the field follows and removes the entry. What is left when the
+/// read ends is applied, the local value kept in `replaced_values`.
+@DataClassName('OlderRemoteValueEntity')
+class OlderRemoteValuesTable extends Table {
+  TextColumn get entityId => text()();
+  TextColumn get field => text()();
+
+  /// `SyncChange.toJson` of the latest such change of the field.
+  TextColumn get changeJson => text()();
+
+  @override
+  String get tableName => 'older_remote_values';
+
+  @override
+  Set<Column> get primaryKey => {entityId, field};
 }
 
 @DataClassName('VaultMetaEntity')
@@ -103,6 +244,12 @@ class VaultMetaTable extends Table {
       dateTime().nullable().named('artworks_pull_cursor')();
   DateTimeColumn get purgedPullCursor =>
       dateTime().nullable().named('purged_pull_cursor')();
+
+  /// Position in the remote change journal (`ChangeCursor.value`) and its
+  /// generation, written in the transaction that applies the page they end.
+  TextColumn get changeCursor => text().nullable().named('change_cursor')();
+  IntColumn get changeGeneration =>
+      integer().nullable().named('change_generation')();
 
   @override
   String get tableName => 'vault_meta';
@@ -141,6 +288,10 @@ class ShareLinkUrlCacheTable extends Table {
     ArtworksTable,
     PendingFileCleanupsTable,
     SyncOutboxTable,
+    ReplacedValuesTable,
+    MediaVersionsTable,
+    DeferredRemoteChangesTable,
+    OlderRemoteValuesTable,
     VaultMetaTable,
     ShareLinkUrlCacheTable,
   ],
@@ -150,37 +301,17 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.executor);
 
-  /// Schema v1 is a deliberate clean baseline. Schema v2 adds the durable
-  /// join-reset marker used to recover if the process dies after the server
-  /// commits a family switch but before the local vault is erased. Schema v3
-  /// adds added_by attribution to artworks.
+  /// Schema v1 is the launch baseline: every table is created by `onCreate`.
+  /// Once a vault exists in the field, any schema change bumps this number,
+  /// adds a step here, a snapshot in `drift_schemas/` and a case in
+  /// `test/unit/local_data/migration_test.dart`.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
-    },
-    onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 2) {
-        await m.addColumn(vaultMetaTable, vaultMetaTable.joinResetPending);
-      }
-      if (from < 3) {
-        await m.addColumn(artworksTable, artworksTable.addedBy);
-      }
-      if (from < 4) {
-        await m.addColumn(artworksTable, artworksTable.audioRevision);
-        await m.addColumn(artworksTable, artworksTable.audioSyncIntent);
-        await m.addColumn(artworksTable, artworksTable.audioConflict);
-        // Recover edits queued by the previous schema without losing files.
-        await customStatement(
-          "UPDATE artworks SET audio_sync_intent = 'replace' WHERE relative_audio_path IS NOT NULL AND audio_object_key IS NULL",
-        );
-        await customStatement(
-          "UPDATE artworks SET audio_sync_intent = 'delete' WHERE audio_duration_ms IS NULL AND relative_audio_path IS NULL AND display_object_key IS NOT NULL AND sync_state = 'localOnly'",
-        );
-      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -196,6 +327,10 @@ class AppDatabase extends _$AppDatabase {
       await delete(artworksTable).go();
       await delete(childrenTable).go();
       await delete(syncOutboxTable).go();
+      await delete(replacedValuesTable).go();
+      await delete(mediaVersionsTable).go();
+      await delete(deferredRemoteChangesTable).go();
+      await delete(olderRemoteValuesTable).go();
       await delete(pendingFileCleanupsTable).go();
       await delete(shareLinkUrlCacheTable).go();
       await delete(vaultMetaTable).go();

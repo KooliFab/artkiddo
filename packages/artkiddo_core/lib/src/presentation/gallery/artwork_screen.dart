@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../domain/action_result.dart';
+import '../../domain/backup_status.dart';
 import '../../domain/child.dart';
 import '../../domain/artwork.dart';
 import '../../local/audio/audio_player_service.dart';
@@ -14,9 +15,11 @@ import '../../local/audio/audio_recorder_service.dart';
 import '../../local/logging/log.dart';
 import '../async_action.dart';
 import '../children/children_providers.dart';
+import '../providers/backup_status_providers.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/backup_status_views.dart';
 import '../ui/discard_guard.dart';
 import '../ui/error_presenter.dart';
 import '../ui/formatters.dart';
@@ -850,6 +853,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         : (ageBasis == AgeBasis.drawnAt
               ? l10n.artworkAgeAtDrawing(ageText)
               : l10n.artworkAgeAtAddition(ageText));
+    final backup = ref.watch(artworkBackupStatusProvider(m.id));
 
     return [
       Text(childName, style: AppTypography.h1),
@@ -891,6 +895,10 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         ),
       ],
       const SizedBox(height: AppSpacing.s5),
+      if (backup != null) ...[
+        BackupStatusLine(status: backup),
+        const SizedBox(height: AppSpacing.s4),
+      ],
       if (ref.watch(appCapabilitiesProvider).remoteBackup &&
           (m.hasAudio || m.audioSyncPending)) ...[
         if (m.audioConflict) ...[
@@ -909,14 +917,19 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
             ],
           ),
         ] else ...[
-          Text(
-            m.syncState == SyncState.syncError
-                ? l10n.artworkAudioBackupFailed
-                : m.audioSyncPending
-                ? l10n.artworkAudioBackupPending
-                : l10n.artworkAudioBackedUp,
-            style: AppTypography.caption,
-          ),
+          // "Backed up" is only said of an artwork whose status is saved: a
+          // restored artwork the server no longer holds never reads so.
+          if (m.syncState == SyncState.syncError ||
+              m.audioSyncPending ||
+              backup?.state == ArtworkBackupState.saved)
+            Text(
+              m.syncState == SyncState.syncError
+                  ? l10n.artworkAudioBackupFailed
+                  : m.audioSyncPending
+                  ? l10n.artworkAudioBackupPending
+                  : l10n.artworkAudioBackedUp,
+              style: AppTypography.caption,
+            ),
           if (m.syncState == SyncState.syncError)
             TextButton(
               onPressed: () {

@@ -12,6 +12,11 @@ class TrashedArtwork {
   final String? previewPath;
   final Uri? previewUri;
 
+  /// The remote side purged this artwork (or its child): restoring it keeps
+  /// it on this phone only. It will not be backed up or shown on other
+  /// devices, and the person must be told so.
+  final bool existsOnlyHere;
+
   const TrashedArtwork({
     required this.id,
     required this.childId,
@@ -21,6 +26,7 @@ class TrashedArtwork {
     this.story,
     this.previewPath,
     this.previewUri,
+    this.existsOnlyHere = false,
   });
 }
 

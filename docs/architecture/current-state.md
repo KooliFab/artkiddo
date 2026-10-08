@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-09-27 (versioned audio writes and Drift v4).
+Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
 
 ## Repository shape
 
@@ -70,15 +70,25 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Local persistence
 
-- `AppDatabase` is Drift schema v4: v1 clean baseline (ADR 0007), v2 adds
-  `vault_meta.join_reset_pending`, v3 adds `artworks.added_by`, v4 adds audio revision, explicit write intent and conflict state. Each version
-  has a snapshot in `drift_schemas/`, covered by
-  `test/unit/local_data/migration_test.dart`. No upgrade path from pre-v1
-  vaults.
-- Tables: `children`, `artworks`, `sync_outbox`, `vault_meta`,
+- `AppDatabase` is Drift schema v1, the launch baseline: `onCreate`
+  builds every table and there is no `onUpgrade` yet. The pre-launch steps
+  (join-reset marker, `added_by`, audio revisions, per-field revisions and the
+  operation queue, `media_versions`, the change journal cursor,
+  `deferred_remote_changes`, `older_remote_values`) are part of that baseline.
+  `drift_schemas/drift_schema_v1.json` is its snapshot, generated test helpers
+  are in `test/generated/migrations/`, and
+  `test/unit/local_data/migration_test.dart` pins that `onCreate` builds the
+  snapshot and documents how to add v2 (dump the schema, regenerate the
+  helpers, add an `onUpgrade` step and a v1 -> v2 test). After launch a schema
+  change is a new version, never an edit of v1.
+- Tables: `children`, `artworks`, `sync_outbox` (identified operations),
+  `replaced_values` (local-only history of values that lost a conflict, 30
+  days), `media_versions`, `deferred_remote_changes` (artworks received
+  before their child), `older_remote_values` (remote values older than the
+  local revision, settled when a journal read ends), `vault_meta`,
   `pending_file_cleanups`, `share_link_url_cache`. Artworks store neutral
   opaque object keys only.
-- `LocalVault` owns image and audio files. Local deletion is recoverable for 30
+- `LocalVault` owns image and audio files. Every write goes through `writeFileAtomically` (temporary file in the same folder, flush, size check, rename); `*.tmp` leftovers are removed at start-up and an unreferenced final file is kept. Audio lives at `audio/<artworkId>/v<N>.m4a`, a new recording is a new version and the old file stays; `media_versions` registers the files and `isMediaReferenced` tells a cleanup whether one is still needed. Local deletion is recoverable for 30
   days, cleanup is journaled, success is reported only after a durable write.
 - `VaultRescueExport` zips vault files (≈3.5 GB parts) without opening the
   database, so it has no child/date/story metadata.
@@ -87,8 +97,17 @@ public contracts only. Rules: `dependency-rules.md`.
 
 ## Public contracts
 
-- `SyncBackend`, `ObjectUploader`/`ObjectDownloader` (opaque object keys),
-  `RemoteMediaFetcher` (local default fetches nothing).
+- `SyncProtocolBackend` (sync protocol v3, ADR 0017): `EntityPatch` operations
+  replayed by `opId`, `MutationReceipt` with per-field `FieldConflict`s,
+  `MediaDescriptor` versions, and a journal read as `SyncChangePage`s with an
+  opaque `ChangeCursor` and a generation. When a `protocolBackend` is
+  supplied, the engine pushes operations through it (ADR 0018) and reads its
+  journal (`ChangeJournalPull`, rules in `docs/sync-contract.md`). The engine
+  requires one: the former `SyncBackend`, the timestamp pull and the key-based
+  transfers are removed. Media bytes (upload, download) belong to the
+  composition, which sends and fetches them around the engine.
+- `ObjectUploader`/`ObjectDownloader` (opaque object keys, no longer used by
+  the engine), `RemoteMediaFetcher` (local default fetches nothing).
 - `SyncEngine.syncAll(onProgress:)` reports neutral `SyncProgress`
   (`sending` with a known count, then `receiving` with no total).
 - `FamilyApi`: membership and invites. `redeemInvite(discardPrevious:)` and
@@ -100,7 +119,11 @@ public contracts only. Rules: `dependency-rules.md`.
   composition's own UI.
 - `SharingService`: web gallery links. `ShareBackup` is invoked for one child
   before link creation; revoked and expired links are hidden using an
-  injectable clock.
+  injectable clock. The share controller is disposed when its sheet loses
+  its last observer, reloads on session changes, and rejects results from an
+  earlier build lifetime. List failures expose a retry without disabling new
+  creation attempts after a past network error. The sheet scrolls when its
+  content exceeds the available height; see `../qa/share-links-p1.md`.
 - `CompositionActions.syncPhotos` is the only trigger for `remoteBackup`; the
   gallery binds it to pull-to-refresh only when the capability is enabled and
   the action is bound.
@@ -110,6 +133,8 @@ public contracts only. Rules: `dependency-rules.md`.
 The gallery feed is one masonry wall, newest first, placed exactly by
 `SliverGridDelegateWithMasonryPlan` from known aspect ratios; its scroll extent
 is computed, never estimated (ADR 0006).
+
+The data-safety rules (operations, conflicts, deletions, trash, backup limits and the known V1.1 gaps) are summarized in `data-safety.md`.
 
 ## Freshness protocol
 
@@ -139,3 +164,7 @@ Audio saves remain local-first. A new recording replaces the previous local voic
 ## Trash convergence and previews (2026-09-27)
 
 Artwork deletion emits the capability-gated `CompositionActions.onArtworkDeleted` hook only after its local transaction succeeds. The sync engine coalesces simultaneous lifecycle/manual/trash runs so they cannot drain the same entry twice. Shared trash refreshes on entry and resume, supports pull-to-refresh, and refreshes every 20 seconds only while its route is visible and the app is active. Local trash reads only local rows and files. `TrashedArtwork` exposes an optional vault path or authorized temporary preview URI; the UI shows a tappable, zoomable preview or an explicit unavailable state. See ADR 0003.
+
+## Backup statuses (2026-10-01)
+
+`backupStatusFor(ArtworkBackupFacts)` (`domain/backup_status.dart`) is the one pure answer to "is this artwork protected": on this device, backup in progress, saved (optimized quality), or action needed. `BackupStatusRepository` reads its facts from existing data only (artwork row, `sync_outbox`, a real existence check of the files the row points at) for artworks outside the trash; no table was added. "Saved" needs an acknowledged row, nothing queued, and no voice waiting; it never means the original is in the cloud. An artwork with `remote_purged_at` is never saved. A missing file changes the status, never the row or the files. Without `remoteBackup` the answer is "on this device" or "action needed". The gallery marker, the artwork sheet line and the cloud summary all read `artworkBackupStatusesProvider`; `countUnsavedArtworks` agrees with it.

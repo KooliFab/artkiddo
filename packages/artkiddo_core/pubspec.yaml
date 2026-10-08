@@ -1,6 +1,6 @@
 name: artkiddo_core
 description: Offline-first ArtKiddo domain, local storage and neutral contracts.
-version: 0.1.0
+version: 0.2.1
 publish_to: none
 resolution: workspace
 
@@ -31,8 +31,10 @@ dependencies:
   audio_session: ^0.2.4
   share_plus: ^13.3.0
   archive: ^4.2.0
+  crypto: ^3.0.7
   disk_space_plus: ^0.2.6
   qr_flutter: ^4.1.0
+  file_selector: 1.1.0
 
 dev_dependencies:
   flutter_test:

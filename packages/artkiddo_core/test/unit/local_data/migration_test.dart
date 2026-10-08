@@ -5,22 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:artkiddo_core/src/local/database/app_database.dart';
 
 import '../../generated/migrations/schema.dart';
-import '../../generated/migrations/schema_v1.dart' show DatabaseAtV1;
-import '../../generated/migrations/schema_v3.dart' show DatabaseAtV3;
 
-/// ADR 0007 reset the local vault to `schemaVersion = 1` and stated that
-/// future schema changes "resume normal practice (schema snapshot, and a
-/// migration test once a second schema version exists)". Three now do:
+/// The vault is at `schemaVersion = 1`, the launch baseline. No upgrade
+/// exists yet, so this file only pins that the committed v1 snapshot is the
+/// schema `onCreate` builds, and that the current version is the newest
+/// snapshot. When v2 is introduced:
 ///
-/// * v2 adds `vault_meta.join_reset_pending`, the durable marker that lets a
-///   family switch recover if the process dies after the server commits but
-///   before the local vault is erased;
-/// * v3 adds `artworks.added_by`, the attribution of who photographed a piece.
-///
-/// Both are additive `addColumn` steps, which is exactly the kind of change
-/// that looks too trivial to test and then silently drops a column on one
-/// path. These tests pin every reachable upgrade, including the v1 -> v4 jump
-/// a device that skipped a release actually takes.
+/// 1. `dart run drift_dev schema dump lib/src/local/database/app_database.dart drift_schemas/`
+/// 2. `dart run drift_dev schema generate drift_schemas test/generated/migrations/`
+/// 3. add an `onUpgrade` step in `AppDatabase.migration`;
+/// 4. add `v1 -> current` here (`verifier.startAt(1)`, optionally seed rows
+///    through the generated `DatabaseAtV1` and assert they survive).
 void main() {
   late SchemaVerifier verifier;
 
@@ -33,100 +28,18 @@ void main() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = false;
   });
 
-  // Every starting point, including v1 -> v4 in one step: skipping a release
-  // is the common case for a user who updates infrequently, and it is the
-  // path where a forgotten `if (from < N)` branch actually bites.
-  //
-  // The target is always 4 because `migrateAndValidate` upgrades through
-  // `AppDatabase`'s own `schemaVersion` — asking it to stop at an
-  // intermediate version would validate the current schema against an older
-  // snapshot and always fail.
-  for (final from in const [1, 2, 3]) {
-    test('migrates a v$from vault to the current schema', () async {
-      final connection = await verifier.startAt(from);
-      final db = AppDatabase.forTesting(connection);
-      addTearDown(db.close);
-
-      await verifier.migrateAndValidate(db, db.schemaVersion);
-    });
-  }
-
-  test('a v1 -> v4 upgrade preserves the rows already in the vault', () async {
-    // Written in raw SQL on purpose: the point is to prove that a row
-    // inserted through the *old* physical shape survives, so going through
-    // today's typed API would defeat the test.
+  test('the committed v1 snapshot is the schema onCreate builds', () async {
     final schema = await verifier.schemaAt(1);
-    // A fresh connection per database object, both onto the same underlying
-    // schema: drift refuses to reopen a connection once closed.
-    final oldDb = DatabaseAtV1(schema.newConnection());
-    await oldDb.customStatement(
-      'INSERT INTO children (id, name, birth_date, created_at, updated_at, '
-      'sync_state) VALUES (?, ?, ?, ?, ?, ?)',
-      ['child-1', 'Léa', 1615680000, 1767225600, 1767225600, 'localOnly'],
-    );
-    await oldDb.close();
-
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 4);
-
-    final children = await db.select(db.childrenTable).get();
-    expect(children, hasLength(1));
-    expect(children.single.name, 'Léa');
-
-    // The column v3 added must exist and read as null, not be absent: an
-    // artwork stored before attribution existed has no known author, and
-    // saying so honestly is what stops the UI from inventing one.
-    final addedBy = await db
-        .customSelect('SELECT added_by FROM artworks')
-        .get();
-    expect(addedBy, isEmpty);
-    final pending = await db
-        .customSelect('SELECT join_reset_pending FROM vault_meta')
-        .get();
-    expect(pending, isEmpty);
+    expect(db.schemaVersion, 1);
+    await verifier.migrateAndValidate(db, db.schemaVersion);
   });
-  test('v3 audio migration preserves pending replacements and deletions', () async {
-    final schema = await verifier.schemaAt(3);
-    final oldDb = DatabaseAtV3(schema.newConnection());
-    await oldDb.customStatement(
-      "INSERT INTO children (id,name,birth_date,created_at,updated_at,sync_state) VALUES ('c','Child',1,1,1,'localOnly')",
-    );
-    for (final values in [
-      ['replace', 'audio/local.m4a', null, 'localOnly'],
-      ['delete', null, 'remote-voice', 'localOnly'],
-      ['keep', null, 'remote-voice', 'synced'],
-    ]) {
-      await oldDb.customStatement(
-        'INSERT INTO artworks (id,child_id,created_at,relative_image_path,display_object_key,relative_audio_path,audio_object_key,sync_state) VALUES (?, ?, 1, ?, ?, ?, ?, ?)',
-        [
-          values[0],
-          'c',
-          'photo.jpg',
-          'remote-photo',
-          values[1],
-          values[2],
-          values[3],
-        ],
-      );
-    }
-    await oldDb.close();
-    final db = AppDatabase.forTesting(schema.newConnection());
+
+  test('a fresh vault is created at the current schema', () async {
+    final connection = await verifier.startAt(1);
+    final db = AppDatabase.forTesting(connection);
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 4);
-    final rows = await db.select(db.artworksTable).get();
-    for (final row in rows) {
-      expect(row.audioSyncIntent, row.id);
-      expect(row.audioRevision, 0);
-      expect(row.audioConflict, false);
-    }
-    expect(
-      rows.firstWhere((r) => r.id == 'replace').relativeAudioPath,
-      'audio/local.m4a',
-    );
-    expect(
-      rows.firstWhere((r) => r.id == 'keep').audioObjectKey,
-      'remote-voice',
-    );
+    await verifier.migrateAndValidate(db, db.schemaVersion);
   });
 }
