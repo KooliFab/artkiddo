@@ -28,7 +28,7 @@ The following third-party dependencies are declared in `artkiddo_core/pubspec.ya
 
 ### 1. Presentation & UI Layout
 - `photo_view` (^0.15.0): Enables interactive pinch-to-zoom and pan on artwork details in the full-screen view (MIT).
-- `qr_flutter` (^4.1.0): Renders QR codes in pure Dart without native platform permissions or network access, used for displaying invite and share codes offline (BSD-3-Clause). Note: QR *scanning* (`mobile_scanner`) remains private in the composition and is injected dynamically.
+- `qr_flutter` (^4.1.0): Renders QR codes in pure Dart without native platform permissions or network access, used for displaying invite and share codes offline (BSD-3-Clause). Note: QR *scanning* is not part of the core; a composition may inject it.
 
 ### 2. Media Capture & Playback
 - `camera` (^0.12.1): Official Flutter plugin providing direct access to the device camera for artwork photography (BSD-3-Clause).

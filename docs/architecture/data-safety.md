@@ -115,19 +115,15 @@ These are product limits, shown or implied by the interface:
   remote side. It never means that the original is in the cloud. An artwork the
   remote side purged is never "Saved".
 - **No zero-loss promise.** V1 reduces the known ways of losing a drawing; it
-  does not guarantee that none is ever lost. The safety net of the service is
-  limited (see the private backend documentation).
+  does not guarantee that none is ever lost.
 - The export (ZIP of the vault and metadata) is the complete, user-held copy.
 
-## Known V1 limits, planned for V1.1
+## Known V1 limits
 
-- The cloud trash goes through dedicated routes; moving it onto lifecycle
-  patches would remove the network requirement for restoring.
-- Restoring from the trash offline is local only.
+- Restoring from the remote trash needs the network; offline, restoring is
+  local only.
 - An audio edit refused as `deleteVsEdit` is kept in the history but not sent
   again after a remote restore.
-- A remote value the local database cannot store blocks the read; the service
-  now refuses such values at the source, but the device has no quarantine.
-- Server-made thumbnails (the device builds its own).
-- A tombstone after a refused purge.
+- A remote value the local database cannot store blocks the read; the device
+  has no quarantine.
 - A conflict resolution screen reading `replaced_values`.
