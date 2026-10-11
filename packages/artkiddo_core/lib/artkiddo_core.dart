@@ -56,6 +56,7 @@ export 'src/local/audio/audio_recorder_service.dart';
 export 'src/local/logging/log.dart';
 export 'src/local/storage/image_derivatives.dart';
 export 'src/local/repositories/trash_repository.dart';
+export 'src/presentation/ui/adaptive_modal.dart';
 export 'src/presentation/ui/app_button.dart';
 export 'src/presentation/ui/app_dialog.dart';
 export 'src/presentation/ui/artwork_card.dart';

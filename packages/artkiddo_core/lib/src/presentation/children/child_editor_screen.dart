@@ -7,14 +7,15 @@ import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
 import '../ui/discard_guard.dart';
+import '../ui/adaptive_modal.dart';
 import '../ui/error_presenter.dart';
 import '../ui/formatters.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'child_editor_controller.dart';
 
-/// Compact pushes `childEditor` as a full page; medium/expanded present
-/// it as a non-dismissible 560-wide dialog instead. Centralized here so
+/// Compact presents `childEditor` as a full-screen modal; medium/expanded
+/// as a 560-wide dialog ([showAdaptiveModal]). Centralized here so
 /// every entry point (galleries' empty states, the children list, the
 /// child actions sheet, the capture draft, the shell's rail FAB) gets
 /// the same responsive behaviour for free.
@@ -22,32 +23,14 @@ Future<ActionResult<String>?> pushChildEditor(
   BuildContext context,
   ChildEditorArgs args,
 ) {
-  final width = MediaQuery.of(context).size.width;
-  if (AppBreakpoints.isCompact(width)) {
-    return Navigator.of(context).push<ActionResult<String>>(
-      // A form that is saved or dismissed: presented modally (slides up,
-      // closes with X), the same in create and edit mode.
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ChildEditorScreen(args: args),
-      ),
-    );
-  }
-  return showDialog<ActionResult<String>>(
-    context: context,
+  // A form that is saved or dismissed: presented modally (slides up,
+  // closes with X), the same in create and edit mode. Not dismissed by a
+  // tap outside the dialog: a stray tap must not reach the discard prompt.
+  return showAdaptiveModal<ActionResult<String>>(
+    context,
+    compact: CompactPresentation.fullScreen,
     barrierDismissible: false,
-    builder: (_) => Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 560,
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: ChildEditorScreen(args: args),
-      ),
-    ),
+    builder: (_) => ChildEditorScreen(args: args),
   );
 }
 

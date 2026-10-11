@@ -11,13 +11,14 @@ import '../navigation/composition_actions.dart';
 import '../navigation/pending_intent.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
+import '../ui/adaptive_modal.dart';
 import '../ui/app_button.dart';
 import '../ui/app_dialog.dart';
 import '../ui/error_presenter.dart';
 import '../ui/state_block.dart';
 import 'share_controller.dart';
 
-/// `share` — modal sheet (compact) / dialog (>=600) — `screens.md` §10.
+/// `share` — modal sheet (compact) / dialog — `screens.md` §10.
 Future<void> showShareSheet(
   BuildContext context, {
   required String childId,
@@ -25,26 +26,14 @@ Future<void> showShareSheet(
   VoidCallback? sendImage,
 }) {
   Log.d('📱 [ShareSheet] Opening', 'Navigation');
-  final width = MediaQuery.of(context).size.width;
   final args = ShareArgs(
     childId: childId,
     childName: childName,
     sendImage: sendImage,
   );
-  if (width >= 600) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: _ShareSheetContent(args: args),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  return showAdaptiveModal<void>(
+    context,
+    maxWidth: 480,
     builder: (_) => _ShareSheetContent(args: args),
   );
 }
