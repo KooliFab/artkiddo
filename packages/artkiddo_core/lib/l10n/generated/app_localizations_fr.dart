@@ -1905,4 +1905,28 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get vaultArchiveImportFailed =>
       'L’importation a échoué. Rien n’a été importé.';
+
+  @override
+  String get captureReviewContinue => 'Continuer';
+
+  @override
+  String get commonNoChanges => 'Aucune modification à enregistrer.';
+
+  @override
+  String get familyHubLeaving => 'Départ en cours…';
+
+  @override
+  String get artworkAudioConflictBody =>
+      'La version que vous ne choisissez pas sera perdue.';
+
+  @override
+  String get accountDeleteSupportSubject => 'artkiddo — suppression de compte';
+
+  @override
+  String errorQuotaExceededTitleUntil(DateTime time) {
+    final intl.DateFormat timeDateFormat = intl.DateFormat.Hm(localeName);
+    final String timeString = timeDateFormat.format(time);
+
+    return 'Espace de stockage du foyer atteint (de nouveau disponible à $timeString)';
+  }
 }

@@ -3060,6 +3060,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'L’importation a échoué. Rien n’a été importé.'**
   String get vaultArchiveImportFailed;
+
+  /// Capture review: return to the details step with the same photo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get captureReviewContinue;
+
+  /// Why Save is disabled on an unchanged form.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune modification à enregistrer.'**
+  String get commonNoChanges;
+
+  /// Family hub: busy label while leaving the family.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ en cours…'**
+  String get familyHubLeaving;
+
+  /// Artwork: consequence of resolving a voice-story conflict.
+  ///
+  /// In fr, this message translates to:
+  /// **'La version que vous ne choisissez pas sera perdue.'**
+  String get artworkAudioConflictBody;
+
+  /// Account deletion: subject of the email to support.
+  ///
+  /// In fr, this message translates to:
+  /// **'artkiddo — suppression de compte'**
+  String get accountDeleteSupportSubject;
+
+  /// Error title when storage quota is reached, with the reset time.
+  ///
+  /// In fr, this message translates to:
+  /// **'Espace de stockage du foyer atteint (de nouveau disponible à {time})'**
+  String errorQuotaExceededTitleUntil(DateTime time);
 }
 
 class _AppLocalizationsDelegate

@@ -2293,5 +2293,35 @@
   "vaultArchiveImportFailed": "L’importation a échoué. Rien n’a été importé.",
   "@vaultArchiveImportFailed": {
     "description": "Archive export and import (settings)."
+  },
+  "captureReviewContinue": "Continuer",
+  "@captureReviewContinue": {
+    "description": "Capture review: return to the details step with the same photo."
+  },
+  "commonNoChanges": "Aucune modification à enregistrer.",
+  "@commonNoChanges": {
+    "description": "Why Save is disabled on an unchanged form."
+  },
+  "familyHubLeaving": "Départ en cours…",
+  "@familyHubLeaving": {
+    "description": "Family hub: busy label while leaving the family."
+  },
+  "artworkAudioConflictBody": "La version que vous ne choisissez pas sera perdue.",
+  "@artworkAudioConflictBody": {
+    "description": "Artwork: consequence of resolving a voice-story conflict."
+  },
+  "accountDeleteSupportSubject": "artkiddo — suppression de compte",
+  "@accountDeleteSupportSubject": {
+    "description": "Account deletion: subject of the email to support."
+  },
+  "errorQuotaExceededTitleUntil": "Espace de stockage du foyer atteint (de nouveau disponible à {time})",
+  "@errorQuotaExceededTitleUntil": {
+    "description": "Error title when storage quota is reached, with the reset time.",
+    "placeholders": {
+      "time": {
+        "type": "DateTime",
+        "format": "Hm"
+      }
+    }
   }
 }

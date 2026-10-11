@@ -1,12 +1,5 @@
 part of 'artwork_screen.dart';
 
-String _formatDuration(int ms) {
-  final totalSeconds = (ms / 1000).floor();
-  final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-  final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
-  return '$minutes:$seconds';
-}
-
 class _ArtworkAudioPlayerCard extends ConsumerStatefulWidget {
   final Artwork artwork;
   final VoidCallback onReRecord;
@@ -190,7 +183,7 @@ class _ArtworkAudioPlayerCardState
                     borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Text(
-                    _formatDuration(durationMs),
+                    formatAudioDuration(durationMs),
                     style: AppTypography.caption.copyWith(
                       color: AppColors.accentPressed,
                       fontWeight: FontWeight.bold,
@@ -234,48 +227,11 @@ class _ArtworkAudioPlayerCardState
               ],
             ),
           ] else ...[
-            Row(
-              children: [
-                IconButton.filled(
-                  tooltip: _isPlaying
-                      ? l10n.captureAudioPause
-                      : l10n.captureAudioPlay,
-                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: _togglePlayback,
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.onAccent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadii.xs),
-                        child: LinearProgressIndicator(
-                          value: durationMs > 0
-                              ? (_positionMs / durationMs).clamp(0.0, 1.0)
-                              : 0.0,
-                          backgroundColor: AppColors.surfaceSunken,
-                          valueColor: const AlwaysStoppedAnimation(
-                            AppColors.accent,
-                          ),
-                          minHeight: 6,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      Text(
-                        '${_formatDuration(_positionMs)} / ${_formatDuration(durationMs)}',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            AudioPlaybackRow(
+              isPlaying: _isPlaying,
+              positionMs: _positionMs,
+              durationMs: durationMs,
+              onToggle: _togglePlayback,
             ),
           ],
           const SizedBox(height: AppSpacing.s2),
@@ -514,201 +470,111 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: AppSpacing.s4,
-          right: AppSpacing.s4,
-          top: AppSpacing.s4,
-          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s4,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(l10n.captureAudioCardTitle, style: AppTypography.h2),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(false),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              l10n.captureAudioCardSubtitle,
-              style: AppTypography.caption.copyWith(color: AppColors.inkMuted),
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            if (_micDenied) ...[
-              StateBlock(
-                intent: StateBlockIntent.warning,
-                title: l10n.captureAudioMicPermissionDeniedTitle,
-                body: l10n.captureAudioMicPermissionDeniedBody,
-                actionLabel: l10n.commonOpenSettings,
-                onAction: AppSettingsLauncher.open,
+    // A take in progress or recorded but not saved is only thrown away
+    // after the user confirms it.
+    return DiscardGuard(
+      isDirty: (_isRecording || _recordedPath != null) && !_saving,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.s4,
+            right: AppSpacing.s4,
+            top: AppSpacing.s4,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s4,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l10n.captureAudioCardTitle, style: AppTypography.h2),
+                  IconButton(
+                    tooltip: l10n.commonClose,
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).maybePop(false),
+                  ),
+                ],
               ),
-            ] else if (_isRecording) ...[
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
-                  border: Border.all(color: AppColors.accent, width: 2),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.danger,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s2),
-                        Text(
-                          l10n.captureAudioRecording,
-                          style: AppTypography.bodyStrong.copyWith(
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${_formatDuration(_recordingDurationMs)} / 02:00',
-                          style: AppTypography.caption.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s3),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadii.xs),
-                      child: LinearProgressIndicator(
-                        value: _soundLevel.clamp(0.05, 1.0),
-                        backgroundColor: AppColors.surfaceSunken,
-                        valueColor: const AlwaysStoppedAnimation(
-                          AppColors.accent,
-                        ),
-                        minHeight: 8,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s3),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.close, size: 18),
-                          label: Text(l10n.captureAudioCancel),
-                          onPressed: _cancelRecording,
-                        ),
-                        AppButton(
-                          label: l10n.captureAudioStop,
-                          icon: Icons.stop,
-                          onPressed: _stopRecording,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ] else if (_recordedPath != null) ...[
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
-                  border: Border.all(color: AppColors.borderStrong),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton.filled(
-                          tooltip: _isPlaying
-                              ? l10n.captureAudioPause
-                              : l10n.captureAudioPlay,
-                          icon: Icon(
-                            _isPlaying ? Icons.pause : Icons.play_arrow,
-                          ),
-                          onPressed: _togglePlayback,
-                          style: IconButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                            foregroundColor: AppColors.onAccent,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s3),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadii.xs,
-                                ),
-                                child: LinearProgressIndicator(
-                                  value:
-                                      (_recordedDurationMs != null &&
-                                          _recordedDurationMs! > 0)
-                                      ? (_playbackPositionMs /
-                                                _recordedDurationMs!)
-                                            .clamp(0.0, 1.0)
-                                      : 0.0,
-                                  backgroundColor: AppColors.surfaceSunken,
-                                  valueColor: const AlwaysStoppedAnimation(
-                                    AppColors.accent,
-                                  ),
-                                  minHeight: 6,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.s1),
-                              Text(
-                                '${_formatDuration(_playbackPositionMs)} / ${_formatDuration(_recordedDurationMs ?? 0)}',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s3),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: Text(l10n.captureAudioReRecord),
-                          onPressed: _startRecording,
-                        ),
-                      ],
-                    ),
-                  ],
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                l10n.captureAudioCardSubtitle,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.inkMuted,
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),
-              AppButton(
-                label: _saving ? l10n.commonSaving : l10n.commonSave,
-                fullWidth: true,
-                onPressed: _saving ? null : _saveAudio,
-              ),
-            ] else ...[
-              AppButton(
-                label: l10n.captureAudioRecord,
-                icon: Icons.mic,
-                variant: AppButtonVariant.secondary,
-                fullWidth: true,
-                onPressed: _startRecording,
-              ),
+              if (_micDenied) ...[
+                StateBlock(
+                  intent: StateBlockIntent.warning,
+                  title: l10n.captureAudioMicPermissionDeniedTitle,
+                  body: l10n.captureAudioMicPermissionDeniedBody,
+                  actionLabel: l10n.commonOpenSettings,
+                  onAction: AppSettingsLauncher.open,
+                ),
+              ] else if (_isRecording) ...[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.s4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                    border: Border.all(color: AppColors.accent, width: 2),
+                  ),
+                  child: AudioRecordingPanel(
+                    durationMs: _recordingDurationMs,
+                    soundLevel: _soundLevel,
+                    onCancel: _cancelRecording,
+                    onStop: _stopRecording,
+                  ),
+                ),
+              ] else if (_recordedPath != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.s4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                    border: Border.all(color: AppColors.borderStrong),
+                  ),
+                  child: Column(
+                    children: [
+                      AudioPlaybackRow(
+                        isPlaying: _isPlaying,
+                        positionMs: _playbackPositionMs,
+                        durationMs: _recordedDurationMs ?? 0,
+                        onToggle: _togglePlayback,
+                      ),
+                      const SizedBox(height: AppSpacing.s3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: Text(l10n.captureAudioReRecord),
+                            onPressed: _startRecording,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                AppButton(
+                  label: _saving ? l10n.commonSaving : l10n.commonSave,
+                  fullWidth: true,
+                  onPressed: _saving ? null : _saveAudio,
+                ),
+              ] else ...[
+                AppButton(
+                  label: l10n.captureAudioRecord,
+                  icon: Icons.mic,
+                  variant: AppButtonVariant.secondary,
+                  fullWidth: true,
+                  onPressed: _startRecording,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

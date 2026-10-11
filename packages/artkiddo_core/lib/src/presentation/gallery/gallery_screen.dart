@@ -27,6 +27,7 @@ import '../settings/settings_screen.dart';
 import '../theme/app_tokens.dart';
 import '../ui/backup_status_views.dart';
 import '../ui/filter_chip_row.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import 'artwork_screen.dart';
 import 'capture_controller.dart';

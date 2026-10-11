@@ -24,9 +24,11 @@ import '../ui/backup_status_views.dart';
 import '../ui/discard_guard.dart';
 import '../ui/error_presenter.dart';
 import '../ui/formatters.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import '../utils/app_settings_launcher.dart';
 import 'artwork_zoom_screen.dart';
+import 'audio_controls.dart';
 import '../navigation/composition_actions.dart';
 import '../family/family_controller.dart';
 import 'gallery_providers.dart';
@@ -181,6 +183,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
+      // A drag-to-dismiss bypasses the sheet's DiscardGuard.
+      enableDrag: false,
       builder: (ctx) =>
           _StoryEditorSheet(artworkId: m.id, initialStory: m.story ?? ''),
     );
@@ -223,6 +227,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final recorded = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      // A drag-to-dismiss bypasses the sheet's DiscardGuard.
+      enableDrag: false,
       builder: (ctx) => _AudioRecorderSheet(artworkId: m.id),
     );
     if (recorded == true && mounted) {
@@ -334,13 +340,13 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SheetHandle(),
                 Text(l10n.artworkDrawnAtPickerTitle, style: AppTypography.h2),
                 const SizedBox(height: AppSpacing.s2),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.edit_calendar_outlined),
                   title: Text(l10n.artworkDrawnAtEdit),
-                  trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(sheetContext).pop('edit'),
                 ),
                 ListTile(
@@ -349,7 +355,6 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
                   iconColor: AppColors.danger,
                   leading: const Icon(Icons.event_busy_outlined),
                   title: Text(l10n.artworkDrawnAtClear),
-                  trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(sheetContext).pop('clear'),
                 ),
               ],
@@ -408,6 +413,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SheetHandle(),
               Text(l10n.childrenActionsShare, style: AppTypography.h2),
               const SizedBox(height: AppSpacing.s3),
               ListTile(
@@ -851,19 +857,17 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       if (ref.watch(appCapabilitiesProvider).remoteBackup &&
           (m.hasAudio || m.audioSyncPending)) ...[
         if (m.audioConflict) ...[
-          Text(l10n.artworkAudioConflict, style: AppTypography.body),
-          Wrap(
-            spacing: AppSpacing.s2,
-            children: [
-              TextButton(
-                onPressed: _resolvingAudio ? null : () => _resolveAudio(false),
-                child: Text(l10n.artworkAudioKeepRemote),
-              ),
-              TextButton(
-                onPressed: _resolvingAudio ? null : () => _resolveAudio(true),
-                child: Text(l10n.artworkAudioUseLocal),
-              ),
-            ],
+          // A decision with a loss on either side: a warning that says so,
+          // with the two versions as its two actions (hidden while the
+          // choice is being applied).
+          StateBlock(
+            intent: StateBlockIntent.warning,
+            title: l10n.artworkAudioConflict,
+            body: l10n.artworkAudioConflictBody,
+            actionLabel: l10n.artworkAudioKeepRemote,
+            onAction: _resolvingAudio ? null : () => _resolveAudio(false),
+            secondaryLabel: l10n.artworkAudioUseLocal,
+            onSecondary: _resolvingAudio ? null : () => _resolveAudio(true),
           ),
         ] else ...[
           // "Backed up" is only said of an artwork whose status is saved: a

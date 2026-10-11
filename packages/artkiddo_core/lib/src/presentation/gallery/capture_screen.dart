@@ -14,6 +14,7 @@ import '../ui/app_dialog.dart';
 import '../utils/app_settings_launcher.dart';
 import '../ui/discard_guard.dart';
 import '../ui/error_presenter.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../children/child_editor_controller.dart';
@@ -22,6 +23,7 @@ import '../children/children_providers.dart';
 import '../providers/core_providers.dart';
 import '../../domain/child.dart' as domain;
 import 'camera_capture_screen.dart';
+import 'audio_controls.dart';
 import 'capture_controller.dart';
 
 /// `capture` — one route, three internal steps.
@@ -327,9 +329,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Reached only via step 3's "view large" — the photo is already
-    // cropped and confirmed, so this is a plain preview. Retake is kept
-    // for a full do-over.
+    // Reached only by going back from a blank step 3 — the photo is already
+    // cropped and confirmed. Continue returns to step 3 with it; Retake is
+    // kept for a full do-over.
     return SafeArea(
       child: Column(
         children: [
@@ -353,10 +355,23 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
-            child: AppButton(
-              label: l10n.captureReviewRetake,
-              variant: AppButtonVariant.secondary,
-              onPressed: _handleRetake,
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: l10n.captureReviewRetake,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: _handleRetake,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s3),
+                Expanded(
+                  child: AppButton(
+                    label: l10n.captureReviewContinue,
+                    onPressed: _controller.resumeDetails,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -504,9 +519,10 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ),
             ),
           ),
-          // A "view large" link back to the full step-2 preview.
+          // Opens a viewer over the form rather than going back a step, so
+          // the draft and an ongoing recording are left untouched.
           TextButton(
-            onPressed: _controller.backToReviewFromDetails,
+            onPressed: () => _openPhotoViewer(draft.temporaryImagePath),
             child: Text(l10n.captureDetailsViewLarge),
           ),
         ],
@@ -664,6 +680,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SheetHandle(
+                margin: EdgeInsets.symmetric(vertical: AppSpacing.s3),
+              ),
               for (final child in children)
                 ListTile(
                   leading: Radio<String>(value: child.id),
@@ -686,6 +705,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     } else {
       _controller.selectChild(result);
     }
+  }
+
+  void _openPhotoViewer(String path) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _DraftPhotoViewer(path: path),
+      ),
+    );
   }
 
   Future<void> _openChildEditor(BuildContext context) async {
@@ -732,58 +760,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               onAction: AppSettingsLauncher.open,
             ),
           ] else if (state.isRecording) ...[
-            Row(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.danger,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s2),
-                Text(
-                  l10n.captureAudioRecording,
-                  style: AppTypography.bodyStrong.copyWith(
-                    color: AppColors.accent,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${_formatDuration(state.recordingDurationMs)} / 02:00',
-                  style: AppTypography.caption.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.xs),
-              child: LinearProgressIndicator(
-                value: state.soundLevel.clamp(0.05, 1.0),
-                backgroundColor: AppColors.surfaceSunken,
-                valueColor: const AlwaysStoppedAnimation(AppColors.accent),
-                minHeight: 8,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton.icon(
-                  icon: const Icon(Icons.close, size: 18),
-                  label: Text(l10n.captureAudioCancel),
-                  onPressed: _controller.cancelRecording,
-                ),
-                AppButton(
-                  label: l10n.captureAudioStop,
-                  icon: Icons.stop,
-                  onPressed: _controller.stopRecording,
-                ),
-              ],
+            AudioRecordingPanel(
+              durationMs: state.recordingDurationMs,
+              soundLevel: state.soundLevel,
+              onCancel: _controller.cancelRecording,
+              onStop: _controller.stopRecording,
             ),
           ] else if (hasAudio) ...[
             Row(
@@ -806,7 +787,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                     borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Text(
-                    _formatDuration(draft!.audioDurationMs ?? 0),
+                    formatAudioDuration(draft!.audioDurationMs ?? 0),
                     style: AppTypography.caption.copyWith(
                       color: AppColors.accentPressed,
                       fontWeight: FontWeight.bold,
@@ -816,54 +797,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.s3),
-            Row(
-              children: [
-                IconButton.filled(
-                  tooltip: state.isPlayingAudio
-                      ? l10n.captureAudioPause
-                      : l10n.captureAudioPlay,
-                  icon: Icon(
-                    state.isPlayingAudio ? Icons.pause : Icons.play_arrow,
-                  ),
-                  onPressed: _controller.togglePlayback,
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.onAccent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadii.xs),
-                        child: LinearProgressIndicator(
-                          value:
-                              (draft.audioDurationMs != null &&
-                                  draft.audioDurationMs! > 0)
-                              ? (state.playbackPositionMs /
-                                        draft.audioDurationMs!)
-                                    .clamp(0.0, 1.0)
-                              : 0.0,
-                          backgroundColor: AppColors.surfaceSunken,
-                          valueColor: const AlwaysStoppedAnimation(
-                            AppColors.accent,
-                          ),
-                          minHeight: 6,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      Text(
-                        '${_formatDuration(state.playbackPositionMs)} / ${_formatDuration(draft.audioDurationMs ?? 0)}',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            AudioPlaybackRow(
+              isPlaying: state.isPlayingAudio,
+              positionMs: state.playbackPositionMs,
+              durationMs: draft.audioDurationMs ?? 0,
+              onToggle: _controller.togglePlayback,
             ),
             const SizedBox(height: AppSpacing.s2),
             Wrap(
@@ -954,13 +892,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       await _controller.deleteAudio();
     }
   }
-
-  String _formatDuration(int ms) {
-    final totalSeconds = (ms / 1000).floor();
-    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
 }
 
 class _SourceChoiceSheet extends ConsumerWidget {
@@ -988,6 +919,7 @@ class _SourceChoiceSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SheetHandle(),
             Text(l10n.captureTitle, style: AppTypography.h2),
             const SizedBox(height: AppSpacing.s3),
             // When both permissions are denied, show one combined block
@@ -1019,37 +951,95 @@ class _SourceChoiceSheet extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s3),
             ],
-            ListTile(
+            CaptureSourceRow(
               enabled: !cameraDenied,
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: Text(l10n.captureSourceCameraTitle),
-              subtitle: Text(
-                cameraDenied
-                    ? l10n.permissionCameraReason
-                    : l10n.captureSourceCameraBody,
-              ),
+              icon: Icons.camera_alt_outlined,
+              title: l10n.captureSourceCameraTitle,
+              subtitle: cameraDenied
+                  ? l10n.permissionCameraReason
+                  : l10n.captureSourceCameraBody,
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
-            ListTile(
+            CaptureSourceRow(
               enabled: !photosDenied,
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(l10n.captureSourceGalleryTitle),
-              subtitle: Text(
-                photosDenied
-                    ? l10n.permissionPhotosReason
-                    : l10n.captureSourceGalleryBody,
-              ),
+              icon: Icons.photo_library_outlined,
+              title: l10n.captureSourceGalleryTitle,
+              subtitle: photosDenied
+                  ? l10n.permissionPhotosReason
+                  : l10n.captureSourceGalleryBody,
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
-            const SizedBox(height: AppSpacing.s2),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.commonCancel),
-              ),
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One photo source (camera or library) in a source-choice sheet. Shared by
+/// the gallery's "add" sheet and the capture screen's own sheet so both
+/// offer the choice the same way.
+class CaptureSourceRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const CaptureSourceRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    enabled: enabled,
+    contentPadding: EdgeInsets.zero,
+    minVerticalPadding: AppSpacing.s3,
+    leading: Icon(
+      icon,
+      size: 28,
+      color: enabled ? AppColors.accent : AppColors.inkDisabled,
+    ),
+    title: Text(title, style: AppTypography.bodyStrong),
+    subtitle: Text(
+      subtitle,
+      style: AppTypography.body.copyWith(color: AppColors.inkMuted),
+    ),
+    onTap: onTap,
+  );
+}
+
+/// Full-screen, zoomable view of the draft photo opened from step 3.
+class _DraftPhotoViewer extends StatelessWidget {
+  final String path;
+  const _DraftPhotoViewer({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.immersive,
+      appBar: AppBar(
+        backgroundColor: AppColors.immersive,
+        foregroundColor: AppColors.onImmersive,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            tooltip: l10n.commonClose,
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: InteractiveViewer(
+          maxScale: 5,
+          child: Center(child: Image.file(File(path), fit: BoxFit.contain)),
         ),
       ),
     );

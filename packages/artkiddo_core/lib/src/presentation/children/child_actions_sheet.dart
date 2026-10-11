@@ -299,11 +299,17 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
           DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(),
           ),
+          // While the unsaved count loads, the button says so instead of
+          // sitting greyed out without a reason.
           DialogConfirmButton(
-            label: busy ? l10n.commonDeleting : l10n.commonDelete,
+            label: busy
+                ? l10n.commonDeleting
+                : countPending
+                ? l10n.commonLoading
+                : l10n.commonDelete,
             destructive: true,
-            busy: busy,
-            onPressed: countPending ? null : _delete,
+            busy: busy || countPending,
+            onPressed: _delete,
           ),
         ],
       ),

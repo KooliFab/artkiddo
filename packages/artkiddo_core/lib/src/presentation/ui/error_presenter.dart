@@ -105,7 +105,7 @@ class ErrorPresenter {
       // member decision required.
       QuotaExceededFailure(:final resetsAt) => PresentedError(
         title: resetsAt != null
-            ? '${l10n.errorQuotaExceededTitle} (disponible à ${resetsAt.toLocal().hour.toString().padLeft(2, '0')}:${resetsAt.toLocal().minute.toString().padLeft(2, '0')})'
+            ? l10n.errorQuotaExceededTitleUntil(resetsAt.toLocal())
             : l10n.errorQuotaExceededTitle,
         body: l10n.errorQuotaExceededBody,
         actionLabel: l10n.commonRetry,

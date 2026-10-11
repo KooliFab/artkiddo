@@ -25,7 +25,12 @@ Future<ActionResult<String>?> pushChildEditor(
   final width = MediaQuery.of(context).size.width;
   if (AppBreakpoints.isCompact(width)) {
     return Navigator.of(context).push<ActionResult<String>>(
-      MaterialPageRoute(builder: (_) => ChildEditorScreen(args: args)),
+      // A form that is saved or dismissed: presented modally (slides up,
+      // closes with X), the same in create and edit mode.
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ChildEditorScreen(args: args),
+      ),
     );
   }
   return showDialog<ActionResult<String>>(
@@ -111,7 +116,6 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(childEditorControllerProvider(widget.args));
     final isCreate = widget.args.childId == null;
-    final isSheet = widget.args.presentedAsSheet;
 
     if (_nameController.text != state.name &&
         !_nameController.value.composing.isValid) {
@@ -149,29 +153,26 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
               : null)
         : null;
 
-    final canSave =
-        state.isDirty &&
-        state.name.trim().isNotEmpty &&
-        state.birthDate != null &&
-        !state.loading;
+    final missingRequired =
+        state.name.trim().isEmpty || state.birthDate == null;
+    final canSave = state.isDirty && !missingRequired && !state.loading;
 
     return DiscardGuard(
       isDirty: state.isDirty && !state.save.isBusy,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: !isSheet && isCreate,
+          automaticallyImplyLeading: false,
           title: Text(
             isCreate
                 ? l10n.childEditorTitleCreate
                 : l10n.childEditorTitleArtist,
           ),
           actions: [
-            if (!isCreate || isSheet)
-              IconButton(
-                tooltip: l10n.commonClose,
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.close),
-              ),
+            IconButton(
+              tooltip: l10n.commonClose,
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.close),
+            ),
           ],
         ),
         body: state.loading
@@ -311,20 +312,26 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
                                 color: AppColors.inkMuted,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.s6),
-                            AsyncActionButton(
-                              action: state.save,
-                              idleLabel: l10n.commonSave,
-                              busyLabel: l10n.commonSaving,
-                              fullWidth: true,
-                              enabled: canSave,
-                              disabledReason: canSave
-                                  ? null
-                                  : l10n.childEditorSaveDisabledReason,
-                              onPressed: _handleSave,
-                            ),
                           ],
                         ),
+                      ),
+                    ),
+                    // Pinned under the form, like the capture save bar, so
+                    // it stays reachable above the keyboard.
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.s4),
+                      child: AsyncActionButton(
+                        action: state.save,
+                        idleLabel: l10n.commonSave,
+                        busyLabel: l10n.commonSaving,
+                        fullWidth: true,
+                        enabled: canSave,
+                        disabledReason: canSave
+                            ? null
+                            : (missingRequired
+                                  ? l10n.childEditorSaveDisabledReason
+                                  : l10n.commonNoChanges),
+                        onPressed: _handleSave,
                       ),
                     ),
                   ],

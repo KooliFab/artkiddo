@@ -237,6 +237,7 @@ class _ArtistPickerSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SheetHandle(),
             Text(l10n.artworkShareGallery, style: AppTypography.h2),
             const SizedBox(height: AppSpacing.s1),
             Text(
@@ -284,15 +285,16 @@ class _CaptureSourceSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SheetHandle(),
             Text(l10n.galleryAddArtwork, style: AppTypography.h2),
             const SizedBox(height: AppSpacing.s2),
-            _CaptureSourceRow(
+            CaptureSourceRow(
               icon: Icons.camera_alt_outlined,
               title: l10n.captureSourceCameraTitle,
               subtitle: l10n.captureSourceCameraBody,
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
-            _CaptureSourceRow(
+            CaptureSourceRow(
               icon: Icons.photo_library_outlined,
               title: l10n.captureSourceGalleryTitle,
               subtitle: l10n.captureSourceGalleryBody,
@@ -303,30 +305,4 @@ class _CaptureSourceSheet extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CaptureSourceRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  const _CaptureSourceRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    minVerticalPadding: AppSpacing.s3,
-    leading: Icon(icon, size: 28, color: AppColors.accent),
-    title: Text(title, style: AppTypography.bodyStrong),
-    subtitle: Text(
-      subtitle,
-      style: AppTypography.body.copyWith(color: AppColors.inkMuted),
-    ),
-    onTap: onTap,
-  );
 }

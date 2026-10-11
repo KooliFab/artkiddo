@@ -493,6 +493,14 @@ class CaptureController extends Notifier<CaptureState> {
     state = state.copyWith(step: CaptureStep.review);
   }
 
+  /// Step 2 -> step 3 for a draft that already went through step 3: the
+  /// photo, artist, story and voice are all kept. [confirmPhoto] would
+  /// re-run the artist preselection instead.
+  void resumeDetails() {
+    if (state.draft == null) return;
+    state = state.copyWith(step: CaptureStep.details);
+  }
+
   /// Full draft abandonment confirmed from step 3. The temporary picker
   /// file was only ever deleted on a *successful* save — an abandoned
   /// draft left its file behind in the OS temp directory.

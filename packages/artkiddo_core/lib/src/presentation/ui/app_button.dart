@@ -193,10 +193,20 @@ class AsyncActionButton extends StatelessWidget {
               variant == AppButtonVariant.destructive
           ? 48.0
           : 52.0;
-      final busyBackground = variant == AppButtonVariant.share
-          ? AppColors.share
-          : AppColors.accent;
-      final busyForeground = AppColors.onAccent;
+      // Busy keeps the variant's look: only the label and spinner change.
+      final busyBackground = switch (variant) {
+        AppButtonVariant.primary => AppColors.accent,
+        AppButtonVariant.share => AppColors.share,
+        AppButtonVariant.secondary => AppColors.surface,
+        _ => Colors.transparent,
+      };
+      final busyForeground = switch (variant) {
+        AppButtonVariant.primary ||
+        AppButtonVariant.share => AppColors.onAccent,
+        AppButtonVariant.secondary => AppColors.ink,
+        AppButtonVariant.tertiary => AppColors.accent,
+        AppButtonVariant.destructive => AppColors.danger,
+      };
       final content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -225,6 +235,9 @@ class AsyncActionButton extends StatelessWidget {
               elevation: 0,
               shadowColor: Colors.transparent,
               surfaceTintColor: Colors.transparent,
+              side: variant == AppButtonVariant.secondary
+                  ? const BorderSide(color: AppColors.borderStrong)
+                  : BorderSide.none,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadii.sm),
               ),

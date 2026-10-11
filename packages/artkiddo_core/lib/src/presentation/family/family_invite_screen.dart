@@ -405,6 +405,8 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
               ),
               DialogConfirmButton(
                 label: _impactFailed ? l10n.commonRetry : l10n.commonNext,
+                // Loading, not greyed out, while the impact is fetched.
+                busy: !_impactLoaded && !_impactFailed,
                 onPressed: _impactFailed
                     ? _loadImpact
                     : _impactLoaded && _impact?.isAlone != null
