@@ -12,6 +12,7 @@ import '../navigation/pending_intent.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 import '../ui/error_presenter.dart';
 import '../ui/state_block.dart';
 import 'share_controller.dart';
@@ -34,9 +35,6 @@ Future<void> showShareSheet(
     return showDialog<void>(
       context: context,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: _ShareSheetContent(args: args),
@@ -494,17 +492,12 @@ class _LinkRow extends ConsumerWidget {
           ),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(
+          child: AppButton(
+            label: revoking ? l10n.shareRevoking : l10n.shareRevoke,
+            variant: AppButtonVariant.destructive,
             onPressed: revoking
                 ? null
                 : () => _confirmRevoke(context, controller, link.id),
-            child: Text(
-              revoking ? l10n.shareRevoking : l10n.shareRevoke,
-              style: TextStyle(
-                fontFamily: AppTypography.family,
-                color: revoking ? AppColors.inkDisabled : AppColors.danger,
-              ),
-            ),
           ),
         ),
       ],
@@ -570,25 +563,20 @@ class _RevokeDialogState extends ConsumerState<_RevokeDialog> {
     return PopScope(
       canPop: !busy,
       child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         title: Text(l10n.shareRevokeTitle),
         content: Text(l10n.shareRevokeBody),
         actions: [
-          TextButton(
+          DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(),
-            child: Text(l10n.commonCancel),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: busy
-                ? null
-                : () {
-                    setState(() => _confirmed = true);
-                    widget.controller.revokeLink(widget.linkId);
-                  },
-            child: Text(busy ? l10n.shareRevoking : l10n.shareRevoke),
+          DialogConfirmButton(
+            label: busy ? l10n.shareRevoking : l10n.shareRevoke,
+            destructive: true,
+            busy: busy,
+            onPressed: () {
+              setState(() => _confirmed = true);
+              widget.controller.revokeLink(widget.linkId);
+            },
           ),
         ],
       ),

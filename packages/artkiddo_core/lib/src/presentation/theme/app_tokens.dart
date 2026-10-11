@@ -36,6 +36,23 @@ abstract final class AppColors {
   static const immersive = Color(0xFF1D1915);
   static const focusRing = Color(0xFFA84732);
   static const disabledBg = Color(0x00FFFFFF);
+
+  /// Foreground on photo, camera and other immersive (dark) surfaces.
+  static const onImmersive = Color(0xFFFFFFFF);
+  static const onImmersiveMuted = Color(0xB3FFFFFF);
+  static const onImmersiveSubtle = Color(0x8AFFFFFF);
+
+  /// The camera viewfinder stays pure black, unlike the warm [immersive].
+  static const cameraBackdrop = Color(0xFF000000);
+
+  /// Blurred backdrop behind the gallery peek preview.
+  static const peekScrim = Color(0xA6000000);
+
+  /// Elevation shadow for Material surfaces that take a single color.
+  static const shadow = Color(0x33000000);
+
+  /// A QR code needs a pure white quiet zone to scan reliably.
+  static const qrBackground = Color(0xFFFFFFFF);
 }
 
 abstract final class AppSpacing {
@@ -52,6 +69,8 @@ abstract final class AppSpacing {
 }
 
 abstract final class AppRadii {
+  /// Progress tracks, sheet handles and other thin bars.
+  static const xs = 4.0;
   static const sm = 14.0;
   static const artwork = 10.0;
   static const lg = 28.0;
@@ -68,13 +87,48 @@ abstract final class AppShadows {
   static const lg = [
     BoxShadow(color: Color(0x1F2D2A26), blurRadius: 32, offset: Offset(0, 12)),
   ];
+
+  /// Small badge floating over an artwork thumbnail.
+  static const badge = [
+    BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1)),
+  ];
+
+  /// Pill or round button floating over content.
+  static const floating = [
+    BoxShadow(color: Color(0x1F000000), blurRadius: 12, offset: Offset(0, 4)),
+  ];
+  static const floatingRound = [
+    BoxShadow(color: Color(0x2E000000), blurRadius: 8, offset: Offset(0, 3)),
+  ];
+
+  /// The gallery peek card and its action pill, over [AppColors.peekScrim].
+  static const peekCard = [
+    BoxShadow(
+      color: Color(0x66000000),
+      blurRadius: 32,
+      spreadRadius: 2,
+      offset: Offset(0, 12),
+    ),
+  ];
+  static const peekPill = [
+    BoxShadow(color: Color(0x40000000), blurRadius: 16, offset: Offset(0, 4)),
+  ];
+
+  /// Keeps text legible when it sits directly on a photo.
+  static const textOnImage = [Shadow(color: Color(0x8A000000), blurRadius: 8)];
+  static const textOnImageStrong = [
+    Shadow(color: Color(0xDD000000), blurRadius: 8),
+  ];
 }
 
 /// Text styles. Font family attached by [AppTheme].
 abstract final class AppTypography {
   /// Explicit on every token so locally supplied styles cannot fall back to
   /// the platform's default font family instead of the ArtKiddo voice.
-  static const family = 'Playpen Sans';
+  ///
+  /// Package-qualified because the font asset is declared by this package:
+  /// a bare family name only resolves in an app that re-declares the font.
+  static const family = 'packages/artkiddo_core/Playpen Sans';
 
   static const display = TextStyle(
     fontFamily: family,
@@ -146,6 +200,16 @@ abstract final class AppTypography {
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w400,
+    fontFamilyFallback: ['Menlo', 'monospace'],
+  );
+
+  /// A short code the user reads aloud or copies, such as a family invite.
+  static const code = TextStyle(
+    fontFamily: family,
+    fontSize: 28,
+    height: 36 / 28,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 4,
     fontFamilyFallback: ['Menlo', 'monospace'],
   );
 }

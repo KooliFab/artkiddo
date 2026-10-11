@@ -10,6 +10,7 @@ import '../../local/storage/vault_rescue_export.dart';
 import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 import '../utils/app_settings_launcher.dart';
 import '../ui/discard_guard.dart';
 import '../ui/error_presenter.dart';
@@ -623,8 +624,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               child: selected != null
                   ? Text(
                       selected.name[0].toUpperCase(),
-                      style: const TextStyle(
-                        fontFamily: AppTypography.family,
+                      style: AppTypography.body.copyWith(
                         color: AppColors.accentPressed,
                       ),
                     )
@@ -761,7 +761,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             ),
             const SizedBox(height: AppSpacing.s3),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadii.xs),
               child: LinearProgressIndicator(
                 value: state.soundLevel.clamp(0.05, 1.0),
                 backgroundColor: AppColors.surfaceSunken,
@@ -778,12 +778,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                   label: Text(l10n.captureAudioCancel),
                   onPressed: _controller.cancelRecording,
                 ),
-                FilledButton.icon(
-                  icon: const Icon(Icons.stop, size: 18),
-                  label: Text(l10n.captureAudioStop),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                  ),
+                AppButton(
+                  label: l10n.captureAudioStop,
+                  icon: Icons.stop,
                   onPressed: _controller.stopRecording,
                 ),
               ],
@@ -822,6 +819,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             Row(
               children: [
                 IconButton.filled(
+                  tooltip: state.isPlayingAudio
+                      ? l10n.captureAudioPause
+                      : l10n.captureAudioPlay,
                   icon: Icon(
                     state.isPlayingAudio ? Icons.pause : Icons.play_arrow,
                   ),
@@ -837,7 +837,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(AppRadii.xs),
                         child: LinearProgressIndicator(
                           value:
                               (draft.audioDurationMs != null &&
@@ -872,32 +872,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               runSpacing: AppSpacing.s1,
               children: [
                 TextButton.icon(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                    ),
-                  ),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: Text(l10n.captureAudioReRecord),
                   onPressed: () => _handleReRecord(context, l10n),
                 ),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                    ),
+                    foregroundColor: AppColors.danger,
                   ),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: AppColors.danger,
-                  ),
-                  label: Text(
-                    l10n.captureAudioDelete,
-                    style: const TextStyle(color: AppColors.danger),
-                  ),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: Text(l10n.captureAudioDelete),
                   onPressed: () => _handleDeleteAudio(context, l10n),
                 ),
               ],
@@ -927,12 +911,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.s3),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.mic, color: AppColors.accent),
-              label: Text(
-                l10n.captureAudioRecord,
-                style: const TextStyle(color: AppColors.accent),
-              ),
+            AppButton(
+              label: l10n.captureAudioRecord,
+              icon: Icons.mic,
+              variant: AppButtonVariant.secondary,
+              fullWidth: true,
               onPressed: _controller.startRecording,
             ),
           ],
@@ -945,26 +928,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Text(l10n.captureAudioReRecordConfirmTitle),
-        content: Text(l10n.captureAudioReRecordConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.captureAudioReRecord),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.captureAudioReRecordConfirmTitle,
+      body: l10n.captureAudioReRecordConfirmBody,
+      confirmLabel: l10n.captureAudioReRecord,
     );
     if (confirmed == true) {
       await _controller.startRecording();
@@ -975,26 +943,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Text(l10n.captureAudioDeleteConfirmTitle),
-        content: Text(l10n.captureAudioDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.captureAudioDeleteConfirmTitle,
+      body: l10n.captureAudioDeleteConfirmBody,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
     );
     if (confirmed == true) {
       await _controller.deleteAudio();

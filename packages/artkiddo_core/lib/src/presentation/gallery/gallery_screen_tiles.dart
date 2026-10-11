@@ -265,7 +265,7 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
       height: height.clamp(4.0, 16.0),
       decoration: BoxDecoration(
         color: AppColors.accent,
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(AppRadii.xs),
       ),
     );
   }
@@ -286,13 +286,7 @@ class _TileAudioBadge extends StatelessWidget {
           color: AppColors.surface.withValues(alpha: 0.35),
           width: 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppShadows.badge,
       ),
       child: const Center(
         child: Icon(Icons.mic_rounded, size: 14, color: AppColors.surface),

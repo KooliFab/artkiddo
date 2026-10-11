@@ -185,8 +185,8 @@ void main() {
         ),
         findsOneWidget,
       );
-      final next = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Suivant'),
+      final next = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Suivant'),
       );
       expect(next.onPressed, isNull);
       expect(find.text('Rejoindre et tout supprimer'), findsNothing);
@@ -217,11 +217,13 @@ void main() {
       await tester.pumpAndSettle();
 
       final destructiveButtonFinder = find.widgetWithText(
-        TextButton,
+        FilledButton,
         'Rejoindre et tout supprimer',
       );
       expect(destructiveButtonFinder, findsOneWidget);
-      final disabledButton = tester.widget<TextButton>(destructiveButtonFinder);
+      final disabledButton = tester.widget<FilledButton>(
+        destructiveButtonFinder,
+      );
       expect(
         disabledButton.onPressed,
         isNull,
@@ -231,7 +233,9 @@ void main() {
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
 
-      final enabledButton = tester.widget<TextButton>(destructiveButtonFinder);
+      final enabledButton = tester.widget<FilledButton>(
+        destructiveButtonFinder,
+      );
       expect(enabledButton.onPressed, isNotNull);
 
       await tester.tap(find.text('Annuler'));

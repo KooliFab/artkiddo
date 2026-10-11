@@ -144,7 +144,9 @@ class AppButton extends StatelessWidget {
             children: [
               Icon(icon, size: 20),
               const SizedBox(width: AppSpacing.s2),
-              Text(label),
+              // Wraps instead of overflowing on narrow widths or large
+              // text scales.
+              Flexible(child: Text(label, textAlign: TextAlign.center)),
             ],
           );
 

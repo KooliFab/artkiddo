@@ -65,9 +65,6 @@ class _DeleteArtworkDialogState extends ConsumerState<_DeleteArtworkDialog> {
     return PopScope(
       canPop: !busy,
       child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         title: Text(l10n.artworkDeleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -95,14 +92,14 @@ class _DeleteArtworkDialogState extends ConsumerState<_DeleteArtworkDialog> {
           ],
         ),
         actions: [
-          TextButton(
+          DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: busy ? null : _delete,
-            child: Text(busy ? l10n.commonDeleting : l10n.commonDelete),
+          DialogConfirmButton(
+            label: busy ? l10n.commonDeleting : l10n.commonDelete,
+            destructive: true,
+            busy: busy,
+            onPressed: _delete,
           ),
         ],
       ),

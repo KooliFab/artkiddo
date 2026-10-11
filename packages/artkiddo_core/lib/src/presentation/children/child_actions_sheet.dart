@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../async_action.dart';
 import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
+import '../ui/app_dialog.dart';
 import '../ui/error_presenter.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../providers/core_providers.dart';
@@ -70,10 +72,7 @@ Future<void> showChildActionsSheet(
         value: ChildAction.delete,
         child: Text(
           l10n.childrenActionsDelete,
-          style: const TextStyle(
-            fontFamily: AppTypography.family,
-            color: AppColors.danger,
-          ),
+          style: const TextStyle(color: AppColors.danger),
         ),
       ),
     ],
@@ -152,17 +151,7 @@ class _ChildActionsSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpacing.s4),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Row(
               children: [
                 CircleAvatar(
@@ -210,17 +199,10 @@ class _ChildActionsSheet extends ConsumerWidget {
             ListTile(
               contentPadding: EdgeInsets.zero,
               minVerticalPadding: 16,
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppColors.danger,
-              ),
-              title: Text(
-                l10n.childrenActionsDelete,
-                style: const TextStyle(
-                  fontFamily: AppTypography.family,
-                  color: AppColors.danger,
-                ),
-              ),
+              textColor: AppColors.danger,
+              iconColor: AppColors.danger,
+              leading: const Icon(Icons.delete_outline),
+              title: Text(l10n.childrenActionsDelete),
               onTap: () => act(ChildAction.delete),
             ),
           ],
@@ -287,9 +269,6 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
     return PopScope(
       canPop: !busy,
       child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         title: Text(l10n.childrenDeleteTitle(widget.child.name)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -300,10 +279,8 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
               const SizedBox(height: AppSpacing.s3),
               Text(
                 l10n.unsavedArtworksWarning(unsaved),
-                style: const TextStyle(
-                  fontFamily: AppTypography.family,
+                style: AppTypography.bodyStrong.copyWith(
                   color: AppColors.danger,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -319,16 +296,14 @@ class _DeleteChildDialogState extends ConsumerState<_DeleteChildDialog> {
           ],
         ),
         actions: [
-          TextButton(
+          DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(),
-            child: Text(l10n.commonCancel),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: (busy || countPending) ? null : _delete,
-            child: _state.isBusy
-                ? Text(l10n.commonDeleting)
-                : Text(l10n.commonDelete),
+          DialogConfirmButton(
+            label: busy ? l10n.commonDeleting : l10n.commonDelete,
+            destructive: true,
+            busy: busy,
+            onPressed: countPending ? null : _delete,
           ),
         ],
       ),

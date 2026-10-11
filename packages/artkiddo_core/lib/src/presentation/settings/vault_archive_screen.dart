@@ -196,7 +196,7 @@ class _VaultArchiveScreenState extends ConsumerState<VaultArchiveScreen> {
                       _Tone.warning => AppColors.ochreSurface,
                       _Tone.error => AppColors.accentSurface,
                     },
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Text(_message!, style: AppTypography.body),
                 ),

@@ -237,6 +237,9 @@ class _ArtworkAudioPlayerCardState
             Row(
               children: [
                 IconButton.filled(
+                  tooltip: _isPlaying
+                      ? l10n.captureAudioPause
+                      : l10n.captureAudioPlay,
                   icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
                   onPressed: _togglePlayback,
                   style: IconButton.styleFrom(
@@ -250,7 +253,7 @@ class _ArtworkAudioPlayerCardState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(AppRadii.xs),
                         child: LinearProgressIndicator(
                           value: durationMs > 0
                               ? (_positionMs / durationMs).clamp(0.0, 1.0)
@@ -282,32 +285,14 @@ class _ArtworkAudioPlayerCardState
             runSpacing: AppSpacing.s1,
             children: [
               TextButton.icon(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                  ),
-                ),
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(l10n.captureAudioReRecord),
                 onPressed: widget.onReRecord,
               ),
               TextButton.icon(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: AppColors.danger,
-                ),
-                label: Text(
-                  l10n.captureAudioDelete,
-                  style: const TextStyle(color: AppColors.danger),
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: Text(l10n.captureAudioDelete),
                 onPressed: widget.onDelete,
               ),
             ],
@@ -604,7 +589,7 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
                     ),
                     const SizedBox(height: AppSpacing.s3),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadii.xs),
                       child: LinearProgressIndicator(
                         value: _soundLevel.clamp(0.05, 1.0),
                         backgroundColor: AppColors.surfaceSunken,
@@ -623,12 +608,9 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
                           label: Text(l10n.captureAudioCancel),
                           onPressed: _cancelRecording,
                         ),
-                        FilledButton.icon(
-                          icon: const Icon(Icons.stop, size: 18),
-                          label: Text(l10n.captureAudioStop),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                          ),
+                        AppButton(
+                          label: l10n.captureAudioStop,
+                          icon: Icons.stop,
                           onPressed: _stopRecording,
                         ),
                       ],
@@ -649,6 +631,9 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
                     Row(
                       children: [
                         IconButton.filled(
+                          tooltip: _isPlaying
+                              ? l10n.captureAudioPause
+                              : l10n.captureAudioPlay,
                           icon: Icon(
                             _isPlaying ? Icons.pause : Icons.play_arrow,
                           ),
@@ -664,7 +649,9 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(3),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadii.xs,
+                                ),
                                 child: LinearProgressIndicator(
                                   value:
                                       (_recordedDurationMs != null &&
@@ -707,24 +694,17 @@ class _AudioRecorderSheetState extends ConsumerState<_AudioRecorderSheet> {
                 ),
               ),
               const SizedBox(height: AppSpacing.s4),
-              FilledButton(
+              AppButton(
+                label: _saving ? l10n.commonSaving : l10n.commonSave,
+                fullWidth: true,
                 onPressed: _saving ? null : _saveAudio,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
-                ),
-                child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
               ),
             ] else ...[
-              OutlinedButton.icon(
-                icon: const Icon(Icons.mic, color: AppColors.accent),
-                label: Text(
-                  l10n.captureAudioRecord,
-                  style: const TextStyle(color: AppColors.accent),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
-                ),
+              AppButton(
+                label: l10n.captureAudioRecord,
+                icon: Icons.mic,
+                variant: AppButtonVariant.secondary,
+                fullWidth: true,
                 onPressed: _startRecording,
               ),
             ],

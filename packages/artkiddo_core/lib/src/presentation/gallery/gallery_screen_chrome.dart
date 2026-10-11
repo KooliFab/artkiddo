@@ -98,13 +98,7 @@ class _ScrollMonthLabel extends StatelessWidget {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadii.full),
                       border: Border.all(color: AppColors.border),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1F000000),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: AppShadows.floating,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

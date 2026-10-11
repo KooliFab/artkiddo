@@ -127,13 +127,14 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.cameraBackdrop,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.cameraBackdrop,
+        foregroundColor: AppColors.onImmersive,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: l10n.commonClose,
           onPressed: () =>
               Navigator.of(context).pop(const CameraCaptureCancelled()),
         ),
@@ -158,7 +159,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
           final controller = _controller;
           if (controller == null || !controller.value.isInitialized) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              child: CircularProgressIndicator(color: AppColors.onImmersive),
             );
           }
           return Stack(
@@ -177,8 +178,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
                       height: 72,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(color: Colors.white54, width: 4),
+                        color: AppColors.onImmersive,
+                        border: Border.all(
+                          color: AppColors.onImmersiveSubtle,
+                          width: 4,
+                        ),
                       ),
                       child: _capturing
                           ? const Padding(
@@ -211,7 +215,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
             Text(
               body,
               textAlign: TextAlign.center,
-              style: AppTypography.body.copyWith(color: Colors.white),
+              style: AppTypography.body.copyWith(color: AppColors.onImmersive),
             ),
             if (showSettings) ...[
               const SizedBox(height: AppSpacing.s4),

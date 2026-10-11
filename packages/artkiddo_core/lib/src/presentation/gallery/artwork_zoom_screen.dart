@@ -95,7 +95,7 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.immersive.withValues(alpha: 0.7),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppColors.onImmersive),
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: l10n.commonClose,
@@ -103,10 +103,8 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
         ),
         title: Text(
           l10n.artworkTitle(widget.childName),
-          style: const TextStyle(
-            fontFamily: AppTypography.family,
-            color: Colors.white70,
-            fontSize: 12,
+          style: AppTypography.caption.copyWith(
+            color: AppColors.onImmersiveMuted,
           ),
         ),
       ),
@@ -115,7 +113,7 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              child: CircularProgressIndicator(color: AppColors.onImmersive),
             );
           }
           final artwork = snapshot.data;
@@ -158,7 +156,9 @@ class _ArtworkZoomScreenState extends ConsumerState<ArtworkZoomScreen> {
                       // covered/original cycle.
                       enablePanAlways: true,
                       loadingBuilder: (context, event) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
+                        child: CircularProgressIndicator(
+                          color: AppColors.onImmersive,
+                        ),
                       ),
                       errorBuilder: (context, error, stack) =>
                           _ZoomMessage(text: l10n.artworkZoomDecodeFailed),
@@ -234,13 +234,13 @@ class _ZoomControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
+            icon: const Icon(Icons.add, color: AppColors.onImmersive),
             tooltip: l10n.artworkZoomIn,
             onPressed: onZoomIn,
           ),
           const SizedBox(height: AppSpacing.s1),
           IconButton(
-            icon: const Icon(Icons.remove, color: Colors.white),
+            icon: const Icon(Icons.remove, color: AppColors.onImmersive),
             tooltip: l10n.artworkZoomOut,
             onPressed: onZoomOut,
           ),
@@ -259,10 +259,7 @@ class _ZoomMessage extends StatelessWidget {
     return Center(
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: AppTypography.family,
-          color: Colors.white70,
-        ),
+        style: AppTypography.body.copyWith(color: AppColors.onImmersiveMuted),
       ),
     );
   }

@@ -81,13 +81,7 @@ class ArtworkCard extends StatelessWidget {
                                   ),
                                   width: 1,
                                 ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x33000000),
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
+                                boxShadow: AppShadows.badge,
                               ),
                               child: const Center(
                                 child: Icon(
