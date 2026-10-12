@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-/// Exact design tokens transposed from reference design tokens.
+/// Exact design tokens, mirrored from `design/tokens.json` (the single source
+/// the web site also generates its CSS from). `design_tokens_test.dart` fails
+/// when the two disagree: change both together.
 ///
 /// Values are exact, not intentions. Do not invent new colors, spacing or
 /// radii outside this set.
@@ -24,18 +26,30 @@ abstract final class AppColors {
   static const lavenderInk = Color(0xFF59476F);
   static const ochre = Color(0xFFD49A28);
   static const ochreSurface = Color(0xFFF6EBD0);
+
+  /// Legible ochre text on [ochreSurface] (5.7:1). [ochre] itself is
+  /// decorative only (2.2:1 on paper).
+  static const ochreInk = Color(0xFF7A5410);
   static const border = Color(0xFFDED4C8);
-  static const borderStrong = Color(0xFFB7AA9A);
+  /// Control outlines (fields, secondary buttons, chips): 3.6:1 on
+  /// [surface], 3.3:1 on [paper] — WCAG 1.4.11 asks for 3:1.
+  static const borderStrong = Color(0xFF928372);
   static const danger = Color(0xFFB33B32);
   static const dangerSurface = Color(0xFFF7E7E4);
-  static const success = Color(0xFF4C6B55);
-  static const successSurface = Color(0xFFE6EEE6);
+  /// Success is the sage pair: aliases, never copies.
+  static const success = sageInk;
+  static const successSurface = sageSurface;
   static const warning = Color(0xFF8A5A00);
   static const warningSurface = Color(0xFFFBF0DC);
   static const overlay = Color(0x7A27221D);
   static const immersive = Color(0xFF1D1915);
-  static const focusRing = Color(0xFFA84732);
+  static const focusRing = accent;
   static const disabledBg = Color(0x00FFFFFF);
+
+  /// Ink-tinted veils, never pure black, on warm (non-photo) surfaces.
+  static const scrimSoft = Color(0x1F27221D);
+  static const scrim = Color(0x3327221D);
+  static const scrimStrong = Color(0x6627221D);
 
   /// Foreground on photo, camera and other immersive (dark) surfaces.
   static const onImmersive = Color(0xFFFFFFFF);
@@ -49,10 +63,33 @@ abstract final class AppColors {
   static const peekScrim = Color(0xA6000000);
 
   /// Elevation shadow for Material surfaces that take a single color.
-  static const shadow = Color(0x33000000);
+  static const shadow = scrim;
 
   /// A QR code needs a pure white quiet zone to scan reliably.
   static const qrBackground = Color(0xFFFFFFFF);
+}
+
+/// One colour pair per child, assigned by creation order (index modulo 5):
+/// terracotta, blue, sage, lavender, ochre. Every ink passes 4.5:1 on its
+/// surface. Used on the child avatar and the artwork badge.
+abstract final class AppChildColors {
+  static const surfaces = [
+    AppColors.accentSurface,
+    AppColors.shareSurface,
+    AppColors.sageSurface,
+    AppColors.lavenderSurface,
+    AppColors.ochreSurface,
+  ];
+  static const inks = [
+    AppColors.accentPressed,
+    AppColors.sharePressed,
+    AppColors.sageInk,
+    AppColors.lavenderInk,
+    AppColors.ochreInk,
+  ];
+
+  static Color surface(int index) => surfaces[index % surfaces.length];
+  static Color ink(int index) => inks[index % inks.length];
 }
 
 abstract final class AppSpacing {
@@ -73,6 +110,9 @@ abstract final class AppRadii {
   static const xs = 4.0;
   static const sm = 14.0;
   static const artwork = 10.0;
+
+  /// Cards (artwork, child, state block). Sheets and dialogs keep [lg].
+  static const md = 20.0;
   static const lg = 28.0;
   static const full = 999.0;
 }
@@ -81,21 +121,20 @@ abstract final class AppShadows {
   static const sm = [
     BoxShadow(color: Color(0x1427221D), blurRadius: 12, offset: Offset(0, 4)),
   ];
-  static const md = [
-    BoxShadow(color: Color(0x142D2A26), blurRadius: 12, offset: Offset(0, 4)),
-  ];
+  /// Merged into [sm]: the two only differed by their ink.
+  static const md = sm;
   static const lg = [
-    BoxShadow(color: Color(0x1F2D2A26), blurRadius: 32, offset: Offset(0, 12)),
+    BoxShadow(color: Color(0x1F27221D), blurRadius: 32, offset: Offset(0, 12)),
   ];
 
   /// Small badge floating over an artwork thumbnail.
   static const badge = [
-    BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1)),
+    BoxShadow(color: AppColors.scrim, blurRadius: 4, offset: Offset(0, 1)),
   ];
 
   /// Pill or round button floating over content.
   static const floating = [
-    BoxShadow(color: Color(0x1F000000), blurRadius: 12, offset: Offset(0, 4)),
+    BoxShadow(color: AppColors.scrimSoft, blurRadius: 12, offset: Offset(0, 4)),
   ];
   static const floatingRound = [
     BoxShadow(color: Color(0x2E000000), blurRadius: 8, offset: Offset(0, 3)),
@@ -140,14 +179,14 @@ abstract final class AppTypography {
   static const h1 = TextStyle(
     fontFamily: family,
     fontSize: 28,
-    height: 32 / 28,
+    height: 34 / 28,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.2,
   );
   static const h2 = TextStyle(
     fontFamily: family,
     fontSize: 22,
-    height: 26 / 22,
+    height: 28 / 22,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.1,
   );
@@ -182,10 +221,11 @@ abstract final class AppTypography {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
   );
+  /// 13 px floor: Playpen is a handwriting face and gets fragile below it.
   static const caption = TextStyle(
     fontFamily: family,
-    fontSize: 12,
-    height: 16 / 12,
+    fontSize: 13,
+    height: 18 / 13,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.1,
   );
@@ -195,22 +235,27 @@ abstract final class AppTypography {
     height: 20 / 15,
     fontWeight: FontWeight.w700,
   );
+  /// A real monospace face: system Menlo on Apple platforms, the
+  /// platform `monospace` elsewhere. Playpen has no fixed-width digits.
+  static const monoFamily = 'Menlo';
+  static const monoFallback = ['Courier', 'monospace'];
+
   static const mono = TextStyle(
-    fontFamily: family,
+    fontFamily: monoFamily,
+    fontFamilyFallback: monoFallback,
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w400,
-    fontFamilyFallback: ['Menlo', 'monospace'],
   );
 
   /// A short code the user reads aloud or copies, such as a family invite.
   static const code = TextStyle(
-    fontFamily: family,
+    fontFamily: monoFamily,
+    fontFamilyFallback: monoFallback,
     fontSize: 28,
     height: 36 / 28,
     fontWeight: FontWeight.w700,
     letterSpacing: 4,
-    fontFamilyFallback: ['Menlo', 'monospace'],
   );
 }
 
@@ -219,7 +264,17 @@ abstract final class AppMotion {
   static const standard = Duration(milliseconds: 200);
   static const page = Duration(milliseconds: 280);
   static const highlight = Duration(milliseconds: 1200);
+
+  /// One beat of a looping indicator (the audio equalizer on a tile).
+  static const pulse = Duration(milliseconds: 800);
+
+  /// How long transient chrome (the scroll month pill) lingers once
+  /// scrolling stops.
+  static const linger = Duration(seconds: 1);
   static const snackBar = Duration(seconds: 4);
+
+  /// A snack bar the user must read in full (an outcome they did not expect).
+  static const snackBarLong = Duration(seconds: 8);
   static const curve = Curves.easeOutCubic;
   static const pageCurve = Curves.easeInOutCubic;
 }
@@ -233,6 +288,36 @@ abstract final class AppBreakpoints {
   static bool isCompact(double width) => width < 600;
   static bool isMedium(double width) => width >= 600 && width < 840;
   static bool isExpanded(double width) => width >= 840;
+}
+
+/// Component dimensions shared by several widgets.
+abstract final class AppSizes {
+  /// Filled buttons (primary, secondary, share).
+  static const button = 52.0;
+
+  /// Text-like buttons (tertiary, destructive); also the minimum tap target.
+  static const buttonText = 48.0;
+
+  /// Painted height of a filter chip; its hit area extends to 48.
+  static const chip = 40.0;
+
+  /// Child avatar diameter.
+  static const avatar = 44.0;
+
+  /// Compact child avatar inside a picker row.
+  static const avatarSmall = 36.0;
+
+  /// Round badge floating over an artwork thumbnail.
+  static const badge = 26.0;
+
+  /// Full-width status banner (offline).
+  static const banner = 44.0;
+
+  /// Camera shutter button.
+  static const shutter = 72.0;
+
+  /// Bottom inset that keeps the last list item clear of an extended FAB.
+  static const fabClearance = 104.0;
 }
 
 const double kMinTapTarget = 48.0;

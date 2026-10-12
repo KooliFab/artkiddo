@@ -23,12 +23,18 @@ NAMES=(
   'Material black/white (use AppColors)'
   'raw font size (use AppTypography)'
   'raw radius (use AppRadii)'
+  'raw spacing in EdgeInsets (use AppSpacing or AppSizes)'
+  'raw SizedBox gap (use AppSpacing)'
+  'raw animation duration (use AppMotion)'
 )
 PATTERNS=(
   '\bColor\(0x'
   '(?<![A-Za-z])Colors\.(white|black)'
   '\bfontSize:\s*\d'
   'Radius\.circular\(\d'
+  'EdgeInsets\.\w+\([^)]*(?<![\w.])\d'
+  'SizedBox\((width|height):\s*\d'
+  'duration:\s*(const\s+)?Duration\('
 )
 # Self-test: each pattern must match its own sample, otherwise a flag or
 # escaping mistake would make the whole guard pass without checking anything.
@@ -39,6 +45,9 @@ SAMPLES=(
   'color: Colors.white54,'
   'fontSize: 12,'
   'BorderRadius.circular(4),'
+  'padding: const EdgeInsets.symmetric(horizontal: 12),'
+  'const SizedBox(width: 3),'
+  'duration: const Duration(milliseconds: 800),'
 )
 sample_dir=$(mktemp -d)
 trap 'rm -rf "$sample_dir"' EXIT

@@ -566,7 +566,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           final wideImage = Container(
             color: AppColors.surfaceSunken,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.lg),
+              borderRadius: BorderRadius.circular(AppRadii.md),
               child: Image.file(
                 File(draft.temporaryImagePath),
                 fit: BoxFit.contain,
@@ -635,7 +635,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         child: Row(
           children: [
             CircleAvatar(
-              radius: 18,
+              radius: AppSizes.avatarSmall / 2,
               backgroundColor: AppColors.accentSurface,
               child: selected != null
                   ? Text(

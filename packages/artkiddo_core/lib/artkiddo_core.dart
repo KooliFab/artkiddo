@@ -60,6 +60,7 @@ export 'src/presentation/ui/adaptive_modal.dart';
 export 'src/presentation/ui/app_button.dart';
 export 'src/presentation/ui/app_dialog.dart';
 export 'src/presentation/ui/artwork_card.dart';
+export 'src/presentation/ui/child_colors.dart';
 export 'src/presentation/ui/child_row.dart';
 export 'src/presentation/ui/discard_guard.dart';
 export 'src/presentation/ui/error_presenter.dart';

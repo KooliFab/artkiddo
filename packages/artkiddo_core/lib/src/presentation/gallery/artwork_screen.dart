@@ -691,8 +691,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     return Tooltip(
       message: tooltip,
       child: Container(
-        width: 52,
-        height: 52,
+        width: AppSizes.button,
+        height: AppSizes.button,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,

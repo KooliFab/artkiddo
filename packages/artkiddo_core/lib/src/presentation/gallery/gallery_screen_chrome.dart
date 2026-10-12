@@ -156,8 +156,8 @@ class _ShareButton extends StatelessWidget {
       icon: const Icon(Icons.ios_share_outlined, size: 18),
       label: Text(l10n.shareGalleryHeading),
       style: TextButton.styleFrom(
-        minimumSize: const Size(48, kMinTapTarget),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
         foregroundColor: AppColors.onAccent,
         backgroundColor: AppColors.share,
         disabledForegroundColor: AppColors.inkDisabled,

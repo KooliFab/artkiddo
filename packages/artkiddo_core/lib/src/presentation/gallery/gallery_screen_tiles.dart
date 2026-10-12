@@ -1,5 +1,8 @@
 part of 'gallery_screen.dart';
 
+/// Gap between the bars of the tile's audio equalizer.
+const _equalizerBarGap = 3.0;
+
 class MosaicArtworkTile extends ConsumerStatefulWidget {
   final ArtworkTile tile;
   const MosaicArtworkTile({super.key, required this.tile});
@@ -226,7 +229,7 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
     super.initState();
     _anim = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: AppMotion.pulse,
     )..repeat(reverse: true);
   }
 
@@ -247,11 +250,11 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _bar(6 + 8 * v),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(14 - 8 * v),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(8 + 8 * (1 - v)),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(5 + 10 * v),
           ],
         );
@@ -277,8 +280,8 @@ class _TileAudioBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 26,
-      height: 26,
+      width: AppSizes.badge,
+      height: AppSizes.badge,
       decoration: BoxDecoration(
         color: AppColors.overlay,
         shape: BoxShape.circle,

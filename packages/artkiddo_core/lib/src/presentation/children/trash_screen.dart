@@ -90,7 +90,7 @@ class _TrashScreenState extends ConsumerState<TrashScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.trashRestoredOnlyHere),
-            duration: const Duration(seconds: 8),
+            duration: AppMotion.snackBarLong,
           ),
         );
       }
@@ -216,7 +216,7 @@ class _TrashRow extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s3),
       decoration: BoxDecoration(
         color: AppColors.surfaceSunken,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,7 +328,7 @@ class _TrashPreview extends ConsumerWidget {
       label: AppLocalizations.of(context).trashPreviewOpen,
       button: true,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: Image(
           image: image,
           height: 150,

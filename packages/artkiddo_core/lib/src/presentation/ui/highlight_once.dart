@@ -14,7 +14,7 @@ class HighlightOnce extends StatefulWidget {
     super.key,
     required this.active,
     required this.child,
-    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadii.lg)),
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadii.md)),
   });
 
   @override

@@ -7,6 +7,9 @@ import '../ui/app_button.dart';
 import '../utils/app_settings_launcher.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
+/// Insets the busy spinner so it sits inside the shutter's 4 px ring.
+const _shutterSpinnerInset = 22.0;
+
 /// Outcome of a [CameraCaptureScreen] round trip, popped back to whoever
 /// pushed it (`_acquirePhoto` in capture presentation).
 sealed class CameraCaptureOutcome {
@@ -174,8 +177,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
                   child: GestureDetector(
                     onTap: _capturing ? null : _capture,
                     child: Container(
-                      width: 72,
-                      height: 72,
+                      width: AppSizes.shutter,
+                      height: AppSizes.shutter,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.onImmersive,
@@ -186,7 +189,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
                       ),
                       child: _capturing
                           ? const Padding(
-                              padding: EdgeInsets.all(22),
+                              padding: EdgeInsets.all(_shutterSpinnerInset),
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : null,

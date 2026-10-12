@@ -100,7 +100,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               notification.metrics.viewportDimension / 2;
     } else if (notification is ScrollEndNotification) {
       _hideScrollMonth?.cancel();
-      _hideScrollMonth = Timer(const Duration(seconds: 1), () {
+      _hideScrollMonth = Timer(AppMotion.linger, () {
         if (mounted) _scrollMonthVisible.value = false;
       });
     }
@@ -513,7 +513,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     return tilesAsync.when(
       loading: () => [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(margin, AppSpacing.s3, margin, 104),
+          padding: EdgeInsets.fromLTRB(
+            margin,
+            AppSpacing.s3,
+            margin,
+            AppSizes.fabClearance,
+          ),
           sliver: SliverGrid(
             delegate: SliverChildBuilderDelegate(
               (_, _) => DecoratedBox(
@@ -604,7 +609,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         };
         return [
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(margin, AppSpacing.s3, margin, 104),
+            padding: EdgeInsets.fromLTRB(
+              margin,
+              AppSpacing.s3,
+              margin,
+              AppSizes.fabClearance,
+            ),
             sliver: SliverGrid(
               gridDelegate: delegate,
               delegate: SliverChildBuilderDelegate(
