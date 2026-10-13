@@ -4,8 +4,10 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../database/app_database.dart';
 import '../logging/log.dart';
+import 'atomic_file.dart';
 import 'image_derivatives.dart';
 import 'local_vault_paths.dart';
+import 'physical_delete.dart';
 
 /// Result of [LocalVault.generateDerivatives]: either relative path is
 /// `null` when that particular derivative could not be produced (a
@@ -53,12 +55,51 @@ class LocalVault {
   final Future<Directory> Function() _documentsDirProvider;
   final ImageDerivativeCodec _derivativeCodec;
 
+  /// File primitives behind every write; tests inject failures here.
+  final VaultFileOps _fileOps;
+
   LocalVault({
     Future<Directory> Function()? documentsDirProvider,
     ImageDerivativeCodec? derivativeCodec,
+    VaultFileOps? fileOps,
   }) : _documentsDirProvider =
            documentsDirProvider ?? getApplicationDocumentsDirectory,
-       _derivativeCodec = derivativeCodec ?? const ImageDerivativeCodec();
+       _derivativeCodec = derivativeCodec ?? const ImageDerivativeCodec(),
+       _fileOps = fileOps ?? const DiskVaultFileOps();
+
+  /// The single write path: temporary file, flush, size check, rename.
+  Future<void> _write(File dest, {List<int>? bytes, File? source}) =>
+      writeFileAtomically(dest, bytes: bytes, source: source, ops: _fileOps);
+
+  /// Removes every unfinished write (`*.tmp`) left by a crash or a kill.
+  /// A final file that no row references is **kept**: it may be the only copy
+  /// of a recording, and only an explicit cleanup may delete it.
+  /// Returns how many temporary files were removed.
+  Future<int> removeStaleTempFiles() async {
+    final docs = await _documentsDirProvider();
+    var removed = 0;
+    for (final folder in const [
+      artworksFolder,
+      derivativesFolder,
+      audioFolder,
+    ]) {
+      final dir = Directory(p.join(docs.path, folder));
+      if (!await dir.exists()) continue;
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is! File || !entity.path.endsWith(kTempFileSuffix)) continue;
+        try {
+          await entity.delete();
+          removed++;
+        } on FileSystemException catch (e, st) {
+          Log.e('Fichier temporaire non supprimé', e, st, 'Vault');
+        }
+      }
+    }
+    return removed;
+  }
 
   /// The documents directory used by this vault. Exposed for file-only
   /// recovery services that must share the vault's injected test location.
@@ -119,7 +160,7 @@ class LocalVault {
     final targetFileName = '$artworkId$extension';
     final targetFile = File(p.join(targetDir.path, targetFileName));
 
-    await sourceFile.copy(targetFile.path);
+    await _write(targetFile, source: sourceFile);
 
     // Store relative path (e.g. "artworks/uuid.jpg") so it survives
     // app container migrations.
@@ -137,7 +178,7 @@ class LocalVault {
   /// already failed or never ran. Removes every original and
   /// derivative image and audio recording this vault holds; a missing
   /// directory is not an error (idempotent, same discipline as
-  /// [deleteFile]). Does not touch the Drift database — the caller is
+  /// [_removeFile]). Does not touch the Drift database — the caller is
   /// responsible for clearing [AppDatabase]'s own tables alongside
   /// this, since this class has no reference to it.
   Future<void> eraseEverything() async {
@@ -168,18 +209,23 @@ class LocalVault {
     }
   }
 
-  /// Deletes a file from the vault. A missing file is not an error
-  /// (idempotent). Throws if the file exists but cannot be removed.
-  Future<void> deleteFile(String relativePath) async {
+  /// Raw removal of a vault file. A missing file is not an error
+  /// (idempotent); throws if it exists but cannot be removed. Never call it
+  /// directly: [deleteFileOrEnqueueCleanup] and [retryPendingCleanups] go
+  /// through [deleteVaultFileIfUnreferenced], which checks the references
+  /// first.
+  Future<void> _removeFile(String relativePath) async {
     final file = await resolveFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }
   }
 
-  /// Deletes a file, recording a [PendingFileCleanupsTable] entry
-  /// instead of throwing when the deletion fails. This is the
-  /// recovery strategy required by the durability contract: a failed
+  /// The one physical deletion of a vault file: removes it unless something
+  /// still references it ([deleteVaultFileIfUnreferenced]). A failed removal
+  /// or a still-referenced file records a [PendingFileCleanupsTable] entry
+  /// instead of throwing, so the cleanup is retried at the next start. This
+  /// is the recovery strategy required by the durability contract: a failed
   /// file cleanup must never turn an otherwise-successful durable
   /// operation into a failure, but it must also never be silently
   /// forgotten.
@@ -188,7 +234,12 @@ class LocalVault {
     required AppDatabase db,
   }) async {
     try {
-      await deleteFile(relativePath);
+      final outcome = await deleteVaultFileIfUnreferenced(
+        db: db,
+        relativePath: relativePath,
+        removeFile: _removeFile,
+      );
+      if (outcome == PhysicalDeleteOutcome.deleted) return;
     } catch (e, st) {
       Log.e(
         'Suppression différée : fichier conservé pour une nouvelle tentative',
@@ -196,25 +247,54 @@ class LocalVault {
         st,
         'Vault',
       );
-      await db
-          .into(db.pendingFileCleanupsTable)
-          .insertOnConflictUpdate(
-            PendingFileCleanupsTableCompanion(
-              relativePath: Value(relativePath),
-              failedAt: Value(DateTime.now()),
-            ),
-          );
+    }
+    await db
+        .into(db.pendingFileCleanupsTable)
+        .insertOnConflictUpdate(
+          PendingFileCleanupsTableCompanion(
+            relativePath: Value(relativePath),
+            failedAt: Value(DateTime.now()),
+          ),
+        );
+  }
+
+  /// Removes every file an artwork row owned, after the row is gone: its
+  /// original, its audio, its derivatives and every other version the
+  /// registry lists under its id (a replaced audio). Each goes through
+  /// [deleteFileOrEnqueueCleanup], so a version still referenced elsewhere
+  /// (`replaced_values`, an operation in the outbox) stays.
+  Future<void> deleteArtworkFilesOrEnqueueCleanup(
+    ArtworkEntity artwork, {
+    required AppDatabase db,
+  }) async {
+    final paths = <String>{
+      if (artwork.relativeImagePath != null) artwork.relativeImagePath!,
+      if (artwork.relativeAudioPath != null) artwork.relativeAudioPath!,
+      if (artwork.displayImagePath != null) artwork.displayImagePath!,
+      if (artwork.thumbnailImagePath != null) artwork.thumbnailImagePath!,
+      for (final version in await (db.select(
+        db.mediaVersionsTable,
+      )..where((t) => t.mediaId.equals(artwork.id))).get())
+        version.localPath,
+    };
+    for (final path in paths) {
+      await deleteFileOrEnqueueCleanup(relativePath: path, db: db);
     }
   }
 
   /// Retries every pending cleanup entry, silently. Intended to be
-  /// called once at app startup. Entries that still fail are left in
-  /// place for the next attempt.
+  /// called once at app startup. Entries that still fail, or whose file is
+  /// still referenced, are left in place for the next attempt.
   Future<void> retryPendingCleanups(AppDatabase db) async {
     final pending = await db.select(db.pendingFileCleanupsTable).get();
     for (final entry in pending) {
       try {
-        await deleteFile(entry.relativePath);
+        final outcome = await deleteVaultFileIfUnreferenced(
+          db: db,
+          relativePath: entry.relativePath,
+          removeFile: _removeFile,
+        );
+        if (outcome == PhysicalDeleteOutcome.stillReferenced) continue;
         await (db.delete(
           db.pendingFileCleanupsTable,
         )..where((t) => t.relativePath.equals(entry.relativePath))).go();
@@ -371,11 +451,7 @@ class LocalVault {
       final dir = await _derivativesDirectory;
       final fileName = '${artworkId}_$suffix.jpg';
       final targetFile = File(p.join(dir.path, fileName));
-      // Write-then-rename: a crash mid-write never leaves a half-written
-      // file at the path callers will read from.
-      final tmpFile = File('${targetFile.path}.tmp');
-      await tmpFile.writeAsBytes(bytes, flush: true);
-      await tmpFile.rename(targetFile.path);
+      await _write(targetFile, bytes: bytes);
       return p.join(derivativesFolder, fileName);
     } catch (e, st) {
       Log.e(
@@ -406,12 +482,7 @@ class LocalVault {
     final suffix = isDisplay ? 'display' : 'thumb';
     final fileName = '${artworkId}_$suffix.jpg';
     final targetFile = File(p.join(dir.path, fileName));
-    // Write-then-rename, same rationale as [_writeDerivativeBytes]: a
-    // crash mid-download never leaves a half-written file at the path
-    // callers will read from.
-    final tmpFile = File('${targetFile.path}.tmp');
-    await tmpFile.writeAsBytes(bytes, flush: true);
-    await tmpFile.rename(targetFile.path);
+    await _write(targetFile, bytes: bytes);
     return p.join(derivativesFolder, fileName);
   }
 
@@ -438,10 +509,17 @@ class LocalVault {
     }
   }
 
-  /// Stores a captured audio file into the vault using a versioned
-  /// filename. Uses a temporary write followed by an atomic rename so
-  /// an interrupted write never leaves a partial file at the readable
-  /// path.
+  /// Relative path of audio version [version] of [mediaId]:
+  /// `audio/<mediaId>/v<version>.<ext>`. A new recording is a new version at
+  /// a new path; the previous version's file stays where it is.
+  static String audioVersionPath(
+    String mediaId,
+    int version, {
+    String extension = '.m4a',
+  }) => p.join(audioFolder, mediaId, 'v$version$extension');
+
+  /// Stores a captured audio file as version [version] of the artwork's
+  /// audio. Never overwrites another version.
   Future<String> storeArtworkAudio({
     required File sourceFile,
     required String artworkId,
@@ -450,38 +528,24 @@ class LocalVault {
     if (sourceFile.path.isEmpty) {
       throw ArgumentError('sourceFile.path must not be empty');
     }
-    final targetDir = await audioDirectory;
     final extension = p.extension(sourceFile.path).isNotEmpty
         ? p.extension(sourceFile.path)
         : '.m4a';
-    final targetFileName = '${artworkId}_v$version$extension';
-    final targetFile = File(p.join(targetDir.path, targetFileName));
-
-    // Temp write + atomic rename: an interrupted write never leaves a
-    // partial file at the readable path.
-    final tmpFile = File('${targetFile.path}.tmp');
-    await sourceFile.copy(tmpFile.path);
-    await tmpFile.rename(targetFile.path);
-
-    return p.join(audioFolder, targetFileName);
+    final relative = audioVersionPath(artworkId, version, extension: extension);
+    await _write(await resolveFile(relative), source: sourceFile);
+    return relative;
   }
 
-  /// Writes downloaded audio bytes into the vault with a versioned
-  /// filename, using temporary file writing and atomic rename.
+  /// Writes downloaded audio bytes as version [version] of the artwork's
+  /// audio.
   Future<String> storeDownloadedAudio({
     required List<int> bytes,
     required String artworkId,
     int version = 1,
   }) async {
-    final targetDir = await audioDirectory;
-    final targetFileName = '${artworkId}_v$version.m4a';
-    final targetFile = File(p.join(targetDir.path, targetFileName));
-
-    final tmpFile = File('${targetFile.path}.tmp');
-    await tmpFile.writeAsBytes(bytes, flush: true);
-    await tmpFile.rename(targetFile.path);
-
-    return p.join(audioFolder, targetFileName);
+    final relative = audioVersionPath(artworkId, version);
+    await _write(await resolveFile(relative), bytes: bytes);
+    return relative;
   }
 
   /// Deletes an audio file from the vault or enqueues deferred

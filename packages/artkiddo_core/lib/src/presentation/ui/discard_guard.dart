@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../theme/app_tokens.dart';
+import 'app_dialog.dart';
 
 /// Intercepts Back/Close on a dirty form and only lets the positive answer
 /// through the dialog "Discard changes?".
@@ -46,27 +46,13 @@ class DiscardGuard extends StatelessWidget {
     String? body,
   }) async {
     final l10n = AppLocalizations.of(context);
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Text(title ?? l10n.commonDiscardTitle),
-        content: Text(body ?? l10n.commonDiscardBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonContinueEditing),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDiscard),
-          ),
-        ],
-      ),
+    return showConfirmDialog(
+      context,
+      title: title ?? l10n.commonDiscardTitle,
+      body: body ?? l10n.commonDiscardBody,
+      cancelLabel: l10n.commonContinueEditing,
+      confirmLabel: l10n.commonDiscard,
+      destructive: true,
     );
-    return result ?? false;
   }
 }

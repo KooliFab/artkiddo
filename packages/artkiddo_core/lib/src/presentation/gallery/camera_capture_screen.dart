@@ -7,6 +7,9 @@ import '../ui/app_button.dart';
 import '../utils/app_settings_launcher.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
+/// Insets the busy spinner so it sits inside the shutter's 4 px ring.
+const _shutterSpinnerInset = 22.0;
+
 /// Outcome of a [CameraCaptureScreen] round trip, popped back to whoever
 /// pushed it (`_acquirePhoto` in capture presentation).
 sealed class CameraCaptureOutcome {
@@ -127,13 +130,14 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.cameraBackdrop,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.cameraBackdrop,
+        foregroundColor: AppColors.onImmersive,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: l10n.commonClose,
           onPressed: () =>
               Navigator.of(context).pop(const CameraCaptureCancelled()),
         ),
@@ -158,7 +162,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
           final controller = _controller;
           if (controller == null || !controller.value.isInitialized) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              child: CircularProgressIndicator(color: AppColors.onImmersive),
             );
           }
           return Stack(
@@ -173,16 +177,19 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
                   child: GestureDetector(
                     onTap: _capturing ? null : _capture,
                     child: Container(
-                      width: 72,
-                      height: 72,
+                      width: AppSizes.shutter,
+                      height: AppSizes.shutter,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(color: Colors.white54, width: 4),
+                        color: AppColors.onImmersive,
+                        border: Border.all(
+                          color: AppColors.onImmersiveSubtle,
+                          width: 4,
+                        ),
                       ),
                       child: _capturing
                           ? const Padding(
-                              padding: EdgeInsets.all(22),
+                              padding: EdgeInsets.all(_shutterSpinnerInset),
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : null,
@@ -211,7 +218,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
             Text(
               body,
               textAlign: TextAlign.center,
-              style: AppTypography.body.copyWith(color: Colors.white),
+              style: AppTypography.body.copyWith(color: AppColors.onImmersive),
             ),
             if (showSettings) ...[
               const SizedBox(height: AppSpacing.s4),

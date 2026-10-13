@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
+import 'app_button.dart';
 
 enum StateBlockIntent { info, help, warning, error, success }
 
@@ -67,7 +68,7 @@ class StateBlock extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.s4),
         decoration: BoxDecoration(
           color: style.surface,
-          borderRadius: BorderRadius.circular(AppRadii.lg),
+          borderRadius: BorderRadius.circular(AppRadii.md),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +178,7 @@ class EmptyStateView extends StatelessWidget {
                 color: AppColors.surfaceSunken,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: AppColors.borderStrong),
+              child: Icon(icon, size: 32, color: AppColors.inkMuted),
             ),
             const SizedBox(height: AppSpacing.s5),
             Text(title, style: AppTypography.h2, textAlign: TextAlign.center),
@@ -192,7 +193,7 @@ class EmptyStateView extends StatelessWidget {
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: AppSpacing.s6),
-              _PrimaryEmptyAction(label: actionLabel!, onPressed: onAction!),
+              AppButton(label: actionLabel!, onPressed: onAction),
             ],
             if (secondaryLabel != null && onSecondary != null) ...[
               const SizedBox(height: AppSpacing.s2),
@@ -201,30 +202,6 @@ class EmptyStateView extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _PrimaryEmptyAction extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  const _PrimaryEmptyAction({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.onAccent,
-        minimumSize: const Size(kMinTapTarget, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.sm),
-        ),
-        textStyle: AppTypography.button,
-      ),
-      child: Text(label),
     );
   }
 }
@@ -238,7 +215,7 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 44,
+      height: AppSizes.banner,
       color: AppColors.warningSurface,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Row(

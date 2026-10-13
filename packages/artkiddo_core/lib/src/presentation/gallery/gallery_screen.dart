@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../domain/action_result.dart';
+import '../../domain/backup_status.dart';
 import '../../domain/child.dart';
 import '../../local/logging/log.dart';
 import '../../local/storage/vault_rescue_export.dart';
@@ -20,10 +21,13 @@ import '../children/child_editor_screen.dart';
 import '../children/children_providers.dart';
 import '../children/children_screen.dart';
 import '../config/app_capabilities.dart';
+import '../providers/backup_status_providers.dart';
 import '../providers/core_providers.dart';
 import '../settings/settings_screen.dart';
 import '../theme/app_tokens.dart';
+import '../ui/backup_status_views.dart';
 import '../ui/filter_chip_row.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import 'artwork_screen.dart';
 import 'capture_controller.dart';
@@ -96,7 +100,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               notification.metrics.viewportDimension / 2;
     } else if (notification is ScrollEndNotification) {
       _hideScrollMonth?.cancel();
-      _hideScrollMonth = Timer(const Duration(seconds: 1), () {
+      _hideScrollMonth = Timer(AppMotion.linger, () {
         if (mounted) _scrollMonthVisible.value = false;
       });
     }
@@ -509,7 +513,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     return tilesAsync.when(
       loading: () => [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(margin, AppSpacing.s3, margin, 104),
+          padding: EdgeInsets.fromLTRB(
+            margin,
+            AppSpacing.s3,
+            margin,
+            AppSizes.fabClearance,
+          ),
           sliver: SliverGrid(
             delegate: SliverChildBuilderDelegate(
               (_, _) => DecoratedBox(
@@ -600,7 +609,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         };
         return [
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(margin, AppSpacing.s3, margin, 104),
+            padding: EdgeInsets.fromLTRB(
+              margin,
+              AppSpacing.s3,
+              margin,
+              AppSizes.fabClearance,
+            ),
             sliver: SliverGrid(
               gridDelegate: delegate,
               delegate: SliverChildBuilderDelegate(

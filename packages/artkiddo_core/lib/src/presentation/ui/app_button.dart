@@ -66,7 +66,7 @@ class AppButton extends StatelessWidget {
   }
 
   Widget _buildButton(bool disabled) {
-    final height = _isTextLike ? 48.0 : 52.0;
+    final height = _isTextLike ? AppSizes.buttonText : AppSizes.button;
     final foreground = switch (variant) {
       AppButtonVariant.primary => AppColors.onAccent,
       AppButtonVariant.secondary => AppColors.ink,
@@ -90,7 +90,9 @@ class AppButton extends StatelessWidget {
     final style = ButtonStyle(
       minimumSize: WidgetStatePropertyAll(Size(kMinTapTarget, height)),
       padding: WidgetStatePropertyAll(
-        EdgeInsets.symmetric(horizontal: _isTextLike ? 12 : 24),
+        EdgeInsets.symmetric(
+          horizontal: _isTextLike ? AppSpacing.s3 : AppSpacing.s6,
+        ),
       ),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) return AppColors.disabledBg;
@@ -144,7 +146,9 @@ class AppButton extends StatelessWidget {
             children: [
               Icon(icon, size: 20),
               const SizedBox(width: AppSpacing.s2),
-              Text(label),
+              // Wraps instead of overflowing on narrow widths or large
+              // text scales.
+              Flexible(child: Text(label, textAlign: TextAlign.center)),
             ],
           );
 
@@ -189,12 +193,22 @@ class AsyncActionButton extends StatelessWidget {
       final height =
           variant == AppButtonVariant.tertiary ||
               variant == AppButtonVariant.destructive
-          ? 48.0
-          : 52.0;
-      final busyBackground = variant == AppButtonVariant.share
-          ? AppColors.share
-          : AppColors.accent;
-      final busyForeground = AppColors.onAccent;
+          ? AppSizes.buttonText
+          : AppSizes.button;
+      // Busy keeps the variant's look: only the label and spinner change.
+      final busyBackground = switch (variant) {
+        AppButtonVariant.primary => AppColors.accent,
+        AppButtonVariant.share => AppColors.share,
+        AppButtonVariant.secondary => AppColors.surface,
+        _ => Colors.transparent,
+      };
+      final busyForeground = switch (variant) {
+        AppButtonVariant.primary ||
+        AppButtonVariant.share => AppColors.onAccent,
+        AppButtonVariant.secondary => AppColors.ink,
+        AppButtonVariant.tertiary => AppColors.accent,
+        AppButtonVariant.destructive => AppColors.danger,
+      };
       final content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -223,6 +237,9 @@ class AsyncActionButton extends StatelessWidget {
               elevation: 0,
               shadowColor: Colors.transparent,
               surfaceTintColor: Colors.transparent,
+              side: variant == AppButtonVariant.secondary
+                  ? const BorderSide(color: AppColors.borderStrong)
+                  : BorderSide.none,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadii.sm),
               ),

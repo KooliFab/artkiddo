@@ -11,12 +11,14 @@ import '../navigation/composition_actions.dart';
 import '../navigation/pending_intent.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
+import '../ui/adaptive_modal.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 import '../ui/error_presenter.dart';
 import '../ui/state_block.dart';
 import 'share_controller.dart';
 
-/// `share` — modal sheet (compact) / dialog (>=600) — `screens.md` §10.
+/// `share` — modal sheet (compact) / dialog — `screens.md` §10.
 Future<void> showShareSheet(
   BuildContext context, {
   required String childId,
@@ -24,29 +26,14 @@ Future<void> showShareSheet(
   VoidCallback? sendImage,
 }) {
   Log.d('📱 [ShareSheet] Opening', 'Navigation');
-  final width = MediaQuery.of(context).size.width;
   final args = ShareArgs(
     childId: childId,
     childName: childName,
     sendImage: sendImage,
   );
-  if (width >= 600) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: _ShareSheetContent(args: args),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  return showAdaptiveModal<void>(
+    context,
+    maxWidth: 480,
     builder: (_) => _ShareSheetContent(args: args),
   );
 }
@@ -77,40 +64,42 @@ class _ShareSheetContent extends ConsumerWidget {
         ),
         child: PopScope(
           canPop: !creating,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.shareTitle(childName),
-                      style: AppTypography.h2,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.shareTitle(childName),
+                        style: AppTypography.h2,
+                      ),
                     ),
-                  ),
-                  if (!creating)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                l10n.shareWarning,
-                style: AppTypography.body.copyWith(color: AppColors.inkMuted),
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              if (state.loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else
-                _buildBody(context, ref, l10n, state, controller, childName),
-            ],
+                    if (!creating)
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s1),
+                Text(
+                  l10n.shareWarning,
+                  style: AppTypography.body.copyWith(color: AppColors.inkMuted),
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                if (state.loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  _buildBody(context, ref, l10n, state, controller, childName),
+              ],
+            ),
           ),
         ),
       ),
@@ -223,6 +212,16 @@ class _ShareSheetContent extends ConsumerWidget {
     // "send this image" block — factored above the step-specific
     // content.
     final children = <Widget>[
+      if (state.loadError case final failure?) ...[
+        StateBlock(
+          intent: ErrorPresenter.intentFor(failure),
+          title: ErrorPresenter.present(l10n, failure).title,
+          body: ErrorPresenter.present(l10n, failure).body,
+          actionLabel: l10n.commonRetry,
+          onAction: controller.refresh,
+        ),
+        const SizedBox(height: AppSpacing.s3),
+      ],
       if (state.offline) ...[
         OfflineBanner(label: l10n.settingsOffline),
         const SizedBox(height: AppSpacing.s3),
@@ -330,11 +329,7 @@ class _ShareSheetContent extends ConsumerWidget {
           busyLabel: l10n.shareGalleryCreating,
           variant: AppButtonVariant.share,
           fullWidth: true,
-          enabled:
-              state.childHasSyncedArtworks &&
-              !state.offline &&
-              !state.backup.isBusy,
-          disabledReason: state.offline ? l10n.settingsOffline : null,
+          enabled: state.childHasSyncedArtworks && !state.backup.isBusy,
           onPressed: controller.createLink,
         ),
       ]);
@@ -486,17 +481,12 @@ class _LinkRow extends ConsumerWidget {
           ),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(
+          child: AppButton(
+            label: revoking ? l10n.shareRevoking : l10n.shareRevoke,
+            variant: AppButtonVariant.destructive,
             onPressed: revoking
                 ? null
                 : () => _confirmRevoke(context, controller, link.id),
-            child: Text(
-              revoking ? l10n.shareRevoking : l10n.shareRevoke,
-              style: TextStyle(
-                fontFamily: AppTypography.family,
-                color: revoking ? AppColors.inkDisabled : AppColors.danger,
-              ),
-            ),
           ),
         ),
       ],
@@ -562,25 +552,20 @@ class _RevokeDialogState extends ConsumerState<_RevokeDialog> {
     return PopScope(
       canPop: !busy,
       child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         title: Text(l10n.shareRevokeTitle),
         content: Text(l10n.shareRevokeBody),
         actions: [
-          TextButton(
+          DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(),
-            child: Text(l10n.commonCancel),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: busy
-                ? null
-                : () {
-                    setState(() => _confirmed = true);
-                    widget.controller.revokeLink(widget.linkId);
-                  },
-            child: Text(busy ? l10n.shareRevoking : l10n.shareRevoke),
+          DialogConfirmButton(
+            label: busy ? l10n.shareRevoking : l10n.shareRevoke,
+            destructive: true,
+            busy: busy,
+            onPressed: () {
+              setState(() => _confirmed = true);
+              widget.controller.revokeLink(widget.linkId);
+            },
           ),
         ],
       ),

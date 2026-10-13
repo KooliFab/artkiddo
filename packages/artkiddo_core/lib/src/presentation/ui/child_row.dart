@@ -9,25 +9,29 @@ class ChildRow extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
+  /// Index into [AppChildColors]; see `childColorIndexes`.
+  final int colorIndex;
+
   const ChildRow({
     super.key,
     required this.name,
     required this.subtitle,
     required this.onTap,
+    this.colorIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadii.lg),
+      borderRadius: BorderRadius.circular(AppRadii.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 72),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.lg),
+            borderRadius: BorderRadius.circular(AppRadii.md),
             border: Border.all(color: AppColors.border, width: 1),
             boxShadow: AppShadows.sm,
           ),
@@ -38,12 +42,12 @@ class ChildRow extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 24,
-                backgroundColor: AppColors.accentSurface,
+                radius: AppSizes.avatar / 2,
+                backgroundColor: AppChildColors.surface(colorIndex),
                 child: Text(
                   name.isNotEmpty ? name[0].toUpperCase() : '?',
                   style: AppTypography.h3.copyWith(
-                    color: AppColors.accentPressed,
+                    color: AppChildColors.ink(colorIndex),
                   ),
                 ),
               ),

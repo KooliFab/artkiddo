@@ -20,6 +20,9 @@ class ArtworkCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool hasAudio;
 
+  /// Index into [AppChildColors] for the age badge.
+  final int colorIndex;
+
   const ArtworkCard({
     super.key,
     required this.childName,
@@ -33,6 +36,7 @@ class ArtworkCard extends StatelessWidget {
     required this.imageMissingLabel,
     required this.onTap,
     this.hasAudio = false,
+    this.colorIndex = 0,
   });
 
   @override
@@ -42,13 +46,13 @@ class ArtworkCard extends StatelessWidget {
       label: semanticLabel,
       child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
+          borderRadius: BorderRadius.circular(AppRadii.md),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadii.lg),
+              borderRadius: BorderRadius.circular(AppRadii.md),
               border: Border.all(color: AppColors.border, width: 1),
               boxShadow: AppShadows.sm,
             ),
@@ -57,7 +61,7 @@ class ArtworkCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadii.lg),
+                    top: Radius.circular(AppRadii.md),
                   ),
                   child: AspectRatio(
                     aspectRatio: 3 / 4,
@@ -70,8 +74,8 @@ class ArtworkCard extends StatelessWidget {
                             right: AppSpacing.s2,
                             bottom: AppSpacing.s2,
                             child: Container(
-                              width: 26,
-                              height: 26,
+                              width: AppSizes.badge,
+                              height: AppSizes.badge,
                               decoration: BoxDecoration(
                                 color: AppColors.overlay,
                                 shape: BoxShape.circle,
@@ -81,13 +85,7 @@ class ArtworkCard extends StatelessWidget {
                                   ),
                                   width: 1,
                                 ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x33000000),
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
+                                boxShadow: AppShadows.badge,
                               ),
                               child: const Center(
                                 child: Icon(
@@ -137,9 +135,9 @@ class ArtworkCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.accentSurface,
+                                color: AppChildColors.surface(colorIndex),
                                 borderRadius: BorderRadius.circular(
-                                  AppRadii.sm,
+                                  AppRadii.full,
                                 ),
                               ),
                               child: Text(
@@ -147,7 +145,7 @@ class ArtworkCard extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.label.copyWith(
-                                  color: AppColors.accentPressed,
+                                  color: AppChildColors.ink(colorIndex),
                                 ),
                               ),
                             ),

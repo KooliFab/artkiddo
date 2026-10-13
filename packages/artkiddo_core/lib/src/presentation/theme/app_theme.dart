@@ -10,7 +10,7 @@ import 'app_tokens.dart';
 class AppTheme {
   /// Playpen Sans is the product's voice across the entire app. Individual
   /// display styles only adjust scale and weight; they do not switch family.
-  static const fontFamily = 'packages/artkiddo_core/Playpen Sans';
+  static const fontFamily = AppTypography.family;
 
   static ThemeData get lightTheme {
     final colorScheme = const ColorScheme.light().copyWith(
@@ -28,20 +28,14 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.paper,
       splashFactory: NoSplash.splashFactory,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.paper,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         foregroundColor: AppColors.ink,
-        titleTextStyle: TextStyle(
-          fontFamily: fontFamily,
-          color: AppColors.ink,
-          fontSize: 28,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.3,
-        ),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        titleTextStyle: AppTypography.h1.copyWith(color: AppColors.ink),
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: AppColors.paper,
           statusBarIconBrightness: Brightness.dark,
           systemNavigationBarColor: AppColors.paper,
@@ -64,6 +58,45 @@ class AppTheme {
           surfaceTintColor: Colors.transparent,
         ),
       ),
+      // Raw Material buttons left in screens inherit the same shape, type
+      // and tap target as [AppButton] instead of Material 3 defaults.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          disabledForegroundColor: AppColors.inkDisabled,
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+          textStyle: AppTypography.button,
+          shape: _buttonShape,
+          splashFactory: NoSplash.splashFactory,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: AppColors.onAccent,
+          disabledBackgroundColor: AppColors.surfaceSunken,
+          disabledForegroundColor: AppColors.inkDisabled,
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
+          textStyle: AppTypography.button,
+          shape: _buttonShape,
+          splashFactory: NoSplash.splashFactory,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.ink,
+          disabledForegroundColor: AppColors.inkDisabled,
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
+          side: const BorderSide(color: AppColors.borderStrong),
+          textStyle: AppTypography.button,
+          shape: _buttonShape,
+          splashFactory: NoSplash.splashFactory,
+        ),
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -83,8 +116,8 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s3 + 2,
         ),
         hintStyle: const TextStyle(
           fontFamily: fontFamily,
@@ -154,6 +187,10 @@ class AppTheme {
       focusColor: AppColors.focusRing,
     );
   }
+
+  static final _buttonShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(AppRadii.sm),
+  );
 
   static const TextTheme _textTheme = TextTheme(
     displayLarge: AppTypography.display,

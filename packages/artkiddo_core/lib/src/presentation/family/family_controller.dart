@@ -520,6 +520,9 @@ class FamilyController extends Notifier<FamilyState> {
         convergence: ActionError(NetworkFailure(cause: e, stack: st)),
       );
     }
+    // The membership is committed server-side either way: the roster cached
+    // before the join belongs to the previous family.
+    unawaited(loadFamilyMembers(force: true));
   }
 }
 

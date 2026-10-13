@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/core_providers.dart';
 import '../../local/repositories/children_repository.dart';
 import '../../domain/child.dart';
+import '../../local/repositories/unsaved_artworks.dart';
 
 final childrenRepositoryProvider = Provider<ChildrenRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
@@ -25,3 +26,12 @@ final artworkCountByChildProvider = FutureProvider<Map<String, int>>((
   ref.watch(allChildrenStreamProvider);
   return repository.countArtworksByChild();
 });
+
+/// Artworks of [childId] (all children when null) not saved remotely yet.
+final unsavedArtworkCountProvider = FutureProvider.autoDispose
+    .family<int, String?>((ref, childId) {
+      return countUnsavedArtworks(
+        ref.watch(appDatabaseProvider),
+        childId: childId,
+      );
+    });

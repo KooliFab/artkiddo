@@ -9,7 +9,7 @@ flowchart LR
   Local --> Files["LocalVault"]
   SQLite --> Outbox["SyncOutbox"]
   Outbox -. "optional capability" .-> Sync["SyncEngine"]
-  Sync --> Contract["SyncBackend\nneutral contract"]
+  Sync --> Contract["SyncProtocolBackend\nneutral contract"]
   Contract -. "external implementation" .-> External["External service\nnot described by the core"]
   Files --> Rescue["Rescue ZIP export\nwithout database"]
 ```
@@ -69,9 +69,9 @@ sequenceDiagram
   participant S as External service
 
   M->>L: foreground resume or manual backup
-  L->>L: read outbox + independent cursors
-  L->>B: adapter SyncBackend
-  B->>S: RPC / Data API / Edge Function
+  L->>L: read outbox + journal cursor
+  L->>B: adapter SyncProtocolBackend
+  B->>S: adapter-owned transport
   S-->>B: pages, states, URLs, or typed errors
   B-->>L: neutral DTOs
   L-->>M: local state + convergence status

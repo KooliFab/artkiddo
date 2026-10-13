@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../domain/action_result.dart';
+import '../../domain/backup_status.dart';
 import '../../domain/child.dart';
 import '../../domain/artwork.dart';
 import '../../local/audio/audio_player_service.dart';
@@ -14,15 +15,20 @@ import '../../local/audio/audio_recorder_service.dart';
 import '../../local/logging/log.dart';
 import '../async_action.dart';
 import '../children/children_providers.dart';
+import '../providers/backup_status_providers.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
+import '../ui/backup_status_views.dart';
 import '../ui/discard_guard.dart';
 import '../ui/error_presenter.dart';
 import '../ui/formatters.dart';
+import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import '../utils/app_settings_launcher.dart';
 import 'artwork_zoom_screen.dart';
+import 'audio_controls.dart';
 import '../navigation/composition_actions.dart';
 import '../family/family_controller.dart';
 import 'gallery_providers.dart';
@@ -177,6 +183,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
+      // A drag-to-dismiss bypasses the sheet's DiscardGuard.
+      enableDrag: false,
       builder: (ctx) =>
           _StoryEditorSheet(artworkId: m.id, initialStory: m.story ?? ''),
     );
@@ -192,26 +200,12 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   Future<void> _clearAudio(AppLocalizations l10n) async {
     final m = _artwork;
     if (m == null || !m.hasAudio) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Text(l10n.captureAudioDeleteConfirmTitle),
-        content: Text(l10n.captureAudioDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.captureAudioDeleteConfirmTitle,
+      body: l10n.captureAudioDeleteConfirmBody,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
     );
     if (confirmed != true) return;
     final repo = ref.read(artworksRepositoryProvider);
@@ -233,6 +227,8 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final recorded = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      // A drag-to-dismiss bypasses the sheet's DiscardGuard.
+      enableDrag: false,
       builder: (ctx) => _AudioRecorderSheet(artworkId: m.id),
     );
     if (recorded == true && mounted) {
@@ -302,25 +298,12 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   Future<void> _clearDrawnAt(AppLocalizations l10n) async {
     final m = _artwork;
     if (m == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Text(l10n.artworkDrawnAtClearConfirmTitle),
-        content: Text(l10n.artworkDrawnAtClearConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDiscard),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.artworkDrawnAtClearConfirmTitle,
+      body: l10n.artworkDrawnAtClearConfirmBody,
+      confirmLabel: l10n.artworkDrawnAtClear,
+      destructive: true,
     );
     if (confirmed != true) return;
     final repo = ref.read(artworksRepositoryProvider);
@@ -357,26 +340,21 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SheetHandle(),
                 Text(l10n.artworkDrawnAtPickerTitle, style: AppTypography.h2),
                 const SizedBox(height: AppSpacing.s2),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.edit_calendar_outlined),
                   title: Text(l10n.artworkDrawnAtEdit),
-                  trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(sheetContext).pop('edit'),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.event_busy_outlined,
-                    color: AppColors.danger,
-                  ),
-                  title: Text(
-                    l10n.artworkDrawnAtClear,
-                    style: const TextStyle(color: AppColors.danger),
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
+                  textColor: AppColors.danger,
+                  iconColor: AppColors.danger,
+                  leading: const Icon(Icons.event_busy_outlined),
+                  title: Text(l10n.artworkDrawnAtClear),
                   onTap: () => Navigator.of(sheetContext).pop('clear'),
                 ),
               ],
@@ -399,26 +377,11 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     final m = _artwork;
     if (m == null) return;
     if (m.hasAudio) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.lg),
-          ),
-          title: Text(l10n.captureAudioReRecordConfirmTitle),
-          content: Text(l10n.captureAudioReRecordConfirmBody),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.commonCancel),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.captureAudioReRecord),
-            ),
-          ],
-        ),
+      final confirmed = await showConfirmDialog(
+        context,
+        title: l10n.captureAudioReRecordConfirmTitle,
+        body: l10n.captureAudioReRecordConfirmBody,
+        confirmLabel: l10n.captureAudioReRecord,
       );
       if (confirmed != true) return;
     }
@@ -450,6 +413,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SheetHandle(),
               Text(l10n.childrenActionsShare, style: AppTypography.h2),
               const SizedBox(height: AppSpacing.s3),
               ListTile(
@@ -727,18 +691,12 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
     return Tooltip(
       message: tooltip,
       child: Container(
-        width: 52,
-        height: 52,
+        width: AppSizes.button,
+        height: AppSizes.button,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: AppShadows.floatingRound,
         ),
         child: Material(
           color: Colors.transparent,
@@ -850,6 +808,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         : (ageBasis == AgeBasis.drawnAt
               ? l10n.artworkAgeAtDrawing(ageText)
               : l10n.artworkAgeAtAddition(ageText));
+    final backup = ref.watch(artworkBackupStatusProvider(m.id));
 
     return [
       Text(childName, style: AppTypography.h1),
@@ -891,32 +850,39 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         ),
       ],
       const SizedBox(height: AppSpacing.s5),
+      if (backup != null) ...[
+        BackupStatusLine(status: backup),
+        const SizedBox(height: AppSpacing.s4),
+      ],
       if (ref.watch(appCapabilitiesProvider).remoteBackup &&
           (m.hasAudio || m.audioSyncPending)) ...[
         if (m.audioConflict) ...[
-          Text(l10n.artworkAudioConflict, style: AppTypography.body),
-          Wrap(
-            spacing: AppSpacing.s2,
-            children: [
-              TextButton(
-                onPressed: _resolvingAudio ? null : () => _resolveAudio(false),
-                child: Text(l10n.artworkAudioKeepRemote),
-              ),
-              TextButton(
-                onPressed: _resolvingAudio ? null : () => _resolveAudio(true),
-                child: Text(l10n.artworkAudioUseLocal),
-              ),
-            ],
+          // A decision with a loss on either side: a warning that says so,
+          // with the two versions as its two actions (hidden while the
+          // choice is being applied).
+          StateBlock(
+            intent: StateBlockIntent.warning,
+            title: l10n.artworkAudioConflict,
+            body: l10n.artworkAudioConflictBody,
+            actionLabel: l10n.artworkAudioKeepRemote,
+            onAction: _resolvingAudio ? null : () => _resolveAudio(false),
+            secondaryLabel: l10n.artworkAudioUseLocal,
+            onSecondary: _resolvingAudio ? null : () => _resolveAudio(true),
           ),
         ] else ...[
-          Text(
-            m.syncState == SyncState.syncError
-                ? l10n.artworkAudioBackupFailed
-                : m.audioSyncPending
-                ? l10n.artworkAudioBackupPending
-                : l10n.artworkAudioBackedUp,
-            style: AppTypography.caption,
-          ),
+          // "Backed up" is only said of an artwork whose status is saved: a
+          // restored artwork the server no longer holds never reads so.
+          if (m.syncState == SyncState.syncError ||
+              m.audioSyncPending ||
+              backup?.state == ArtworkBackupState.saved)
+            Text(
+              m.syncState == SyncState.syncError
+                  ? l10n.artworkAudioBackupFailed
+                  : m.audioSyncPending
+                  ? l10n.artworkAudioBackupPending
+                  : l10n.artworkAudioBackedUp,
+              style: AppTypography.caption,
+            ),
           if (m.syncState == SyncState.syncError)
             TextButton(
               onPressed: () {

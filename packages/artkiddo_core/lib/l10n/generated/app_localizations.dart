@@ -2356,6 +2356,102 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Œuvre restaurée. Elle n\'existe plus que sur ce téléphone : elle ne sera plus sauvegardée ni visible sur vos autres appareils.'**
+  String get trashRestoredOnlyHere;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dessin n\'est pas encore sauvegardé : il sera définitivement perdu.} other{{count} dessins ne sont pas encore sauvegardés : ils seront définitivement perdus.}}'**
+  String unsavedArtworksWarning(num count);
+
+  /// Backup status of an artwork: nothing protects it but this device.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur cet appareil'**
+  String get backupStateOnDevice;
+
+  /// Backup status of an artwork: an operation is waiting or being retried.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde en cours'**
+  String get backupStateInProgress;
+
+  /// Backup status of an artwork: acknowledged by the server with its optimized photo and audio. Never means the original is saved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegardé (qualité optimisée)'**
+  String get backupStateSaved;
+
+  /// Backup status of an artwork: a file is missing or sending failed repeatedly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Action nécessaire'**
+  String get backupStateActionNeeded;
+
+  /// Short note shown under a backup status.
+  ///
+  /// In fr, this message translates to:
+  /// **'La photo d\'origine reste uniquement sur cet appareil.'**
+  String get backupOriginalStaysOnDevice;
+
+  /// Detail of the action-needed status when a file is gone from the device.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un fichier de ce dessin est introuvable sur cet appareil. Le dessin reste dans la galerie.'**
+  String get backupReasonMissingFile;
+
+  /// Detail of the action-needed status after repeated failures.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'envoi a échoué plusieurs fois. Vérifiez la connexion, puis lancez une sauvegarde.'**
+  String get backupReasonRepeatedFailure;
+
+  /// Detail of the on-device status of an artwork purged remotely then restored here.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce dessin a été supprimé sur les autres appareils. Il n\'existe plus que sur celui-ci.'**
+  String get backupReasonRemotePurged;
+
+  /// Heading of the backup summary in the cloud settings.
+  ///
+  /// In fr, this message translates to:
+  /// **'État des sauvegardes'**
+  String get backupSummaryHeading;
+
+  /// Backup summary line.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dessin sauvegardé} other{{count} dessins sauvegardés}}'**
+  String backupSummarySaved(num count);
+
+  /// Backup summary line.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dessin en cours de sauvegarde} other{{count} dessins en cours de sauvegarde}}'**
+  String backupSummaryInProgress(num count);
+
+  /// Backup summary line.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dessin demande une action} other{{count} dessins demandent une action}}'**
+  String backupSummaryActionNeeded(num count);
+
+  /// Backup summary line.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dessin uniquement sur cet appareil} other{{count} dessins uniquement sur cet appareil}}'**
+  String backupSummaryOnDevice(num count);
+
+  /// Heading above the failure of the last synchronization run, shown in the backup summary.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier problème rencontré'**
+  String get backupSummaryIssueHeading;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'L\'œuvre n\'a pas pu être restaurée.'**
   String get trashRestoreError;
 
@@ -2850,6 +2946,156 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aperçu indisponible'**
   String get trashPreviewUnavailable;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activité de la famille'**
+  String get pushChannelFamilyActivityName;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelles œuvres ajoutées par les membres de votre famille.'**
+  String get pushChannelFamilyActivityDescription;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter et importer'**
+  String get vaultArchiveTitle;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Exportez une copie des profils de vos enfants, de leurs œuvres, des photos et des histoires vocales présentes sur cet appareil. Vous pourrez la réimporter dans ArtKiddo. Choisissez où enregistrer le fichier dans le menu de partage : aucune copie n’est conservée automatiquement pour vous.'**
+  String get vaultArchiveIntro;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter ma collection'**
+  String get vaultArchiveExportAction;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de votre copie… {completed} sur {total}'**
+  String vaultArchiveExportProgress(int completed, int total);
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Archive créée et envoyée vers le partage. Vérifiez que vous l’avez enregistrée à un endroit sûr : rien n’est conservé pour vous automatiquement.'**
+  String get vaultArchiveExportDone;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Export partiel : {count, plural, =1{1 fichier n’a} other{{count} fichiers n’ont}} pas pu être inclus. L’archive est quand même créée ; vérifiez que vous l’avez enregistrée à un endroit sûr.'**
+  String vaultArchiveExportPartial(int count);
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'L’archive n’a pas pu être créée. Rien n’a été modifié.'**
+  String get vaultArchiveExportFailed;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer une collection'**
+  String get vaultArchiveImportAction;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Importation…'**
+  String get vaultArchiveImportProgress;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout ce que contient cette archive est déjà sur cet appareil. Rien n’a été modifié.'**
+  String get vaultArchiveImportNothingNew;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Importation terminée : {artworks, plural, =1{1 œuvre ajoutée} other{{artworks} œuvres ajoutées}} et {children, plural, =1{1 enfant ajouté} other{{children} enfants ajoutés}}.'**
+  String vaultArchiveImportDone(int artworks, int children);
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Importation terminée : les fichiers manquants ont été rendus aux œuvres existantes.'**
+  String get vaultArchiveImportRestored;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 valeur différait} other{{count} valeurs différaient}} de celles de cet appareil. Les vôtres sont conservées ; les valeurs importées sont mises de côté pendant 30 jours.'**
+  String vaultArchiveImportKeptAside(int count);
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce fichier n’est pas une archive ArtKiddo valide. Rien n’a été importé.'**
+  String get vaultArchiveImportInvalid;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette archive vient d’une version plus récente d’ArtKiddo. Mettez l’application à jour, puis réessayez.'**
+  String get vaultArchiveImportUnsupported;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'L’archive est incomplète ou abîmée : un fichier ne correspond pas à son empreinte. Rien n’a été importé.'**
+  String get vaultArchiveImportCorrupted;
+
+  /// Archive export and import (settings).
+  ///
+  /// In fr, this message translates to:
+  /// **'L’importation a échoué. Rien n’a été importé.'**
+  String get vaultArchiveImportFailed;
+
+  /// Capture review: return to the details step with the same photo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get captureReviewContinue;
+
+  /// Why Save is disabled on an unchanged form.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune modification à enregistrer.'**
+  String get commonNoChanges;
+
+  /// Family hub: busy label while leaving the family.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ en cours…'**
+  String get familyHubLeaving;
+
+  /// Artwork: consequence of resolving a voice-story conflict.
+  ///
+  /// In fr, this message translates to:
+  /// **'La version que vous ne choisissez pas sera perdue.'**
+  String get artworkAudioConflictBody;
+
+  /// Account deletion: subject of the email to support.
+  ///
+  /// In fr, this message translates to:
+  /// **'artkiddo — suppression de compte'**
+  String get accountDeleteSupportSubject;
+
+  /// Error title when storage quota is reached, with the reset time.
+  ///
+  /// In fr, this message translates to:
+  /// **'Espace de stockage du foyer atteint (de nouveau disponible à {time})'**
+  String errorQuotaExceededTitleUntil(DateTime time);
 }
 
 class _AppLocalizationsDelegate

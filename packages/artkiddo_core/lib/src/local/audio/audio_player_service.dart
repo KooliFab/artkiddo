@@ -49,7 +49,10 @@ class JustAudioPlayerService implements AudioPlayerService {
     _currentFilePath = filePath;
     final file = File(filePath);
     if (!await file.exists()) {
-      Log.w('Fichier audio introuvable à la lecture : $filePath', 'AudioPlayer');
+      Log.w(
+        'Fichier audio introuvable à la lecture : $filePath',
+        'AudioPlayer',
+      );
       throw FileSystemException('Fichier audio introuvable', filePath);
     }
     try {
@@ -59,7 +62,10 @@ class JustAudioPlayerService implements AudioPlayerService {
         'AudioPlayer',
       );
     } catch (e) {
-      Log.w('Impossible de lire la taille du fichier audio ($filePath): $e', 'AudioPlayer');
+      Log.w(
+        'Impossible de lire la taille du fichier audio ($filePath): $e',
+        'AudioPlayer',
+      );
     }
     await _player.setFilePath(filePath);
   }

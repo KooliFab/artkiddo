@@ -58,6 +58,41 @@ class Children extends Table with TableInfo {
     $customConstraints: 'NOT NULL DEFAULT \'localOnly\'',
     defaultValue: const CustomExpression('\'localOnly\''),
   );
+  late final GeneratedColumn<int> nameRev = GeneratedColumn<int>(
+    'name_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<int> birthDateRev = GeneratedColumn<int>(
+    'birth_date_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<int> lifecycleRev = GeneratedColumn<int>(
+    'lifecycle_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<int> deletedAt = GeneratedColumn<int>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -66,6 +101,10 @@ class Children extends Table with TableInfo {
     createdAt,
     updatedAt,
     syncState,
+    nameRev,
+    birthDateRev,
+    lifecycleRev,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -246,8 +285,78 @@ class Artworks extends Table with TableInfo {
     $customConstraints: 'NOT NULL DEFAULT 0',
     defaultValue: const CustomExpression('0'),
   );
+  late final GeneratedColumn<int> audioRevision = GeneratedColumn<int>(
+    'audio_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<String> audioSyncIntent = GeneratedColumn<String>(
+    'audio_sync_intent',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'keep\'',
+    defaultValue: const CustomExpression('\'keep\''),
+  );
+  late final GeneratedColumn<int> audioConflict = GeneratedColumn<int>(
+    'audio_conflict',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (audio_conflict IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<String> addedBy = GeneratedColumn<String>(
+    'added_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<int> storyRev = GeneratedColumn<int>(
+    'story_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<int> drawnAtRev = GeneratedColumn<int>(
+    'drawn_at_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<int> lifecycleRev = GeneratedColumn<int>(
+    'lifecycle_rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
   late final GeneratedColumn<int> deletedAt = GeneratedColumn<int>(
     'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<int> remotePurgedAt = GeneratedColumn<int>(
+    'remote_purged_at',
     aliasedName,
     true,
     type: DriftSqlType.int,
@@ -274,7 +383,15 @@ class Artworks extends Table with TableInfo {
     audioDurationMs,
     audioObjectKey,
     audioByteSize,
+    audioRevision,
+    audioSyncIntent,
+    audioConflict,
+    addedBy,
+    storyRev,
+    drawnAtRev,
+    lifecycleRev,
     deletedAt,
+    remotePurgedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -359,6 +476,18 @@ class SyncOutbox extends Table with TableInfo {
     requiredDuringInsert: false,
     $customConstraints: 'NOT NULL PRIMARY KEY AUTOINCREMENT',
   );
+  late final GeneratedColumn<String> opId = GeneratedColumn<String>(
+    'op_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT ((lower(hex(randomblob(4)) || \'-\' || hex(randomblob(2)) || \'-4\' || substr(hex(randomblob(2)), 2) || \'-\' || substr(\'89ab\', 1 +(abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || \'-\' || hex(randomblob(6)))))',
+    defaultValue: const CustomExpression(
+      '(lower(hex(randomblob(4)) || \'-\' || hex(randomblob(2)) || \'-4\' || substr(hex(randomblob(2)), 2) || \'-\' || substr(\'89ab\', 1 +(abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || \'-\' || hex(randomblob(6))))',
+    ),
+  );
   late final GeneratedColumn<String> entity = GeneratedColumn<String>(
     'entity',
     aliasedName,
@@ -382,6 +511,23 @@ class SyncOutbox extends Table with TableInfo {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> patchJson = GeneratedColumn<String>(
+    'patch_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'pending\'',
+    defaultValue: const CustomExpression('\'pending\''),
   );
   late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
     'attempts',
@@ -419,9 +565,12 @@ class SyncOutbox extends Table with TableInfo {
   @override
   List<GeneratedColumn> get $columns => [
     seq,
+    opId,
     entity,
     entityId,
     op,
+    patchJson,
+    state,
     attempts,
     nextAttemptAt,
     lastError,
@@ -435,6 +584,10 @@ class SyncOutbox extends Table with TableInfo {
   @override
   Set<GeneratedColumn> get $primaryKey => {seq};
   @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {opId},
+  ];
+  @override
   Never map(Map<String, dynamic> data, {String? tablePrefix}) {
     throw UnsupportedError('TableInfo.map in schema verification code');
   }
@@ -444,6 +597,308 @@ class SyncOutbox extends Table with TableInfo {
     return SyncOutbox(attachedDatabase, alias);
   }
 
+  @override
+  List<String> get customConstraints => const ['UNIQUE(op_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class ReplacedValues extends Table with TableInfo {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  ReplacedValues(this.attachedDatabase, [this._alias]);
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> field = GeneratedColumn<String>(
+    'field',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> valueJson = GeneratedColumn<String>(
+    'value_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> mediaRef = GeneratedColumn<String>(
+    'media_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entityType,
+    entityId,
+    field,
+    valueJson,
+    mediaRef,
+    source,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'replaced_values';
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Never map(Map<String, dynamic> data, {String? tablePrefix}) {
+    throw UnsupportedError('TableInfo.map in schema verification code');
+  }
+
+  @override
+  ReplacedValues createAlias(String alias) {
+    return ReplacedValues(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class MediaVersions extends Table with TableInfo {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  MediaVersions(this.attachedDatabase, [this._alias]);
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+    'local_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<int> byteSize = GeneratedColumn<int>(
+    'byte_size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'present\'',
+    defaultValue: const CustomExpression('\'present\''),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    mediaId,
+    version,
+    role,
+    localPath,
+    byteSize,
+    state,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'media_versions';
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mediaId, version, role};
+  @override
+  Never map(Map<String, dynamic> data, {String? tablePrefix}) {
+    throw UnsupportedError('TableInfo.map in schema verification code');
+  }
+
+  @override
+  MediaVersions createAlias(String alias) {
+    return MediaVersions(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(media_id, version, role)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class DeferredRemoteChanges extends Table with TableInfo {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DeferredRemoteChanges(this.attachedDatabase, [this._alias]);
+  late final GeneratedColumn<String> artworkId = GeneratedColumn<String>(
+    'artwork_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> childId = GeneratedColumn<String>(
+    'child_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> changeJson = GeneratedColumn<String>(
+    'change_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [artworkId, childId, changeJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deferred_remote_changes';
+  @override
+  Set<GeneratedColumn> get $primaryKey => {artworkId};
+  @override
+  Never map(Map<String, dynamic> data, {String? tablePrefix}) {
+    throw UnsupportedError('TableInfo.map in schema verification code');
+  }
+
+  @override
+  DeferredRemoteChanges createAlias(String alias) {
+    return DeferredRemoteChanges(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(artwork_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class OlderRemoteValues extends Table with TableInfo {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  OlderRemoteValues(this.attachedDatabase, [this._alias]);
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> field = GeneratedColumn<String>(
+    'field',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<String> changeJson = GeneratedColumn<String>(
+    'change_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityId, field, changeJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'older_remote_values';
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId, field};
+  @override
+  Never map(Map<String, dynamic> data, {String? tablePrefix}) {
+    throw UnsupportedError('TableInfo.map in schema verification code');
+  }
+
+  @override
+  OlderRemoteValues createAlias(String alias) {
+    return OlderRemoteValues(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(entity_id, field)'];
   @override
   bool get dontWriteConstraints => true;
 }
@@ -468,6 +923,16 @@ class VaultMeta extends Table with TableInfo {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<int> joinResetPending = GeneratedColumn<int>(
+    'join_reset_pending',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT 0 CHECK (join_reset_pending IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
   );
   late final GeneratedColumn<int> lastPullCursor = GeneratedColumn<int>(
     'last_pull_cursor',
@@ -501,14 +966,33 @@ class VaultMeta extends Table with TableInfo {
     requiredDuringInsert: false,
     $customConstraints: 'NULL',
   );
+  late final GeneratedColumn<String> changeCursor = GeneratedColumn<String>(
+    'change_cursor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
+  late final GeneratedColumn<int> changeGeneration = GeneratedColumn<int>(
+    'change_generation',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NULL',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     familyId,
+    joinResetPending,
     lastPullCursor,
     childrenPullCursor,
     artworksPullCursor,
     purgedPullCursor,
+    changeCursor,
+    changeGeneration,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -587,6 +1071,11 @@ class DatabaseAtV1 extends GeneratedDatabase {
     this,
   );
   late final SyncOutbox syncOutbox = SyncOutbox(this);
+  late final ReplacedValues replacedValues = ReplacedValues(this);
+  late final MediaVersions mediaVersions = MediaVersions(this);
+  late final DeferredRemoteChanges deferredRemoteChanges =
+      DeferredRemoteChanges(this);
+  late final OlderRemoteValues olderRemoteValues = OlderRemoteValues(this);
   late final VaultMeta vaultMeta = VaultMeta(this);
   late final ShareLinkUrlCache shareLinkUrlCache = ShareLinkUrlCache(this);
   @override
@@ -598,6 +1087,10 @@ class DatabaseAtV1 extends GeneratedDatabase {
     artworks,
     pendingFileCleanups,
     syncOutbox,
+    replacedValues,
+    mediaVersions,
+    deferredRemoteChanges,
+    olderRemoteValues,
     vaultMeta,
     shareLinkUrlCache,
   ];

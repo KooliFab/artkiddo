@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../local/database/app_database.dart';
-import '../contracts/sync_backend.dart';
+import '../contracts/sync_protocol.dart';
 
 /// Thrown when the authenticated user's household does not match the
 /// household this local vault is already attached to. The only two
@@ -26,15 +26,14 @@ class FamilyMismatchException implements Exception {
 }
 
 /// The one row of `VaultMetaTable` this device keeps: which household
-/// (if any) this local vault is attached to, and how far each
-/// independent `pull` stream got.
+/// (if any) this local vault is attached to, and how far the device read
+/// the remote change journal.
 ///
 /// `familyId` is written exactly once, at the vault's first remote
 /// attachment; every later sync must find the same value or refuse
-/// ([FamilyMismatchException]). The independent cursors are always the
-/// maximal **server** timestamp their own stream has applied, never a
-/// client clock. A null cursor means "never pulled" for that stream,
-/// which is exactly the join/restore starting point.
+/// ([FamilyMismatchException]). The journal cursor ([getChangeCursor]) is
+/// opaque and written only with the page it ends; a null cursor means
+/// "never pulled", which is exactly the join/restore starting point.
 class VaultMetaRepository {
   static const _singletonId = 'singleton';
 
@@ -88,37 +87,28 @@ class VaultMetaRepository {
         );
   }
 
-  Future<PullCursorSet> getPullCursors() async {
+  /// Where the next journal read starts, or null to read from the
+  /// beginning.
+  Future<ChangeCursor?> getChangeCursor() async {
     final row = await _readOrCreate();
-    return PullCursorSet(
-      children: row.childrenPullCursor,
-      artworks: row.artworksPullCursor,
-      purged: row.purgedPullCursor,
-    );
+    final value = row.changeCursor;
+    final generation = row.changeGeneration;
+    if (value == null || generation == null) return null;
+    return ChangeCursor(value: value, generation: generation);
   }
 
-  Future<DateTime?> getChildrenPullCursor() async =>
-      (await getPullCursors()).children;
-
-  Future<DateTime?> getArtworksPullCursor() async =>
-      (await getPullCursors()).artworks;
-
-  Future<DateTime?> getPurgedPullCursor() async =>
-      (await getPullCursors()).purged;
-
-  /// Compatibility read for pre-independent-cursor callers. New code
-  /// must use [getPullCursors]; returning the maximum independent
-  /// cursor preserves the old "last activity" status without coupling
-  /// the streams again.
-  Future<DateTime?> getLastPullCursor() async {
-    final cursors = await getPullCursors();
-    final values = [
-      if (cursors.children != null) cursors.children!,
-      if (cursors.artworks != null) cursors.artworks!,
-      if (cursors.purged != null) cursors.purged!,
-    ];
-    if (values.isEmpty) return null;
-    return values.reduce((a, b) => a.isAfter(b) ? a : b);
+  /// Records the end of a page of the journal. Call it inside the
+  /// transaction that applies that page.
+  Future<void> setChangeCursor(ChangeCursor cursor) async {
+    await _db
+        .into(_db.vaultMetaTable)
+        .insertOnConflictUpdate(
+          VaultMetaTableCompanion.insert(
+            id: _singletonId,
+            changeCursor: Value(cursor.value),
+            changeGeneration: Value(cursor.generation),
+          ),
+        );
   }
 
   /// Writes `familyId` for the first time. A no-op (not an error) if
@@ -158,66 +148,6 @@ class VaultMetaRepository {
         authenticatedFamilyId: familyId,
       );
     }
-  }
-
-  Future<void> setPullCursor({required PullCursorSet cursors}) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            childrenPullCursor: Value(cursors.children),
-            artworksPullCursor: Value(cursors.artworks),
-            purgedPullCursor: Value(cursors.purged),
-          ),
-        );
-  }
-
-  Future<void> setChildrenPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            childrenPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  Future<void> setArtworksPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            artworksPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  Future<void> setPurgedPullCursor(DateTime cursor) async {
-    await _db
-        .into(_db.vaultMetaTable)
-        .insertOnConflictUpdate(
-          VaultMetaTableCompanion.insert(
-            id: _singletonId,
-            purgedPullCursor: Value(cursor),
-          ),
-        );
-  }
-
-  /// Compatibility bridge for old integrations. It deliberately writes
-  /// all streams only when explicitly requested by a legacy caller;
-  /// migrations never call it, so the single legacy cursor is not
-  /// copied into the independent ones.
-  Future<void> setLastPullCursor(DateTime cursor) async {
-    await setPullCursor(
-      cursors: PullCursorSet(
-        children: cursor,
-        artworks: cursor,
-        purged: cursor,
-      ),
-    );
   }
 
   /// Called after a successful account deletion when the member chose

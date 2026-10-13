@@ -81,6 +81,46 @@
             "default_dart": "const CustomExpression('\\'localOnly\\'')",
             "default_client_dart": null,
             "dsl_features": []
+          },
+          {
+            "name": "name_rev",
+            "getter_name": "nameRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "birth_date_rev",
+            "getter_name": "birthDateRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "lifecycle_rev",
+            "getter_name": "lifecycleRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deleted_at",
+            "getter_name": "deletedAt",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -298,8 +338,92 @@
             "dsl_features": []
           },
           {
+            "name": "audio_revision",
+            "getter_name": "audioRevision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "audio_sync_intent",
+            "getter_name": "audioSyncIntent",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'keep\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "audio_conflict",
+            "getter_name": "audioConflict",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"audio_conflict\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"audio_conflict\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "added_by",
+            "getter_name": "addedBy",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "story_rev",
+            "getter_name": "storyRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "drawn_at_rev",
+            "getter_name": "drawnAtRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "lifecycle_rev",
+            "getter_name": "lifecycleRev",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
             "name": "deleted_at",
             "getter_name": "deletedAt",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "remote_purged_at",
+            "getter_name": "remotePurgedAt",
             "moor_type": "dateTime",
             "nullable": true,
             "customConstraints": null,
@@ -378,6 +502,16 @@
             ]
           },
           {
+            "name": "op_id",
+            "getter_name": "opId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('(lower(hex(randomblob(4)) || \\'-\\' || hex(randomblob(2)) || \\'-4\\' || substr(hex(randomblob(2)), 2) || \\'-\\' || substr(\\'89ab\\', 1 +(abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || \\'-\\' || hex(randomblob(6))))')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
             "name": "entity",
             "getter_name": "entity",
             "moor_type": "string",
@@ -404,6 +538,26 @@
             "nullable": false,
             "customConstraints": null,
             "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "patch_json",
+            "getter_name": "patchJson",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "state",
+            "getter_name": "state",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'pending\\'')",
             "default_client_dart": null,
             "dsl_features": []
           },
@@ -450,11 +604,287 @@
         ],
         "is_virtual": false,
         "without_rowid": false,
-        "constraints": []
+        "constraints": [],
+        "unique_keys": [
+          [
+            "op_id"
+          ]
+        ]
       }
     },
     {
       "id": 4,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "replaced_values",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_type",
+            "getter_name": "entityType",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_id",
+            "getter_name": "entityId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "field",
+            "getter_name": "field",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "value_json",
+            "getter_name": "valueJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "media_ref",
+            "getter_name": "mediaRef",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "source",
+            "getter_name": "source",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at",
+            "getter_name": "createdAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "media_versions",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "media_id",
+            "getter_name": "mediaId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "version",
+            "getter_name": "version",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "role",
+            "getter_name": "role",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "local_path",
+            "getter_name": "localPath",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "byte_size",
+            "getter_name": "byteSize",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "state",
+            "getter_name": "state",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'present\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "media_id",
+          "version",
+          "role"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "deferred_remote_changes",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "artwork_id",
+            "getter_name": "artworkId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "child_id",
+            "getter_name": "childId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "change_json",
+            "getter_name": "changeJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "artwork_id"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "older_remote_values",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "entity_id",
+            "getter_name": "entityId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "field",
+            "getter_name": "field",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "change_json",
+            "getter_name": "changeJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "entity_id",
+          "field"
+        ]
+      }
+    },
+    {
+      "id": 8,
       "references": [],
       "type": "table",
       "data": {
@@ -478,6 +908,20 @@
             "nullable": true,
             "customConstraints": null,
             "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "join_reset_pending",
+            "getter_name": "joinResetPending",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"join_reset_pending\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"join_reset_pending\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
             "default_client_dart": null,
             "dsl_features": []
           },
@@ -520,6 +964,26 @@
             "default_dart": null,
             "default_client_dart": null,
             "dsl_features": []
+          },
+          {
+            "name": "change_cursor",
+            "getter_name": "changeCursor",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "change_generation",
+            "getter_name": "changeGeneration",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -531,7 +995,7 @@
       }
     },
     {
-      "id": 5,
+      "id": 9,
       "references": [],
       "type": "table",
       "data": {
@@ -574,7 +1038,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"children\" (\"id\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"birth_date\" INTEGER NOT NULL, \"created_at\" INTEGER NOT NULL, \"updated_at\" INTEGER NOT NULL, \"sync_state\" TEXT NOT NULL DEFAULT 'localOnly', PRIMARY KEY (\"id\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"children\" (\"id\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"birth_date\" INTEGER NOT NULL, \"created_at\" INTEGER NOT NULL, \"updated_at\" INTEGER NOT NULL, \"sync_state\" TEXT NOT NULL DEFAULT 'localOnly', \"name_rev\" INTEGER NOT NULL DEFAULT 0, \"birth_date_rev\" INTEGER NOT NULL DEFAULT 0, \"lifecycle_rev\" INTEGER NOT NULL DEFAULT 0, \"deleted_at\" INTEGER NULL, PRIMARY KEY (\"id\"));"
         }
       ]
     },
@@ -583,7 +1047,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"artworks\" (\"id\" TEXT NOT NULL, \"child_id\" TEXT NOT NULL REFERENCES children (id) ON DELETE CASCADE, \"relative_image_path\" TEXT NULL, \"created_at\" INTEGER NOT NULL, \"drawn_at\" INTEGER NULL, \"story\" TEXT NULL, \"sync_state\" TEXT NOT NULL DEFAULT 'localOnly', \"display_image_path\" TEXT NULL, \"thumbnail_image_path\" TEXT NULL, \"image_width\" INTEGER NULL, \"image_height\" INTEGER NULL, \"display_object_key\" TEXT NULL, \"thumbnail_object_key\" TEXT NULL, \"byte_size\" INTEGER NOT NULL DEFAULT 0, \"relative_audio_path\" TEXT NULL, \"audio_duration_ms\" INTEGER NULL, \"audio_object_key\" TEXT NULL, \"audio_byte_size\" INTEGER NOT NULL DEFAULT 0, \"deleted_at\" INTEGER NULL, PRIMARY KEY (\"id\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"artworks\" (\"id\" TEXT NOT NULL, \"child_id\" TEXT NOT NULL REFERENCES children (id) ON DELETE CASCADE, \"relative_image_path\" TEXT NULL, \"created_at\" INTEGER NOT NULL, \"drawn_at\" INTEGER NULL, \"story\" TEXT NULL, \"sync_state\" TEXT NOT NULL DEFAULT 'localOnly', \"display_image_path\" TEXT NULL, \"thumbnail_image_path\" TEXT NULL, \"image_width\" INTEGER NULL, \"image_height\" INTEGER NULL, \"display_object_key\" TEXT NULL, \"thumbnail_object_key\" TEXT NULL, \"byte_size\" INTEGER NOT NULL DEFAULT 0, \"relative_audio_path\" TEXT NULL, \"audio_duration_ms\" INTEGER NULL, \"audio_object_key\" TEXT NULL, \"audio_byte_size\" INTEGER NOT NULL DEFAULT 0, \"audio_revision\" INTEGER NOT NULL DEFAULT 0, \"audio_sync_intent\" TEXT NOT NULL DEFAULT 'keep', \"audio_conflict\" INTEGER NOT NULL DEFAULT 0 CHECK (\"audio_conflict\" IN (0, 1)), \"added_by\" TEXT NULL, \"story_rev\" INTEGER NOT NULL DEFAULT 0, \"drawn_at_rev\" INTEGER NOT NULL DEFAULT 0, \"lifecycle_rev\" INTEGER NOT NULL DEFAULT 0, \"deleted_at\" INTEGER NULL, \"remote_purged_at\" INTEGER NULL, PRIMARY KEY (\"id\"));"
         }
       ]
     },
@@ -601,7 +1065,43 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"sync_outbox\" (\"seq\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"entity\" TEXT NOT NULL, \"entity_id\" TEXT NOT NULL, \"op\" TEXT NOT NULL, \"attempts\" INTEGER NOT NULL DEFAULT 0, \"next_attempt_at\" INTEGER NULL, \"last_error\" TEXT NULL, \"created_at\" INTEGER NOT NULL);"
+          "sql": "CREATE TABLE IF NOT EXISTS \"sync_outbox\" (\"seq\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"op_id\" TEXT NOT NULL DEFAULT ((lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))))), \"entity\" TEXT NOT NULL, \"entity_id\" TEXT NOT NULL, \"op\" TEXT NOT NULL, \"patch_json\" TEXT NULL, \"state\" TEXT NOT NULL DEFAULT 'pending', \"attempts\" INTEGER NOT NULL DEFAULT 0, \"next_attempt_at\" INTEGER NULL, \"last_error\" TEXT NULL, \"created_at\" INTEGER NOT NULL, UNIQUE (\"op_id\"));"
+        }
+      ]
+    },
+    {
+      "name": "replaced_values",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"replaced_values\" (\"id\" TEXT NOT NULL, \"entity_type\" TEXT NOT NULL, \"entity_id\" TEXT NOT NULL, \"field\" TEXT NOT NULL, \"value_json\" TEXT NOT NULL, \"media_ref\" TEXT NULL, \"source\" TEXT NOT NULL, \"created_at\" INTEGER NOT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "media_versions",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"media_versions\" (\"media_id\" TEXT NOT NULL, \"version\" INTEGER NOT NULL, \"role\" TEXT NOT NULL, \"local_path\" TEXT NOT NULL, \"byte_size\" INTEGER NOT NULL DEFAULT 0, \"state\" TEXT NOT NULL DEFAULT 'present', PRIMARY KEY (\"media_id\", \"version\", \"role\"));"
+        }
+      ]
+    },
+    {
+      "name": "deferred_remote_changes",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"deferred_remote_changes\" (\"artwork_id\" TEXT NOT NULL, \"child_id\" TEXT NOT NULL, \"change_json\" TEXT NOT NULL, PRIMARY KEY (\"artwork_id\"));"
+        }
+      ]
+    },
+    {
+      "name": "older_remote_values",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"older_remote_values\" (\"entity_id\" TEXT NOT NULL, \"field\" TEXT NOT NULL, \"change_json\" TEXT NOT NULL, PRIMARY KEY (\"entity_id\", \"field\"));"
         }
       ]
     },
@@ -610,7 +1110,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"vault_meta\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NULL, \"last_pull_cursor\" INTEGER NULL, \"children_pull_cursor\" INTEGER NULL, \"artworks_pull_cursor\" INTEGER NULL, \"purged_pull_cursor\" INTEGER NULL, PRIMARY KEY (\"id\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"vault_meta\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NULL, \"join_reset_pending\" INTEGER NOT NULL DEFAULT 0 CHECK (\"join_reset_pending\" IN (0, 1)), \"last_pull_cursor\" INTEGER NULL, \"children_pull_cursor\" INTEGER NULL, \"artworks_pull_cursor\" INTEGER NULL, \"purged_pull_cursor\" INTEGER NULL, \"change_cursor\" TEXT NULL, \"change_generation\" INTEGER NULL, PRIMARY KEY (\"id\"));"
         }
       ]
     },

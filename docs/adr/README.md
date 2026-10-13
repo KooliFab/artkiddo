@@ -15,3 +15,5 @@ numbering is shared with decisions recorded outside this repository.
 | `0014-immediate-native-background-upload.md` | `CompositionActions.onArtworkSaved` fires best-effort after the local commit | Current |
 | `0015-discard-previous-family-on-join.md` | Joining another family requires confirmation, then discards the previous one | Current |
 | `0016-local-default-destinations.md` | Capability-gated vs local-default `CompositionActions`; local features never disappear | Current |
+| `0017-sync-protocol-v3.md` | Replayable per-field patches, explicit conflicts, ordered change journal with generation, immutable verified media versions | Accepted; outbox side implemented by 0018 |
+| `0018-operation-outbox.md` | Outbox rows are identified operations; acknowledgement per operation; field revisions; `replaced_values` history | Accepted |

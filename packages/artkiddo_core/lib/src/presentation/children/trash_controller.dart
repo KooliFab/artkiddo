@@ -26,6 +26,10 @@ class TrashState {
   /// *which* row, not just whether one is busy.
   final String? busyItemId;
 
+  /// Counts the restores that left an artwork existing on this phone only
+  /// (purged remotely). The screen reacts to each increase by saying so.
+  final int onlyHereRestores;
+
   const TrashState({
     this.loading = true,
     this.items = const [],
@@ -36,6 +40,7 @@ class TrashState {
     this.purge = const ActionIdle(),
     this.purgeAll = const ActionIdle(),
     this.busyItemId,
+    this.onlyHereRestores = 0,
   });
 
   TrashState copyWith({
@@ -50,6 +55,7 @@ class TrashState {
     AsyncAction? purgeAll,
     String? busyItemId,
     bool clearBusyItemId = false,
+    int? onlyHereRestores,
   }) {
     return TrashState(
       loading: loading ?? this.loading,
@@ -61,6 +67,7 @@ class TrashState {
       purge: purge ?? this.purge,
       purgeAll: purgeAll ?? this.purgeAll,
       busyItemId: clearBusyItemId ? null : (busyItemId ?? this.busyItemId),
+      onlyHereRestores: onlyHereRestores ?? this.onlyHereRestores,
     );
   }
 }
@@ -91,12 +98,29 @@ class TrashController extends Notifier<TrashState> {
       return;
     }
 
-    if (ref.read(appCapabilitiesProvider).remoteBackup) {
-      // Flush pending deletions before reading the shared trash. The list
-      // remains a remote query even when convergence cannot complete.
-      await ref.read(familyConvergenceProvider)();
+    final FamilyMembership? membership;
+    try {
+      if (ref.read(appCapabilitiesProvider).remoteBackup) {
+        // Flush pending deletions before reading the shared trash.
+        await ref.read(familyConvergenceProvider)();
+      }
+      membership = await ref.read(familyApiProvider).currentMembership();
+    } catch (error) {
+      // Offline: the trash of this device stays usable. Its deletions are
+      // queued and reach the remote side once it is reachable again. The
+      // last known role is kept; without one (never read) the parent
+      // actions stay unavailable.
+      Log.w(
+        'Corbeille partagée injoignable, corbeille locale : $error',
+        'Trash',
+      );
+      state = state.copyWith(
+        loading: quiet ? state.loading : true,
+        isParent: state.familyId == null ? false : state.isParent,
+      );
+      _applyListResult(await repository.listTrash(scopeId: state.familyId));
+      return;
     }
-    final membership = await ref.read(familyApiProvider).currentMembership();
     if (membership == null) {
       state = const TrashState(loading: false);
       return;
@@ -157,6 +181,9 @@ class TrashController extends Notifier<TrashState> {
     if (state.restore.isBusy) return;
     state = state.copyWith(restore: const ActionBusy(), busyItemId: artworkId);
     await _refreshing;
+    final onlyHere = state.items.any(
+      (i) => i.id == artworkId && i.existsOnlyHere,
+    );
     final result = await ref.read(trashRepositoryProvider).restore(artworkId);
     switch (result) {
       case ActionSuccess():
@@ -165,6 +192,9 @@ class TrashController extends Notifier<TrashState> {
           restore: const ActionDone(),
           items: remaining,
           clearBusyItemId: true,
+          onlyHereRestores: onlyHere
+              ? state.onlyHereRestores + 1
+              : state.onlyHereRestores,
         );
         // Remote restore needs a prompt sync so the shared gallery
         // reappears immediately. Local restore already changed the durable
@@ -195,6 +225,7 @@ class TrashController extends Notifier<TrashState> {
           items: remaining,
           clearBusyItemId: true,
         );
+        _sendDeletions();
       case ActionFailed(failure: final f):
         state = state.copyWith(purge: ActionError(f), clearBusyItemId: true);
       case ActionCancelled():
@@ -209,7 +240,7 @@ class TrashController extends Notifier<TrashState> {
     final familyId = state.familyId;
     final local =
         ref.read(appCapabilitiesProvider).trash == TrashCapability.local;
-    if ((!local && familyId == null) || state.purgeAll.isBusy) return;
+    if (state.purgeAll.isBusy) return;
     state = state.copyWith(purgeAll: const ActionBusy());
     await _refreshing;
     final result = await ref
@@ -218,11 +249,27 @@ class TrashController extends Notifier<TrashState> {
     switch (result) {
       case ActionSuccess():
         state = state.copyWith(purgeAll: const ActionDone(), items: const []);
+        _sendDeletions();
       case ActionFailed(failure: final f):
         state = state.copyWith(purgeAll: ActionError(f));
       case ActionCancelled():
         state = state.copyWith(purgeAll: const ActionIdle());
     }
+  }
+
+  /// A deletion queued by the remote trash goes out at once when it can; it
+  /// stays queued otherwise.
+  void _sendDeletions() {
+    if (ref.read(appCapabilitiesProvider).trash == TrashCapability.local) {
+      return;
+    }
+    if (!ref.read(appCapabilitiesProvider).remoteBackup) return;
+    unawaited(
+      Future.sync(ref.read(familyConvergenceProvider)).catchError(
+        (Object error, StackTrace stack) =>
+            Log.e('Envoi des suppressions différé', error, stack, 'Trash'),
+      ),
+    );
   }
 }
 

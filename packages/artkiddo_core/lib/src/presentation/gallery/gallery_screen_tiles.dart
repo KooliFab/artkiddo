@@ -1,5 +1,8 @@
 part of 'gallery_screen.dart';
 
+/// Gap between the bars of the tile's audio equalizer.
+const _equalizerBarGap = 3.0;
+
 class MosaicArtworkTile extends ConsumerStatefulWidget {
   final ArtworkTile tile;
   const MosaicArtworkTile({super.key, required this.tile});
@@ -129,6 +132,17 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
     final ratio = MosaicArtworkTile.ratioOf(widget.tile);
     final extreme = ratio != widget.tile.aspectRatio;
     final l10n = AppLocalizations.of(context);
+    // Without a remote backup every card would say "on this device": the
+    // marker then only appears when something needs the parent's action.
+    final remoteBackup = ref.watch(appCapabilitiesProvider).remoteBackup;
+    final backup = ref.watch(
+      artworkBackupStatusProvider(widget.tile.artworkId),
+    );
+    final backupBadge =
+        backup != null &&
+            (remoteBackup || backup.state == ArtworkBackupState.actionNeeded)
+        ? backup.state
+        : null;
     final date = widget.tile.drawnAt ?? widget.tile.addedAt;
     final label = widget.tile.story == null || widget.tile.story!.isEmpty
         ? l10n.a11yGalleryCard(widget.tile.childName, date, widget.tile.age)
@@ -181,6 +195,12 @@ class _MosaicArtworkTileState extends ConsumerState<MosaicArtworkTile> {
                             child: _TileAudioBadge(),
                           ),
                         ),
+                      if (backupBadge != null)
+                        Positioned(
+                          left: AppSpacing.s2,
+                          top: AppSpacing.s2,
+                          child: BackupStatusBadge(state: backupBadge),
+                        ),
                     ],
                   ),
                 ),
@@ -209,7 +229,7 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
     super.initState();
     _anim = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: AppMotion.pulse,
     )..repeat(reverse: true);
   }
 
@@ -230,11 +250,11 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _bar(6 + 8 * v),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(14 - 8 * v),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(8 + 8 * (1 - v)),
-            const SizedBox(width: 3),
+            const SizedBox(width: _equalizerBarGap),
             _bar(5 + 10 * v),
           ],
         );
@@ -248,7 +268,7 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
       height: height.clamp(4.0, 16.0),
       decoration: BoxDecoration(
         color: AppColors.accent,
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(AppRadii.xs),
       ),
     );
   }
@@ -260,8 +280,8 @@ class _TileAudioBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 26,
-      height: 26,
+      width: AppSizes.badge,
+      height: AppSizes.badge,
       decoration: BoxDecoration(
         color: AppColors.overlay,
         shape: BoxShape.circle,
@@ -269,13 +289,7 @@ class _TileAudioBadge extends StatelessWidget {
           color: AppColors.surface.withValues(alpha: 0.35),
           width: 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppShadows.badge,
       ),
       child: const Center(
         child: Icon(Icons.mic_rounded, size: 14, color: AppColors.surface),

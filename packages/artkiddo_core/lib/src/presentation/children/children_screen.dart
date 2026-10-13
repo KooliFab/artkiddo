@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
+import '../ui/child_colors.dart';
 import '../ui/child_row.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -36,7 +37,7 @@ class ChildrenScreen extends ConsumerWidget {
               height: 72,
               decoration: BoxDecoration(
                 color: AppColors.surfaceSunken,
-                borderRadius: BorderRadius.circular(AppRadii.lg),
+                borderRadius: BorderRadius.circular(AppRadii.md),
               ),
             ),
           ),
@@ -67,12 +68,13 @@ class ChildrenScreen extends ConsumerWidget {
               );
             }
             final counts = countsAsync.value ?? const {};
+            final colors = childColorIndexes(children);
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.s4,
                 AppSpacing.s2,
                 AppSpacing.s4,
-                96,
+                AppSizes.fabClearance,
               ),
               itemCount: children.length + 1,
               separatorBuilder: (context, i) =>
@@ -94,6 +96,7 @@ class ChildrenScreen extends ConsumerWidget {
                 return ChildRow(
                   name: child.name,
                   subtitle: l10n.childrenRowSubtitle(child.birthDate, count),
+                  colorIndex: colors[child.id] ?? 0,
                   onTap: () =>
                       showChildActionsSheet(context, ref, child, count),
                 );

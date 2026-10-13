@@ -7,14 +7,15 @@ import '../../domain/action_result.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
 import '../ui/discard_guard.dart';
+import '../ui/adaptive_modal.dart';
 import '../ui/error_presenter.dart';
 import '../ui/formatters.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'child_editor_controller.dart';
 
-/// Compact pushes `childEditor` as a full page; medium/expanded present
-/// it as a non-dismissible 560-wide dialog instead. Centralized here so
+/// Compact presents `childEditor` as a full-screen modal; medium/expanded
+/// as a 560-wide dialog ([showAdaptiveModal]). Centralized here so
 /// every entry point (galleries' empty states, the children list, the
 /// child actions sheet, the capture draft, the shell's rail FAB) gets
 /// the same responsive behaviour for free.
@@ -22,27 +23,14 @@ Future<ActionResult<String>?> pushChildEditor(
   BuildContext context,
   ChildEditorArgs args,
 ) {
-  final width = MediaQuery.of(context).size.width;
-  if (AppBreakpoints.isCompact(width)) {
-    return Navigator.of(context).push<ActionResult<String>>(
-      MaterialPageRoute(builder: (_) => ChildEditorScreen(args: args)),
-    );
-  }
-  return showDialog<ActionResult<String>>(
-    context: context,
+  // A form that is saved or dismissed: presented modally (slides up,
+  // closes with X), the same in create and edit mode. Not dismissed by a
+  // tap outside the dialog: a stray tap must not reach the discard prompt.
+  return showAdaptiveModal<ActionResult<String>>(
+    context,
+    compact: CompactPresentation.fullScreen,
     barrierDismissible: false,
-    builder: (_) => Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 560,
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: ChildEditorScreen(args: args),
-      ),
-    ),
+    builder: (_) => ChildEditorScreen(args: args),
   );
 }
 
@@ -111,7 +99,6 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(childEditorControllerProvider(widget.args));
     final isCreate = widget.args.childId == null;
-    final isSheet = widget.args.presentedAsSheet;
 
     if (_nameController.text != state.name &&
         !_nameController.value.composing.isValid) {
@@ -149,29 +136,26 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
               : null)
         : null;
 
-    final canSave =
-        state.isDirty &&
-        state.name.trim().isNotEmpty &&
-        state.birthDate != null &&
-        !state.loading;
+    final missingRequired =
+        state.name.trim().isEmpty || state.birthDate == null;
+    final canSave = state.isDirty && !missingRequired && !state.loading;
 
     return DiscardGuard(
       isDirty: state.isDirty && !state.save.isBusy,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: !isSheet && isCreate,
+          automaticallyImplyLeading: false,
           title: Text(
             isCreate
                 ? l10n.childEditorTitleCreate
                 : l10n.childEditorTitleArtist,
           ),
           actions: [
-            if (!isCreate || isSheet)
-              IconButton(
-                tooltip: l10n.commonClose,
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.close),
-              ),
+            IconButton(
+              tooltip: l10n.commonClose,
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.close),
+            ),
           ],
         ),
         body: state.loading
@@ -311,20 +295,26 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
                                 color: AppColors.inkMuted,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.s6),
-                            AsyncActionButton(
-                              action: state.save,
-                              idleLabel: l10n.commonSave,
-                              busyLabel: l10n.commonSaving,
-                              fullWidth: true,
-                              enabled: canSave,
-                              disabledReason: canSave
-                                  ? null
-                                  : l10n.childEditorSaveDisabledReason,
-                              onPressed: _handleSave,
-                            ),
                           ],
                         ),
+                      ),
+                    ),
+                    // Pinned under the form, like the capture save bar, so
+                    // it stays reachable above the keyboard.
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.s4),
+                      child: AsyncActionButton(
+                        action: state.save,
+                        idleLabel: l10n.commonSave,
+                        busyLabel: l10n.commonSaving,
+                        fullWidth: true,
+                        enabled: canSave,
+                        disabledReason: canSave
+                            ? null
+                            : (missingRequired
+                                  ? l10n.childEditorSaveDisabledReason
+                                  : l10n.commonNoChanges),
+                        onPressed: _handleSave,
                       ),
                     ),
                   ],

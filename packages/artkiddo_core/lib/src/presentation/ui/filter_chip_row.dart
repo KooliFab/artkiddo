@@ -43,14 +43,16 @@ class AppFilterChip extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: kMinTapTarget),
             child: Center(
               child: Container(
-                height: 40,
+                height: AppSizes.chip,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
                 decoration: BoxDecoration(
                   color: selected ? AppColors.accentSurface : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.full),
                   border: Border.all(
-                    color: selected ? AppColors.accent : AppColors.border,
-                    width: selected ? 1 : 1,
+                    color: selected
+                        ? AppColors.accent
+                        : AppColors.borderStrong,
+                    width: 1,
                   ),
                 ),
                 child: Row(

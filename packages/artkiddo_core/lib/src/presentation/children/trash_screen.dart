@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../async_action.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 import '../ui/state_block.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../local/repositories/trash_repository.dart';
@@ -84,6 +85,14 @@ class _TrashScreenState extends ConsumerState<TrashScreen>
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.trashRestoreError)));
+      }
+      if (next.onlyHereRestores > (previous?.onlyHereRestores ?? 0)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.trashRestoredOnlyHere),
+            duration: AppMotion.snackBarLong,
+          ),
+        );
       }
       if (!wasPurgeError && next.purge is ActionError) {
         ScaffoldMessenger.of(
@@ -207,7 +216,7 @@ class _TrashRow extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s3),
       decoration: BoxDecoration(
         color: AppColors.surfaceSunken,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +328,7 @@ class _TrashPreview extends ConsumerWidget {
       label: AppLocalizations.of(context).trashPreviewOpen,
       button: true,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: Image(
           image: image,
           height: 150,
@@ -358,23 +367,17 @@ class _PurgeDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-      ),
       title: Text(l10n.trashPurgeConfirmTitle),
       content: Text(l10n.trashPurgeConfirmBody),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        TextButton(
-          style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+        DialogCancelButton(onPressed: () => Navigator.of(context).pop()),
+        DialogConfirmButton(
+          label: l10n.trashPurge,
+          destructive: true,
           onPressed: () {
             Navigator.of(context).pop();
             ref.read(trashControllerProvider.notifier).purge(artworkId);
           },
-          child: Text(l10n.trashPurge),
         ),
       ],
     );
@@ -393,25 +396,20 @@ class _PurgeAllDialog extends ConsumerWidget {
     return PopScope(
       canPop: !busy,
       child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
         title: Text(l10n.trashPurgeAllConfirmTitle),
         content: Text(l10n.trashPurgeAllConfirmBody),
         actions: [
-          TextButton(
+          DialogCancelButton(
             onPressed: busy ? null : () => Navigator.of(context).pop(),
-            child: Text(l10n.commonCancel),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            onPressed: busy
-                ? null
-                : () async {
-                    await ref.read(trashControllerProvider.notifier).purgeAll();
-                    if (context.mounted) Navigator.of(context).pop();
-                  },
-            child: Text(l10n.trashPurgeAll),
+          DialogConfirmButton(
+            label: l10n.trashPurgeAll,
+            destructive: true,
+            busy: busy,
+            onPressed: () async {
+              await ref.read(trashControllerProvider.notifier).purgeAll();
+              if (context.mounted) Navigator.of(context).pop();
+            },
           ),
         ],
       ),

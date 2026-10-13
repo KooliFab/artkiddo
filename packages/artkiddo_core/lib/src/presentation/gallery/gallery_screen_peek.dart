@@ -75,7 +75,7 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                 onTap: widget.onDismiss,
                 child: BackdropFilter(
                   filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: Container(color: Colors.black.withValues(alpha: 0.65)),
+                  child: Container(color: AppColors.peekScrim),
                 ),
               ),
             ),
@@ -100,14 +100,7 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(AppRadii.lg),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x66000000),
-                                blurRadius: 32,
-                                spreadRadius: 2,
-                                offset: Offset(0, 12),
-                              ),
-                            ],
+                            boxShadow: AppShadows.peekCard,
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: AspectRatio(
@@ -150,13 +143,7 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(AppRadii.full),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x40000000),
-                                blurRadius: 16,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
+                            boxShadow: AppShadows.peekPill,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -194,11 +181,11 @@ class _ArtworkPeekOverlayState extends State<_ArtworkPeekOverlay>
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             style: AppTypography.body.copyWith(
-                              color: Colors.white.withValues(alpha: 0.92),
+                              color: AppColors.onImmersive.withValues(
+                                alpha: 0.92,
+                              ),
                               fontStyle: FontStyle.italic,
-                              shadows: const [
-                                Shadow(color: Colors.black87, blurRadius: 8),
-                              ],
+                              shadows: AppShadows.textOnImageStrong,
                             ),
                           ),
                         ),
@@ -221,7 +208,7 @@ class _PeekHeader extends StatelessWidget {
   final ArtworkTile tile;
   const _PeekHeader({required this.tile});
 
-  static const _shadows = [Shadow(color: Colors.black54, blurRadius: 8)];
+  static const _shadows = AppShadows.textOnImage;
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +232,7 @@ class _PeekHeader extends StatelessWidget {
             date,
             textAlign: TextAlign.center,
             style: AppTypography.h3.copyWith(
-              color: Colors.white,
+              color: AppColors.onImmersive,
               shadows: _shadows,
             ),
           ),
@@ -255,7 +242,7 @@ class _PeekHeader extends StatelessWidget {
               artist,
               textAlign: TextAlign.center,
               style: AppTypography.bodyStrong.copyWith(
-                color: Colors.white.withValues(alpha: 0.88),
+                color: AppColors.onImmersive.withValues(alpha: 0.88),
                 shadows: _shadows,
               ),
             ),

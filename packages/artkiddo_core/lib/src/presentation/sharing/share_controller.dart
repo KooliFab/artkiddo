@@ -72,6 +72,7 @@ class ShareState {
   // verbatim.
   final String? resolvedChildName;
   final bool offline;
+  final AppFailure? loadError;
   final bool newLinkIncludeAudio;
   final Set<String> updatingLinkIds;
 
@@ -85,6 +86,7 @@ class ShareState {
     this.loading = true,
     this.resolvedChildName,
     this.offline = false,
+    this.loadError,
     this.newLinkIncludeAudio = false,
     this.updatingLinkIds = const {},
   });
@@ -99,6 +101,8 @@ class ShareState {
     bool? loading,
     String? resolvedChildName,
     bool? offline,
+    AppFailure? loadError,
+    bool clearLoadError = false,
     bool? newLinkIncludeAudio,
     Set<String>? updatingLinkIds,
   }) {
@@ -113,6 +117,7 @@ class ShareState {
       loading: loading ?? this.loading,
       resolvedChildName: resolvedChildName ?? this.resolvedChildName,
       offline: offline ?? this.offline,
+      loadError: clearLoadError ? null : (loadError ?? this.loadError),
       newLinkIncludeAudio: newLinkIncludeAudio ?? this.newLinkIncludeAudio,
       updatingLinkIds: updatingLinkIds ?? this.updatingLinkIds,
     );
@@ -125,11 +130,29 @@ class ShareController extends Notifier<ShareState> {
 
   @override
   ShareState build() {
-    Future.microtask(_load);
+    ref.watch(sessionEmailProvider);
+    // A session change rebuilds this notifier with a new Ref. Keep the old
+    // build lifetime so its outstanding responses cannot update the new state.
+    final lifetime = ref;
+    Future.microtask(() => _load(lifetime));
     return const ShareState();
   }
 
-  Future<void> _load() async {
+  Future<void> _load(Ref lifetime) async {
+    if (!lifetime.mounted) return;
+    try {
+      await _loadCurrent(lifetime);
+    } catch (error, stack) {
+      if (!lifetime.mounted) return;
+      state = state.copyWith(
+        loading: false,
+        step: ShareStep.choice,
+        loadError: UnknownFailure(cause: error, stack: stack),
+      );
+    }
+  }
+
+  Future<void> _loadCurrent(Ref lifetime) async {
     // Re-derive the child's current name from the repository — never
     // trust `args.childName` verbatim, which is an empty placeholder when
     // share is reopened via a pending intent (the controller is keyed
@@ -139,6 +162,7 @@ class ShareController extends Notifier<ShareState> {
         .read(childrenRepositoryProvider)
         .watchAll()
         .first;
+    if (!lifetime.mounted) return;
     final child = children.where((c) => c.id == args.childId).firstOrNull;
     if (child == null) {
       state = state.copyWith(step: ShareStep.childMissing, loading: false);
@@ -153,9 +177,11 @@ class ShareController extends Notifier<ShareState> {
     }
 
     final hasSynced = await _childHasSyncedArtworks();
+    if (!lifetime.mounted) return;
 
     final service = ref.read(sharingServiceProvider);
     final result = await service.listLinks(args.childId);
+    if (!lifetime.mounted) return;
     switch (result) {
       case ActionSuccess(value: final links):
         // The backend keeps a revoked link's row (audit trail) instead of
@@ -174,13 +200,15 @@ class ShareController extends Notifier<ShareState> {
               : ShareStep.choice,
           loading: false,
           offline: false,
+          clearLoadError: true,
         );
       case ActionFailed(failure: final f):
         state = state.copyWith(
-          step: ShareStep.choice,
+          step: state.links.isEmpty ? ShareStep.choice : ShareStep.linkReady,
           childHasSyncedArtworks: hasSynced,
           loading: false,
           offline: f is NetworkFailure,
+          loadError: f,
         );
       case ActionCancelled():
         state = state.copyWith(step: ShareStep.choice, loading: false);
@@ -202,7 +230,10 @@ class ShareController extends Notifier<ShareState> {
   /// Starts backup and checks this child's persisted sync state afterwards.
   /// A partial household backup may still make this child shareable.
   Future<ActionResult<void>> backupNow() async {
-    if (state.backup.isBusy) return const ActionCancelled();
+    if (!ref.mounted || state.backup.isBusy || state.loading) {
+      return const ActionCancelled();
+    }
+    final lifetime = ref;
     final backup = ref.read(shareBackupProvider);
     if (backup == null) {
       const failure = UnavailableFailure();
@@ -213,7 +244,9 @@ class ShareController extends Notifier<ShareState> {
     ActionResult<void> result;
     try {
       result = await backup(args.childId);
+      if (!lifetime.mounted) return const ActionCancelled();
       final hasSynced = await _childHasSyncedArtworks();
+      if (!lifetime.mounted) return const ActionCancelled();
       if (hasSynced) {
         state = state.copyWith(
           backup: const ActionDone(),
@@ -225,6 +258,7 @@ class ShareController extends Notifier<ShareState> {
     } catch (error, stack) {
       result = ActionFailed(UnknownFailure(cause: error, stack: stack));
     }
+    if (!lifetime.mounted) return const ActionCancelled();
     final failure = switch (result) {
       ActionFailed(failure: final failure) => failure,
       _ => const ServiceFailure(),
@@ -239,7 +273,14 @@ class ShareController extends Notifier<ShareState> {
   Future<ActionResult<ShareLink>> createLink() async {
     // Only `busy` blocks a new command — retry must stay live after a
     // failed create.
-    if (state.create.isBusy) return const ActionCancelled();
+    if (!ref.mounted ||
+        state.loading ||
+        state.create.isBusy ||
+        state.step == ShareStep.signedOut ||
+        state.step == ShareStep.childMissing) {
+      return const ActionCancelled();
+    }
+    final lifetime = ref;
     if (!state.childHasSyncedArtworks || state.backup.isBusy) {
       return const ActionCancelled();
     }
@@ -250,6 +291,7 @@ class ShareController extends Notifier<ShareState> {
       args.childId,
       includeAudio: state.newLinkIncludeAudio,
     );
+    if (!lifetime.mounted) return const ActionCancelled();
     switch (result) {
       case ActionSuccess(value: final link):
         state = state.copyWith(
@@ -257,9 +299,14 @@ class ShareController extends Notifier<ShareState> {
           // At most 5, most recent first.
           links: [link, ...state.links].take(5).toList(),
           step: ShareStep.linkReady,
+          offline: false,
+          clearLoadError: true,
         );
       case ActionFailed(failure: final f):
-        state = state.copyWith(create: ActionError(f));
+        state = state.copyWith(
+          create: ActionError(f),
+          offline: f is NetworkFailure,
+        );
       case ActionCancelled():
         state = state.copyWith(create: const ActionIdle());
     }
@@ -270,10 +317,16 @@ class ShareController extends Notifier<ShareState> {
     String linkId,
     bool includeAudio,
   ) async {
-    if (state.updatingLinkIds.contains(linkId)) return const ActionCancelled();
+    if (!ref.mounted ||
+        state.loading ||
+        state.updatingLinkIds.contains(linkId)) {
+      return const ActionCancelled();
+    }
+    final lifetime = ref;
     state = state.copyWith(updatingLinkIds: {...state.updatingLinkIds, linkId});
     final service = ref.read(sharingServiceProvider);
     final result = await service.updateIncludeAudio(linkId, includeAudio);
+    if (!lifetime.mounted) return const ActionCancelled();
     final nextUpdating = state.updatingLinkIds
         .where((id) => id != linkId)
         .toSet();
@@ -299,10 +352,14 @@ class ShareController extends Notifier<ShareState> {
 
   Future<ActionResult<void>> revokeLink(String linkId) async {
     // Same fix as createLink — a failed revoke must stay retryable.
-    if (state.revoke.isBusy) return const ActionCancelled();
+    if (!ref.mounted || state.loading || state.revoke.isBusy) {
+      return const ActionCancelled();
+    }
+    final lifetime = ref;
     state = state.copyWith(revoke: const ActionBusy());
     final service = ref.read(sharingServiceProvider);
     final result = await service.revokeLink(linkId);
+    if (!lifetime.mounted) return const ActionCancelled();
     switch (result) {
       case ActionSuccess():
         // The link is only dropped from the list *after* the service
@@ -325,15 +382,24 @@ class ShareController extends Notifier<ShareState> {
   void consumeRevokeError() =>
       state = state.copyWith(revoke: const ActionIdle());
 
-  /// Called after coming back signed-in from account settings via a
-  /// pending share intent.
-  Future<void> refreshAfterSignIn() async {
+  /// Retries the list and persisted backup status without overlapping commands.
+  Future<void> refresh() async {
+    if (!ref.mounted ||
+        state.loading ||
+        state.create.isBusy ||
+        state.backup.isBusy ||
+        state.revoke.isBusy ||
+        state.updatingLinkIds.isNotEmpty) {
+      return;
+    }
+    final lifetime = ref;
     state = state.copyWith(loading: true);
-    await _load();
+    await _load(lifetime);
   }
+
+  /// Kept for callers that explicitly resume a pending share intent.
+  Future<void> refreshAfterSignIn() => refresh();
 }
 
-final shareControllerProvider =
-    NotifierProvider.family<ShareController, ShareState, ShareArgs>(
-      ShareController.new,
-    );
+final shareControllerProvider = NotifierProvider.autoDispose
+    .family<ShareController, ShareState, ShareArgs>(ShareController.new);

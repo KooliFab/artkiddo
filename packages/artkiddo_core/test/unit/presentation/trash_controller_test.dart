@@ -12,6 +12,20 @@ class _Family implements FamilyApi {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _OfflineAfterFirstRead implements FamilyApi {
+  bool offline;
+  _OfflineAfterFirstRead({required this.offline});
+  @override
+  Future<FamilyMembership?> currentMembership() async => offline
+      ? throw StateError('offline')
+      : const FamilyMembership(
+          familyId: 'family',
+          role: FamilyMemberRole.parent,
+        );
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _Trash implements TrashRepository {
   List<TrashedArtwork> items = [];
   int reads = 0;
@@ -127,4 +141,31 @@ void main() {
       expect(trash.reads, 1);
     },
   );
+
+  test('parent actions are unavailable while the role was never read, and '
+      'available once it is known as parent', () async {
+    final family = _OfflineAfterFirstRead(offline: true);
+    final trash = _Trash()..items = [photo('a')];
+    final container = ProviderContainer(
+      overrides: [
+        appCapabilitiesProvider.overrideWithValue(AppCapabilities.cloud),
+        trashRepositoryProvider.overrideWithValue(trash),
+        familyApiProvider.overrideWithValue(family),
+        familyConvergenceProvider.overrideWithValue(() async {}),
+      ],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(trashControllerProvider.notifier);
+    await controller.refresh();
+    expect(container.read(trashControllerProvider).items, hasLength(1));
+    expect(container.read(trashControllerProvider).isParent, false);
+
+    family.offline = false;
+    await controller.refresh(quiet: true);
+    expect(container.read(trashControllerProvider).isParent, true);
+
+    family.offline = true; // the last known role is kept
+    await controller.refresh(quiet: true);
+    expect(container.read(trashControllerProvider).isParent, true);
+  });
 }

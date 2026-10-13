@@ -12,6 +12,7 @@ import '../navigation/composition_actions.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 import '../ui/state_block.dart';
 import 'family_controller.dart';
 
@@ -148,13 +149,13 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.s4),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              color: AppColors.qrBackground,
+                              borderRadius: BorderRadius.circular(AppRadii.sm),
                             ),
                             child: QrImageView(
                               data: info.code,
                               size: 200,
-                              backgroundColor: Colors.white,
+                              backgroundColor: AppColors.qrBackground,
                             ),
                           ),
                         ),
@@ -169,11 +170,7 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                         Center(
                           child: SelectableText(
                             info.code,
-                            style: AppTypography.mono.copyWith(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 4,
-                            ),
+                            style: AppTypography.code,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.s4),
@@ -391,9 +388,6 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-      ),
       title: Text(l10n.familyJoinConfirmTitle),
       content: SingleChildScrollView(
         child: Column(
@@ -406,34 +400,32 @@ class _JoinFamilyDialogState extends ConsumerState<_JoinFamilyDialog> {
       ),
       actions: _step == _JoinStep.summary
           ? [
-              TextButton(
+              DialogCancelButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l10n.commonCancel),
               ),
-              TextButton(
+              DialogConfirmButton(
+                label: _impactFailed ? l10n.commonRetry : l10n.commonNext,
+                // Loading, not greyed out, while the impact is fetched.
+                busy: !_impactLoaded && !_impactFailed,
                 onPressed: _impactFailed
                     ? _loadImpact
                     : _impactLoaded && _impact?.isAlone != null
                     ? () => setState(() => _step = _JoinStep.confirm)
                     : null,
-                child: Text(_impactFailed ? l10n.commonRetry : l10n.commonNext),
               ),
             ]
           : [
-              TextButton(
+              DialogCancelButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l10n.commonCancel),
               ),
-              TextButton(
-                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+              DialogConfirmButton(
+                label: _impact?.isAlone == false
+                    ? l10n.familyJoinConfirmActionLeave
+                    : l10n.familyJoinConfirmAction,
+                destructive: true,
                 onPressed: _confirmed
                     ? () => Navigator.of(context).pop(true)
                     : null,
-                child: Text(
-                  _impact?.isAlone == false
-                      ? l10n.familyJoinConfirmActionLeave
-                      : l10n.familyJoinConfirmAction,
-                ),
               ),
             ],
     );

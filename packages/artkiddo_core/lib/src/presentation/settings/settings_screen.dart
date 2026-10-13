@@ -7,15 +7,16 @@ import '../theme/app_tokens.dart';
 import 'about_screen.dart';
 import 'debug_settings_screen.dart';
 import 'language_screen.dart';
+import 'vault_archive_screen.dart';
 
 /// The account-free settings surface.
 ///
 /// Every row here is `local-only` (`docs/architecture/feature-matrix.md`):
-/// language, about, the recoverable local trash, and — in debug builds —
-/// the debug tools. None of them needs a capability, a composition, an
-/// account, or a network, which is why this screen is the *default*
-/// destination of the gallery's settings control rather than something a
-/// composition has to supply (ADR 0016).
+/// language, about, the recoverable local trash, the archive export and
+/// import, and — in debug builds — the debug tools. None of them needs a
+/// capability, a composition, an account, or a network, which is why this
+/// screen is the *default* destination of the gallery's settings control
+/// rather than something a composition has to supply (ADR 0016).
 ///
 /// A composition with remote capabilities substitutes its own richer
 /// settings surface through `CompositionActions.openSettings`; it is then
@@ -56,6 +57,11 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.delete_outline,
               label: l10n.trashTitle,
               onTap: () => _push(context, const TrashScreen()),
+            ),
+            _SettingsRow(
+              icon: Icons.archive_outlined,
+              label: l10n.vaultArchiveTitle,
+              onTap: () => _push(context, const VaultArchiveScreen()),
             ),
             _SettingsRow(
               icon: Icons.info_outline,
