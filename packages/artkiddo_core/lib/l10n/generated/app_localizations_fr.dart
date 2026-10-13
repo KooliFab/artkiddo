@@ -1819,14 +1819,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vaultArchiveIntro =>
-      'L’archive est un seul fichier avec tous vos enfants, œuvres, photos d’origine et histoires vocales. La partager ne la garde nulle part pour vous : placez-la dans un endroit sûr.';
+      'Exportez une copie des profils de vos enfants, de leurs œuvres, des photos et des histoires vocales présentes sur cet appareil. Vous pourrez la réimporter dans ArtKiddo. Choisissez où enregistrer le fichier dans le menu de partage : aucune copie n’est conservée automatiquement pour vous.';
 
   @override
-  String get vaultArchiveExportAction => 'Créer une archive';
+  String get vaultArchiveExportAction => 'Exporter ma collection';
 
   @override
   String vaultArchiveExportProgress(int completed, int total) {
-    return 'Préparation de l’archive… $completed sur $total';
+    return 'Préparation de votre copie… $completed sur $total';
   }
 
   @override
@@ -1849,7 +1849,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'L’archive n’a pas pu être créée. Rien n’a été modifié.';
 
   @override
-  String get vaultArchiveImportAction => 'Importer une archive';
+  String get vaultArchiveImportAction => 'Importer une collection';
 
   @override
   String get vaultArchiveImportProgress => 'Importation…';

@@ -2204,15 +2204,15 @@
   "@vaultArchiveTitle": {
     "description": "Archive export and import (settings)."
   },
-  "vaultArchiveIntro": "L’archive est un seul fichier avec tous vos enfants, œuvres, photos d’origine et histoires vocales. La partager ne la garde nulle part pour vous : placez-la dans un endroit sûr.",
+  "vaultArchiveIntro": "Exportez une copie des profils de vos enfants, de leurs œuvres, des photos et des histoires vocales présentes sur cet appareil. Vous pourrez la réimporter dans ArtKiddo. Choisissez où enregistrer le fichier dans le menu de partage : aucune copie n’est conservée automatiquement pour vous.",
   "@vaultArchiveIntro": {
     "description": "Archive export and import (settings)."
   },
-  "vaultArchiveExportAction": "Créer une archive",
+  "vaultArchiveExportAction": "Exporter ma collection",
   "@vaultArchiveExportAction": {
     "description": "Archive export and import (settings)."
   },
-  "vaultArchiveExportProgress": "Préparation de l’archive… {completed} sur {total}",
+  "vaultArchiveExportProgress": "Préparation de votre copie… {completed} sur {total}",
   "@vaultArchiveExportProgress": {
     "description": "Archive export and import (settings).",
     "placeholders": {
@@ -2241,7 +2241,7 @@
   "@vaultArchiveExportFailed": {
     "description": "Archive export and import (settings)."
   },
-  "vaultArchiveImportAction": "Importer une archive",
+  "vaultArchiveImportAction": "Importer une collection",
   "@vaultArchiveImportAction": {
     "description": "Archive export and import (settings)."
   },

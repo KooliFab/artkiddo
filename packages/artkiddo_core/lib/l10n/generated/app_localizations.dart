@@ -2968,19 +2968,19 @@ abstract class AppLocalizations {
   /// Archive export and import (settings).
   ///
   /// In fr, this message translates to:
-  /// **'L’archive est un seul fichier avec tous vos enfants, œuvres, photos d’origine et histoires vocales. La partager ne la garde nulle part pour vous : placez-la dans un endroit sûr.'**
+  /// **'Exportez une copie des profils de vos enfants, de leurs œuvres, des photos et des histoires vocales présentes sur cet appareil. Vous pourrez la réimporter dans ArtKiddo. Choisissez où enregistrer le fichier dans le menu de partage : aucune copie n’est conservée automatiquement pour vous.'**
   String get vaultArchiveIntro;
 
   /// Archive export and import (settings).
   ///
   /// In fr, this message translates to:
-  /// **'Créer une archive'**
+  /// **'Exporter ma collection'**
   String get vaultArchiveExportAction;
 
   /// Archive export and import (settings).
   ///
   /// In fr, this message translates to:
-  /// **'Préparation de l’archive… {completed} sur {total}'**
+  /// **'Préparation de votre copie… {completed} sur {total}'**
   String vaultArchiveExportProgress(int completed, int total);
 
   /// Archive export and import (settings).
@@ -3004,7 +3004,7 @@ abstract class AppLocalizations {
   /// Archive export and import (settings).
   ///
   /// In fr, this message translates to:
-  /// **'Importer une archive'**
+  /// **'Importer une collection'**
   String get vaultArchiveImportAction;
 
   /// Archive export and import (settings).
