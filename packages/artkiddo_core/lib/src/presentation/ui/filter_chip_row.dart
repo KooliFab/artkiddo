@@ -49,9 +49,7 @@ class AppFilterChip extends StatelessWidget {
                   color: selected ? AppColors.accentSurface : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.full),
                   border: Border.all(
-                    color: selected
-                        ? AppColors.accent
-                        : AppColors.borderStrong,
+                    color: selected ? AppColors.accent : AppColors.borderStrong,
                     width: 1,
                   ),
                 ),

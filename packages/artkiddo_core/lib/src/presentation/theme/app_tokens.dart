@@ -31,11 +31,13 @@ abstract final class AppColors {
   /// decorative only (2.2:1 on paper).
   static const ochreInk = Color(0xFF7A5410);
   static const border = Color(0xFFDED4C8);
+
   /// Control outlines (fields, secondary buttons, chips): 3.6:1 on
   /// [surface], 3.3:1 on [paper] — WCAG 1.4.11 asks for 3:1.
   static const borderStrong = Color(0xFF928372);
   static const danger = Color(0xFFB33B32);
   static const dangerSurface = Color(0xFFF7E7E4);
+
   /// Success is the sage pair: aliases, never copies.
   static const success = sageInk;
   static const successSurface = sageSurface;
@@ -121,6 +123,7 @@ abstract final class AppShadows {
   static const sm = [
     BoxShadow(color: Color(0x1427221D), blurRadius: 12, offset: Offset(0, 4)),
   ];
+
   /// Merged into [sm]: the two only differed by their ink.
   static const md = sm;
   static const lg = [
@@ -221,6 +224,7 @@ abstract final class AppTypography {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
   );
+
   /// 13 px floor: Playpen is a handwriting face and gets fragile below it.
   static const caption = TextStyle(
     fontFamily: family,
@@ -235,6 +239,7 @@ abstract final class AppTypography {
     height: 20 / 15,
     fontWeight: FontWeight.w700,
   );
+
   /// A real monospace face: system Menlo on Apple platforms, the
   /// platform `monospace` elsewhere. Playpen has no fixed-width digits.
   static const monoFamily = 'Menlo';

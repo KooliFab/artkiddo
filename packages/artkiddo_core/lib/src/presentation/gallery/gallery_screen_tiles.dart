@@ -227,10 +227,8 @@ class _AudioPulsingWavesState extends State<_AudioPulsingWaves>
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: AppMotion.pulse,
-    )..repeat(reverse: true);
+    _anim = AnimationController(vsync: this, duration: AppMotion.pulse)
+      ..repeat(reverse: true);
   }
 
   @override
