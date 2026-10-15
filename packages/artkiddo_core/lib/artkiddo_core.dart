@@ -37,6 +37,7 @@ export 'src/local/repositories/children_repository.dart';
 export 'src/local/repositories/local_trash_repository.dart';
 export 'src/local/repositories/queued_remote_trash_repository.dart';
 export 'src/domain/child.dart';
+export 'src/domain/family/invite_code.dart';
 export 'src/local/repositories/artworks_repository.dart';
 export 'src/domain/artwork.dart';
 export 'src/domain/backup_status.dart';

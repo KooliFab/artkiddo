@@ -47,6 +47,12 @@ final class CompositionActions {
 
   final Future<String?> Function(BuildContext context)? openQrScanner;
 
+  /// Builds the shareable invite link for [code] in [locale]. It feeds the
+  /// invite QR and the share text; when null the screen falls back to the raw
+  /// code for both. The composition owns the link's host and shape, and the
+  /// core recognises it again through `normalizeInviteCode`.
+  final String Function(String code, Locale locale)? inviteLinkFor;
+
   const CompositionActions({
     this.onArtworkSaved,
     this.onArtworkDeleted,
@@ -57,6 +63,7 @@ final class CompositionActions {
     this.openSettings,
     this.syncPhotos,
     this.openQrScanner,
+    this.inviteLinkFor,
   });
 
   static const none = CompositionActions();

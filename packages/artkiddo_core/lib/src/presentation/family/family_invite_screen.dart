@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../domain/family/invite_code.dart';
 import '../../local/logging/log.dart';
 
 import '../async_action.dart';
@@ -26,10 +27,23 @@ class FamilyInviteScreen extends ConsumerStatefulWidget {
   final bool presentedAsSheet;
   final bool joinMode;
 
+  /// In [joinMode], a code (already normalized) to prefill. The join
+  /// confirmation opens automatically after the first frame, once.
+  final String? initialCode;
+
+  /// Called after a redeem succeeded.
+  final VoidCallback? onJoined;
+
+  /// Called after a redeem was rejected as an invalid code.
+  final VoidCallback? onRedeemFailed;
+
   const FamilyInviteScreen({
     super.key,
     this.presentedAsSheet = false,
     this.joinMode = false,
+    this.initialCode,
+    this.onJoined,
+    this.onRedeemFailed,
   });
 
   @override
@@ -44,6 +58,14 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
     super.initState();
     Log.d('📱 [FamilyInviteScreen] Opening', 'Navigation');
     _codeController = TextEditingController();
+    final initial = widget.initialCode?.trim();
+    if (widget.joinMode && initial != null && initial.isNotEmpty) {
+      _codeController.text = initial;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _confirmAndJoin(initial);
+      });
+    }
     if (!ref.read(appCapabilitiesProvider).household) return;
     Future.microtask(
       () => ref.read(familyControllerProvider.notifier).loadFamilyInfo(),
@@ -58,9 +80,18 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
 
   Future<void> _pasteFromClipboard() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text?.trim();
-    if (text == null || text.isEmpty) return;
-    _codeController.text = text;
+    final raw = data?.text;
+    if (!mounted) return;
+    final code = raw == null ? null : normalizeInviteCode(raw);
+    if (code == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).familyJoinNoCodeFound),
+        ),
+      );
+      return;
+    }
+    _codeController.text = code;
     setState(() {});
   }
 
@@ -69,9 +100,18 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
     if (scanFn == null) return;
     final result = await scanFn(context);
     if (result == null || !mounted) return;
-    _codeController.text = result;
+    final code = normalizeInviteCode(result);
+    if (code == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).familyJoinNoCodeFound),
+        ),
+      );
+      return;
+    }
+    _codeController.text = code;
     setState(() {});
-    await _confirmAndJoin(result);
+    await _confirmAndJoin(code);
   }
 
   /// The single entry point into a join, from either the submit button or
@@ -86,13 +126,28 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
     await ref
         .read(familyControllerProvider.notifier)
         .redeem(code, discardPrevious: true);
+    if (!mounted) return;
+    final outcome = ref.read(familyControllerProvider).redeemOutcome;
+    switch (outcome?.state) {
+      case RedeemState.ok:
+        widget.onJoined?.call();
+      case RedeemState.invalidCode:
+        widget.onRedeemFailed?.call();
+      case null:
+        break;
+    }
+  }
+
+  String _linkFor(String code) {
+    final build = ref.read(compositionActionsProvider).inviteLinkFor;
+    if (build == null) return code;
+    return build(code, Localizations.localeOf(context));
   }
 
   Future<void> _shareInvite(String code) async {
+    final l10n = AppLocalizations.of(context);
     await SharePlus.instance.share(
-      ShareParams(
-        text: 'Rejoins ma famille dans ArtKiddo avec ce code : $code',
-      ),
+      ShareParams(text: l10n.familyInviteShareMessage(_linkFor(code), code)),
     );
   }
 
@@ -153,7 +208,9 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                               borderRadius: BorderRadius.circular(AppRadii.sm),
                             ),
                             child: QrImageView(
-                              data: info.code,
+                              // Keyed by payload so tests can assert it.
+                              key: ValueKey(_linkFor(info.code)),
+                              data: _linkFor(info.code),
                               size: 200,
                               backgroundColor: AppColors.qrBackground,
                             ),

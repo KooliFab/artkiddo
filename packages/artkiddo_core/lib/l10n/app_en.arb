@@ -1374,6 +1374,26 @@
   "@familyScanPermissionDenied": {
     "description": "Localized user-facing copy."
   },
+  "familyInviteShareMessage": "Join my family on ArtKiddo: {link} (code {code})",
+  "@familyInviteShareMessage": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "link": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingJoinWithCode": "Join the family",
+  "@onboardingJoinWithCode": {
+    "description": "Localized user-facing copy."
+  },
+  "familyJoinNoCodeFound": "No invite code found. Type it or scan the QR code.",
+  "@familyJoinNoCodeFound": {
+    "description": "Localized user-facing copy."
+  },
   "settingsOffline": "No connection. Backup and sharing features are unavailable.",
   "@settingsOffline": {
     "description": "Localized user-facing copy."

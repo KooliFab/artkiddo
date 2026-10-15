@@ -1109,6 +1109,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'accès à l\'appareil photo est nécessaire pour scanner un code.';
 
   @override
+  String familyInviteShareMessage(String link, String code) {
+    return 'Rejoins ma famille sur ArtKiddo : $link (code $code)';
+  }
+
+  @override
+  String get onboardingJoinWithCode => 'Rejoindre la famille';
+
+  @override
+  String get familyJoinNoCodeFound =>
+      'Aucun code d\'invitation trouvé. Saisissez-le ou scannez le QR.';
+
+  @override
   String get settingsOffline =>
       'Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.';
 

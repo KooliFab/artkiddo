@@ -1091,6 +1091,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Camera access is needed to scan a code.';
 
   @override
+  String familyInviteShareMessage(String link, String code) {
+    return 'Join my family on ArtKiddo: $link (code $code)';
+  }
+
+  @override
+  String get onboardingJoinWithCode => 'Join the family';
+
+  @override
+  String get familyJoinNoCodeFound =>
+      'No invite code found. Type it or scan the QR code.';
+
+  @override
   String get settingsOffline =>
       'No connection. Backup and sharing features are unavailable.';
 

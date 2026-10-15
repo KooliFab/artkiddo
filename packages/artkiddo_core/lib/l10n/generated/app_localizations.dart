@@ -1816,6 +1816,24 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
+  /// **'Rejoins ma famille sur ArtKiddo : {link} (code {code})'**
+  String familyInviteShareMessage(String link, String code);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre la famille'**
+  String get onboardingJoinWithCode;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun code d\'invitation trouvé. Saisissez-le ou scannez le QR.'**
+  String get familyJoinNoCodeFound;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
   /// **'Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.'**
   String get settingsOffline;
 
