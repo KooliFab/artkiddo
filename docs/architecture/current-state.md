@@ -66,6 +66,20 @@ control always renders). `galleryStatusBanner` is gated on `remoteAccount` like
 the first group but optional, because it carries information rather than a
 control. See ADR 0016.
 
+Composition slots by core surface — check this list before adding a seam:
+
+| Core surface | Entries it reads |
+|---|---|
+| Gallery | `openGalleryShare`, `openFamilyHub`, `openSettings`, `syncPhotos` (pull-to-refresh), `galleryStatusBanner` (above the feed) |
+| Artwork screen and capture | `onArtworkSaved`, `onArtworkDeleted`, `resolveAudioConflict`, `openGalleryShare`, `syncPhotos` |
+| Share sheet | `openAccount` |
+| Settings | `openSettings` |
+| Family invite | `openQrScanner`, `inviteLinkFor` |
+
+Strings belong to the surface that renders them: a composition's own screens
+carry their own localizations and add no key to the core (see
+`../agents/public-code-rules.md`).
+
 Dependency direction: `presentation -> domain/contracts -> local repositories ->
 database + vault`; compositions depend on the core, external implementations on
 public contracts only. Rules: `dependency-rules.md`.

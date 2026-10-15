@@ -28,10 +28,6 @@
   "@commonNext": {
     "description": "Localized user-facing copy."
   },
-  "commonSkip": "Skip",
-  "@commonSkip": {
-    "description": "Localized user-facing copy."
-  },
   "commonDelete": "Delete",
   "@commonDelete": {
     "description": "Localized user-facing copy."
@@ -96,10 +92,6 @@
   "@commonContactUs": {
     "description": "Localized user-facing copy."
   },
-  "commonOpensBrowser": "Opens your browser",
-  "@commonOpensBrowser": {
-    "description": "Localized user-facing copy."
-  },
   "commonDiscardTitle": "Discard your changes?",
   "@commonDiscardTitle": {
     "description": "Localized user-facing copy."
@@ -115,43 +107,6 @@
   "commonDateFormatShort": "yMMMd",
   "@commonDateFormatShort": {
     "description": "Localized user-facing copy."
-  },
-  "onboardingPage1Title": "The drawing is put away, the memory stays.",
-  "@onboardingPage1Title": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingPage1Body": "Take a photo of the drawing before it gets damaged, and keep it without cluttering your home.",
-  "@onboardingPage1Body": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingPage2Title": "Everything stays on your device.",
-  "@onboardingPage2Title": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingPage2Body": "Photos are saved on this device. No account is needed to get started.",
-  "@onboardingPage2Body": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingPage3Title": "Ready to start.",
-  "@onboardingPage3Title": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingPage3Body": "Add a first drawing whenever you like. You'll be able to introduce the artist right after.",
-  "@onboardingPage3Body": {
-    "description": "Localized user-facing copy."
-  },
-  "onboardingStart": "Start my album",
-  "@onboardingStart": {
-    "description": "Localized user-facing copy."
-  },
-  "a11yOnboardingPageIndicator": "Page {n} of 3",
-  "@a11yOnboardingPageIndicator": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
   },
   "navGallery": "Gallery",
   "@navGallery": {
@@ -1095,38 +1050,6 @@
   "@settingsGroupApp": {
     "description": "Localized user-facing copy."
   },
-  "settingsNotificationsRow": "Notifications",
-  "@settingsNotificationsRow": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsEnabled": "Enabled",
-  "@settingsNotificationsEnabled": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsNotRequested": "Not requested",
-  "@settingsNotificationsNotRequested": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsDenied": "Denied",
-  "@settingsNotificationsDenied": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsUnavailable": "Unavailable",
-  "@settingsNotificationsUnavailable": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsEnabledMessage": "Notifications enabled.",
-  "@settingsNotificationsEnabledMessage": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsDeniedMessage": "Allow notifications in your device settings to follow backup status.",
-  "@settingsNotificationsDeniedMessage": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsNotificationsRequestError": "Unable to update notification permission.",
-  "@settingsNotificationsRequestError": {
-    "description": "Localized user-facing copy."
-  },
   "settingsGroupDocuments": "Documents",
   "@settingsGroupDocuments": {
     "description": "Localized user-facing copy."
@@ -1135,55 +1058,8 @@
   "@settingsAccountOff": {
     "description": "Localized user-facing copy."
   },
-  "settingsAccountExplain": "An account lets you back up your drawings and share a web gallery.",
-  "@settingsAccountExplain": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsBackupNever": "Never backed up",
-  "@settingsBackupNever": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsBackupLast": "Last backup: {date}",
-  "@settingsBackupLast": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "date": {
-        "type": "DateTime",
-        "format": "yMMMMd",
-        "isCustomDateFormat": "true"
-      }
-    }
-  },
-  "settingsBackupRunning": "Backup in progress… {n} of {total}",
-  "@settingsBackupRunning": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsBackupPartial": "{n} drawings backed up, {m} failed.",
-  "@settingsBackupPartial": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      },
-      "m": {
-        "type": "int"
-      }
-    }
-  },
   "settingsBackupFailed": "The backup didn't complete.",
   "@settingsBackupFailed": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsBackupUnavailable": "The backup service is currently unavailable.",
-  "@settingsBackupUnavailable": {
     "description": "Localized user-facing copy."
   },
   "settingsBackupBlocked": "Backup needs your attention before it can continue.",
@@ -1218,14 +1094,6 @@
   "@settingsDebugRow": {
     "description": "Localized user-facing copy."
   },
-  "settingsPrivacyRow": "Privacy policy",
-  "@settingsPrivacyRow": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsTermsRow": "Terms of use",
-  "@settingsTermsRow": {
-    "description": "Localized user-facing copy."
-  },
   "settingsVersion": "Version {version}",
   "@settingsVersion": {
     "description": "Localized user-facing copy.",
@@ -1238,18 +1106,6 @@
   "familyTitle": "Family",
   "familyInviteTitle": "Invite a member",
   "@familyTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyNameLabel": "Family name",
-  "@familyNameLabel": {
-    "description": "Localized user-facing copy."
-  },
-  "familyNameHint": "E.g.: The Smith Family",
-  "@familyNameHint": {
-    "description": "Localized user-facing copy."
-  },
-  "familyNameSaved": "Name saved.",
-  "@familyNameSaved": {
     "description": "Localized user-facing copy."
   },
   "familyInviteExplain": "Share this code or QR with the person joining your family. It stays valid and can be reused as many times as needed.",
@@ -1362,18 +1218,6 @@
   "@familyScanButton": {
     "description": "Localized user-facing copy."
   },
-  "familyScanTitle": "Scan a code",
-  "@familyScanTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyScanExplain": "Frame the QR code shown by the other person.",
-  "@familyScanExplain": {
-    "description": "Localized user-facing copy."
-  },
-  "familyScanPermissionDenied": "Camera access is needed to scan a code.",
-  "@familyScanPermissionDenied": {
-    "description": "Localized user-facing copy."
-  },
   "familyInviteShareMessage": "Join my family on ArtKiddo: {link} (code {code})",
   "@familyInviteShareMessage": {
     "description": "Localized user-facing copy.",
@@ -1386,10 +1230,6 @@
       }
     }
   },
-  "onboardingJoinWithCode": "Join the family",
-  "@onboardingJoinWithCode": {
-    "description": "Localized user-facing copy."
-  },
   "familyJoinNoCodeFound": "No invite code found. Type it or scan the QR code.",
   "@familyJoinNoCodeFound": {
     "description": "Localized user-facing copy."
@@ -1398,104 +1238,12 @@
   "@settingsOffline": {
     "description": "Localized user-facing copy."
   },
-  "accountTitle": "Create an account",
-  "@accountTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountIntroTitle": "What an account gives you",
-  "@accountIntroTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountIntroBody": "A backup of your drawings and a web link to share with your family. Your drawings stay on this device either way.",
-  "@accountIntroBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountEmailLabel": "Your email address",
-  "@accountEmailLabel": {
-    "description": "Localized user-facing copy."
-  },
-  "accountEmailHint": "parent@example.ca",
-  "@accountEmailHint": {
-    "description": "Localized user-facing copy."
-  },
-  "accountEmailInvalid": "This address doesn't look valid.",
-  "@accountEmailInvalid": {
-    "description": "Localized user-facing copy."
-  },
-  "accountPasswordLabel": "Password",
-  "@accountPasswordLabel": {
-    "description": "Localized user-facing copy."
-  },
-  "accountPasswordInvalid": "Password must be at least 6 characters.",
-  "@accountPasswordInvalid": {
-    "description": "Localized user-facing copy."
-  },
   "accountCodePaste": "Paste",
   "@accountCodePaste": {
     "description": "Localized user-facing copy."
   },
   "accountSubmit": "Continue",
   "@accountSubmit": {
-    "description": "Localized user-facing copy."
-  },
-  "accountSubmitting": "Signing in…",
-  "@accountSubmitting": {
-    "description": "Localized user-facing copy."
-  },
-  "accountForgotPassword": "Forgot your password?",
-  "@accountForgotPassword": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryTitle": "Reset your password",
-  "@accountRecoveryTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryBody": "We will send a reset link if an account uses this email address.",
-  "@accountRecoveryBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoverySend": "Send reset link",
-  "@accountRecoverySend": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoverySending": "Sending…",
-  "@accountRecoverySending": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoverySentTitle": "Check your email",
-  "@accountRecoverySentTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoverySentBody": "If an account uses this address, you will receive a reset link. Check your spam and Promotions folders too.",
-  "@accountRecoverySentBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryNewPassword": "New password",
-  "@accountRecoveryNewPassword": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryConfirmPassword": "Confirm your password",
-  "@accountRecoveryConfirmPassword": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryUpdate": "Choose this password",
-  "@accountRecoveryUpdate": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryUpdating": "Updating…",
-  "@accountRecoveryUpdating": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryMismatch": "The passwords do not match.",
-  "@accountRecoveryMismatch": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryUpdated": "Your password has been updated.",
-  "@accountRecoveryUpdated": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRecoveryError": "We could not complete this request. Please try again later.",
-  "@accountRecoveryError": {
     "description": "Localized user-facing copy."
   },
   "accountErrorInvalidCredentials": "Wrong email or password.",
@@ -1515,117 +1263,8 @@
       }
     }
   },
-  "accountSignedIn": "Account linked.",
-  "@accountSignedIn": {
-    "description": "Localized user-facing copy."
-  },
-  "accountConnectedAs": "Account linked: {email}",
-  "@accountConnectedAs": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "email": {
-        "type": "String"
-      }
-    }
-  },
-  "accountMyProfile": "My profile",
-  "@accountMyProfile": {
-    "description": "Localized user-facing copy."
-  },
-  "accountFirstNameLabel": "First name",
-  "@accountFirstNameLabel": {
-    "description": "Localized user-facing copy."
-  },
-  "accountFirstNameHint": "Your first name",
-  "@accountFirstNameHint": {
-    "description": "Localized user-facing copy."
-  },
-  "accountLastNameLabel": "Last name",
-  "@accountLastNameLabel": {
-    "description": "Localized user-facing copy."
-  },
-  "accountLastNameHint": "Your last name",
-  "@accountLastNameHint": {
-    "description": "Localized user-facing copy."
-  },
-  "accountProfileSaved": "Profile updated.",
-  "@accountProfileSaved": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRoleParent": "Parent",
-  "@accountRoleParent": {
-    "description": "Localized user-facing copy."
-  },
-  "accountRoleContributor": "Contributor",
-  "@accountRoleContributor": {
-    "description": "Localized user-facing copy."
-  },
   "accountSignOut": "Sign out",
   "@accountSignOut": {
-    "description": "Localized user-facing copy."
-  },
-  "accountSignOutTitle": "Sign out?",
-  "@accountSignOutTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountSignOutBody": "Your drawings stay on this device.",
-  "@accountSignOutBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDelete": "Delete my account",
-  "@accountDelete": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteTitle": "Delete your account?",
-  "@accountDeleteTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteBody": "This deletes your sign-in identity. Your household's children and artwork are never affected — other household members keep full access.",
-  "@accountDeleteBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteConfirmCheck": "I understand this action is permanent.",
-  "@accountDeleteConfirmCheck": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteLastMemberWarning": "You are the last active member of your household. Deleting your account will also immediately and permanently erase every child, artwork, and all cloud content of this household.",
-  "@accountDeleteLastMemberWarning": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteLocalChoiceTitle": "What should happen to the vault on this device?",
-  "@accountDeleteLocalChoiceTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteKeepLocal": "Keep the local vault",
-  "@accountDeleteKeepLocal": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteKeepLocalBody": "Drawings already on this device stay usable offline.",
-  "@accountDeleteKeepLocalBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteEraseLocal": "Also erase the local vault",
-  "@accountDeleteEraseLocal": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteEraseLocalBody": "Every drawing on this device is deleted, including any not yet backed up.",
-  "@accountDeleteEraseLocalBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleting": "Deleting account…",
-  "@accountDeleting": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeleteNetworkErrorBody": "The account couldn't be deleted (no connection). Try again later.",
-  "@accountDeleteNetworkErrorBody": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeletePartialTitle": "Deletion couldn't be completed",
-  "@accountDeletePartialTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "accountDeletePartialBody": "Here's what was deleted and what remains. Write to us and we'll finish the process.",
-  "@accountDeletePartialBody": {
     "description": "Localized user-facing copy."
   },
   "accountOfflineReason": "A connection is needed.",
@@ -1840,50 +1479,6 @@
   "@backupReasonRemotePurged": {
     "description": "Detail of the on-device status of an artwork purged remotely then restored here."
   },
-  "backupSummaryHeading": "Backup status",
-  "@backupSummaryHeading": {
-    "description": "Heading of the backup summary in the cloud settings."
-  },
-  "backupSummarySaved": "{count, plural, =1{1 drawing backed up} other{{count} drawings backed up}}",
-  "@backupSummarySaved": {
-    "description": "Backup summary line.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
-  "backupSummaryInProgress": "{count, plural, =1{1 drawing being backed up} other{{count} drawings being backed up}}",
-  "@backupSummaryInProgress": {
-    "description": "Backup summary line.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
-  "backupSummaryActionNeeded": "{count, plural, =1{1 drawing needs action} other{{count} drawings need action}}",
-  "@backupSummaryActionNeeded": {
-    "description": "Backup summary line.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
-  "backupSummaryOnDevice": "{count, plural, =1{1 drawing on this device only} other{{count} drawings on this device only}}",
-  "@backupSummaryOnDevice": {
-    "description": "Backup summary line.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
-  "backupSummaryIssueHeading": "Last problem encountered",
-  "@backupSummaryIssueHeading": {
-    "description": "Heading above the failure of the last synchronization run, shown in the backup summary."
-  },
   "trashRestoreError": "This artwork couldn't be restored.",
   "@trashRestoreError": {
     "description": "Localized user-facing copy."
@@ -2034,110 +1629,12 @@
   "@errorUnknownBody": {
     "description": "Localized user-facing copy."
   },
-  "familyHubTitle": "Family Space",
-  "@familyHubTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubNamedTitle": "Family {name}",
-  "@familyHubNamedTitle": {
-    "description": "Family hub title when a family is named.",
-    "placeholders": {
-      "name": {
-        "type": "String",
-        "example": "Smith"
-      }
-    }
-  },
-  "familyHubSectionArtists": "Artists",
-  "@familyHubSectionArtists": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubAddArtist": "Add an artist",
-  "@familyHubAddArtist": {
-    "description": "Localized user-facing copy."
-  },
   "familyHubFamilyAndSettings": "Family & settings",
   "@familyHubFamilyAndSettings": {
     "description": "Localized user-facing copy."
   },
-  "familyHubSectionParents": "Parents",
-  "@familyHubSectionParents": {
-    "description": "Localized user-facing copy."
-  },
   "familyHubSectionContributors": "Contributors",
   "@familyHubSectionContributors": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubSectionOtherMembers": "Other members",
-  "@familyHubSectionOtherMembers": {
-    "description": "Heading for family members other than parents."
-  },
-  "familyHubLeaveFamily": "Leave family",
-  "@familyHubLeaveFamily": {
-    "description": "Action allowing the signed-in member to leave their family."
-  },
-  "familyHubLeaveFamilyTitle": "Leave this family?",
-  "@familyHubLeaveFamilyTitle": {
-    "description": "Family-leave confirmation title."
-  },
-  "familyHubLeaveFamilyBody": "You will lose access to this family and its shared content. Your local data will not be deleted.",
-  "@familyHubLeaveFamilyBody": {
-    "description": "Family-leave consequence."
-  },
-  "familyHubLeaveFamilyConfirm": "Leave family",
-  "@familyHubLeaveFamilyConfirm": {
-    "description": "Destructive confirmation for leaving a family."
-  },
-  "familyMemberRelationLabel": "Family relationship",
-  "@familyMemberRelationLabel": {
-    "description": "Parent-managed label such as Uncle or Grandpa."
-  },
-  "familyMemberRelationHint": "E.g. Uncle, Grandpa, Auntie",
-  "@familyMemberRelationHint": {
-    "description": "Hint for entering a family relationship label."
-  },
-  "familyHubAddMember": "Add a member",
-  "@familyHubAddMember": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubCreateAccount": "Create an account or sign in",
-  "@familyHubCreateAccount": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubTrashRow": "View deleted photos",
-  "@familyHubTrashRow": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubSyncPhotos": "Sync photos",
-  "@familyHubSyncPhotos": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsTitle": "Family settings",
-  "@familySettingsTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsRemoveMemberTitle": "Remove this member?",
-  "@familySettingsRemoveMemberTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsRemoveMemberBody": "This person will lose access to the family and its shared content. Nothing is deleted from their device.",
-  "@familySettingsRemoveMemberBody": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsRemoveMemberAction": "Remove",
-  "@familySettingsRemoveMemberAction": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsMakeParent": "Make parent",
-  "@familySettingsMakeParent": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsMakeContributor": "Make contributor",
-  "@familySettingsMakeContributor": {
-    "description": "Localized user-facing copy."
-  },
-  "familySettingsLastParentError": "The household must keep at least one active parent.",
-  "@familySettingsLastParentError": {
     "description": "Localized user-facing copy."
   },
   "settingsAccountRowNeutral": "Sign-in and account",
@@ -2164,10 +1661,6 @@
   "@syncUploadSuspendedTitle": {
     "description": "Localized user-facing copy."
   },
-  "syncUploadSuspendedBody": "New cloud backups are temporarily suspended to keep the app free.\n\nYour existing galleries, restores, and deletions remain fully available.",
-  "@syncUploadSuspendedBody": {
-    "description": "Localized user-facing copy."
-  },
   "galleryPeekVoiceOf": "{childName}'s voice",
   "@galleryPeekVoiceOf": {
     "description": "Pill under a long-pressed artwork while its voice story plays.",
@@ -2180,27 +1673,6 @@
   "galleryPeekListening": "Playing the story…",
   "@galleryPeekListening": {
     "description": "Same pill when the artwork's child is unknown."
-  },
-  "syncProgressPreparing": "Preparing sync…",
-  "@syncProgressPreparing": {
-    "description": "Sync progress toast."
-  },
-  "syncProgressReceiving": "{n, plural, =0{Getting the family's drawings…} =1{Getting drawings… 1 received} other{Getting drawings… {n} received}}",
-  "@syncProgressReceiving": {
-    "description": "Sync progress toast.",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
-  "syncProgressUpToDate": "Gallery up to date",
-  "@syncProgressUpToDate": {
-    "description": "Sync progress toast."
-  },
-  "syncProgressDismiss": "Close",
-  "@syncProgressDismiss": {
-    "description": "Sync progress toast."
   },
   "artworkAudioSavedLocal": "New voice story saved on this device.",
   "artworkAudioDeletedLocal": "Voice story removed from this device.",
@@ -2322,17 +1794,9 @@
   "@commonNoChanges": {
     "description": "Why Save is disabled on an unchanged form."
   },
-  "familyHubLeaving": "Leaving…",
-  "@familyHubLeaving": {
-    "description": "Family hub: busy label while leaving the family."
-  },
   "artworkAudioConflictBody": "The version you do not choose will be lost.",
   "@artworkAudioConflictBody": {
     "description": "Artwork: consequence of resolving a voice-story conflict."
-  },
-  "accountDeleteSupportSubject": "artkiddo — account deletion",
-  "@accountDeleteSupportSubject": {
-    "description": "Account deletion: subject of the email to support."
   },
   "errorQuotaExceededTitleUntil": "Household storage is full (available again at {time})",
   "@errorQuotaExceededTitleUntil": {
@@ -2343,64 +1807,5 @@
         "format": "Hm"
       }
     }
-  },
-  "galleryOfflineBanner": "{count, plural, =0{Signed out · new photos stay on this device} =1{Signed out · 1 artwork waiting to be backed up} other{Signed out · {count} artworks waiting to be backed up}}",
-  "@galleryOfflineBanner": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "familyHubOfflineTitle": "Signed out",
-  "@familyHubOfflineTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubOfflineBody": "{count, plural, =0{New photos stay on this device. Sign back in to sync them with your family.} =1{1 artwork is not backed up yet. Sign back in to send it to your family.} other{{count} artworks are not backed up yet. Sign back in to send them to your family.}}",
-  "@familyHubOfflineBody": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "familyHubOfflineSignIn": "Sign back in",
-  "@familyHubOfflineSignIn": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDevice": "Erase everything on this device",
-  "@familyHubEraseDevice": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDeviceTitle": "Erase everything on this device?",
-  "@familyHubEraseDeviceTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDeviceBody": "Artists, artworks and their photos will be permanently erased from this device. Anything not backed up to your family or exported will be lost.",
-  "@familyHubEraseDeviceBody": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDeviceUnsaved": "{count, plural, =1{Warning: 1 artwork was never backed up.} other{Warning: {count} artworks were never backed up.}}",
-  "@familyHubEraseDeviceUnsaved": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "familyHubEraseDeviceExport": "Export the collection",
-  "@familyHubEraseDeviceExport": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDeviceConfirm": "Erase everything",
-  "@familyHubEraseDeviceConfirm": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubEraseDeviceFailed": "Erasing did not complete. Try again.",
-  "@familyHubEraseDeviceFailed": {
-    "description": "Localized user-facing copy."
   }
 }

@@ -66,6 +66,16 @@ promising a household that no account-free composition has.
    people control reads "Famille" only when a household hub is bound, and
    "Enfants" otherwise.
 
+6. **Amendment (2026-10-15): informational slots.** A third kind of entry
+   carries information rather than a control: `galleryStatusBanner`. It is
+   gated on its capability like rule 1, but optional, so `_validateComposition`
+   does not require it — leaving it unbound loses no feature. Such a slot is
+   named after its place on a core screen, never after the feature that fills
+   it; it is a neutral `WidgetBuilder` or callback, renders nothing when
+   unbound, and the core knows nothing of its content. Slots are added for a
+   real need, not ahead of one, and listed in
+   `docs/architecture/current-state.md` so the next need reuses one first.
+
 ## Consequences
 
 - `app/lib/main.dart` overrides nothing. That is the point: the account-free

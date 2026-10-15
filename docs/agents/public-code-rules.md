@@ -62,12 +62,17 @@ all code in the public repository after the split.
 - Put user-facing text in localization resources, not inline strings. The one
   exception is `DebugSettingsScreen`, which is `kDebugMode`-only and
   developer-facing; nothing shipped to a user may follow its example.
-- The core keeps localization keys for surfaces a composition renders (account,
-  family settings, notifications), because `AppLocalizations` is the shared
-  translation source. A key is dead only when no composition can render it —
-  a control the core deleted, not one it delegated. Name a key after the
-  surface that renders it: a `familyHub*` key on the gallery means one of the
-  two moved and the other did not follow.
+- The core keeps localization keys only for surfaces the core itself renders.
+  A screen a composition supplies carries its own strings in that
+  composition; it never adds keys here. Name a key after the surface that
+  renders it: a `familyHub*` key on the gallery means one of the two moved
+  and the other did not follow.
+- A new composition seam is named after its place on a core screen
+  (`galleryStatusBanner`), never after the feature that fills it. It is a
+  neutral `WidgetBuilder` or callback, gated on a capability, renders nothing
+  when unbound, and the core knows nothing of its content. Look for an
+  existing seam in `docs/architecture/current-state.md` before adding one,
+  and add one only for a real need.
 
 ## Data, sync, and files
 

@@ -30,9 +30,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonNext => 'Suivant';
 
   @override
-  String get commonSkip => 'Passer';
-
-  @override
   String get commonDelete => 'Supprimer';
 
   @override
@@ -81,9 +78,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonContactUs => 'Nous écrire';
 
   @override
-  String get commonOpensBrowser => 'Ouvre le navigateur';
-
-  @override
   String get commonDiscardTitle => 'Abandonner les modifications ?';
 
   @override
@@ -95,35 +89,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonDateFormatShort => 'yMMMd';
-
-  @override
-  String get onboardingPage1Title => 'Le dessin est rangé, le souvenir reste.';
-
-  @override
-  String get onboardingPage1Body =>
-      'Prenez le dessin en photo avant qu\'il ne s\'abîme, et gardez-le sans encombrer la maison.';
-
-  @override
-  String get onboardingPage2Title => 'Tout reste sur votre appareil.';
-
-  @override
-  String get onboardingPage2Body =>
-      'Les photos sont enregistrées sur cet appareil. Aucun compte n\'est nécessaire pour commencer.';
-
-  @override
-  String get onboardingPage3Title => 'Prêt à commencer.';
-
-  @override
-  String get onboardingPage3Body =>
-      'Ajoutez un premier dessin quand vous voulez. Vous pourrez présenter l\'artiste juste après.';
-
-  @override
-  String get onboardingStart => 'Commencer mon album';
-
-  @override
-  String a11yOnboardingPageIndicator(int n) {
-    return 'Page $n sur 3';
-  }
 
   @override
   String get navGallery => 'Galerie';
@@ -879,68 +844,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsGroupApp => 'Application';
 
   @override
-  String get settingsNotificationsRow => 'Notifications';
-
-  @override
-  String get settingsNotificationsEnabled => 'Activées';
-
-  @override
-  String get settingsNotificationsNotRequested => 'Non demandées';
-
-  @override
-  String get settingsNotificationsDenied => 'Refusées';
-
-  @override
-  String get settingsNotificationsUnavailable => 'Indisponibles';
-
-  @override
-  String get settingsNotificationsEnabledMessage => 'Notifications activées.';
-
-  @override
-  String get settingsNotificationsDeniedMessage =>
-      'Autorisez les notifications dans les réglages de l\'appareil pour suivre l\'état des sauvegardes.';
-
-  @override
-  String get settingsNotificationsRequestError =>
-      'Impossible de mettre à jour l\'autorisation des notifications.';
-
-  @override
   String get settingsGroupDocuments => 'Documents';
 
   @override
   String get settingsAccountOff => 'Non activée';
 
   @override
-  String get settingsAccountExplain =>
-      'Un compte permet de sauvegarder vos dessins et de partager une galerie web.';
-
-  @override
-  String get settingsBackupNever => 'Jamais sauvegardé';
-
-  @override
-  String settingsBackupLast(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'Dernière sauvegarde : $dateString';
-  }
-
-  @override
-  String settingsBackupRunning(int n, int total) {
-    return 'Sauvegarde en cours… $n sur $total';
-  }
-
-  @override
-  String settingsBackupPartial(int n, int m) {
-    return '$n dessins sauvegardés, $m en échec.';
-  }
-
-  @override
   String get settingsBackupFailed => 'La sauvegarde n\'a pas abouti.';
-
-  @override
-  String get settingsBackupUnavailable =>
-      'Le service de sauvegarde est indisponible pour le moment.';
 
   @override
   String get settingsBackupBlocked =>
@@ -969,12 +879,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDebugRow => 'Outils de débogage';
 
   @override
-  String get settingsPrivacyRow => 'Politique de confidentialité';
-
-  @override
-  String get settingsTermsRow => 'Conditions d\'utilisation';
-
-  @override
   String settingsVersion(String version) {
     return 'Version $version';
   }
@@ -984,15 +888,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get familyInviteTitle => 'Inviter un membre';
-
-  @override
-  String get familyNameLabel => 'Nom de la famille';
-
-  @override
-  String get familyNameHint => 'Ex. : Famille Tremblay';
-
-  @override
-  String get familyNameSaved => 'Nom enregistré.';
 
   @override
   String get familyInviteExplain =>
@@ -1098,23 +993,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get familyScanButton => 'Scanner un code';
 
   @override
-  String get familyScanTitle => 'Scanner un code';
-
-  @override
-  String get familyScanExplain =>
-      'Cadrez le QR code affiché par l\'autre personne.';
-
-  @override
-  String get familyScanPermissionDenied =>
-      'L\'accès à l\'appareil photo est nécessaire pour scanner un code.';
-
-  @override
   String familyInviteShareMessage(String link, String code) {
     return 'Rejoins ma famille sur ArtKiddo : $link (code $code)';
   }
-
-  @override
-  String get onboardingJoinWithCode => 'Rejoindre la famille';
 
   @override
   String get familyJoinNoCodeFound =>
@@ -1125,85 +1006,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune connexion. Les fonctions de sauvegarde et de partage sont indisponibles.';
 
   @override
-  String get accountTitle => 'Créer un compte';
-
-  @override
-  String get accountIntroTitle => 'Ce qu\'un compte apporte';
-
-  @override
-  String get accountIntroBody =>
-      'Une sauvegarde de vos dessins et un lien web à partager avec vos proches. Vos dessins restent sur cet appareil dans tous les cas.';
-
-  @override
-  String get accountEmailLabel => 'Votre adresse courriel';
-
-  @override
-  String get accountEmailHint => 'parent@exemple.ca';
-
-  @override
-  String get accountEmailInvalid => 'Cette adresse ne semble pas valide.';
-
-  @override
-  String get accountPasswordLabel => 'Mot de passe';
-
-  @override
-  String get accountPasswordInvalid =>
-      'Le mot de passe doit contenir au moins 6 caractères.';
-
-  @override
   String get accountCodePaste => 'Coller';
 
   @override
   String get accountSubmit => 'Continuer';
-
-  @override
-  String get accountSubmitting => 'Connexion…';
-
-  @override
-  String get accountForgotPassword => 'Mot de passe oublié ?';
-
-  @override
-  String get accountRecoveryTitle => 'Réinitialiser votre mot de passe';
-
-  @override
-  String get accountRecoveryBody =>
-      'Nous vous enverrons un lien si un compte utilise cette adresse courriel.';
-
-  @override
-  String get accountRecoverySend => 'Envoyer le lien';
-
-  @override
-  String get accountRecoverySending => 'Envoi…';
-
-  @override
-  String get accountRecoverySentTitle => 'Vérifiez votre courriel';
-
-  @override
-  String get accountRecoverySentBody =>
-      'Si un compte utilise cette adresse, vous recevrez un lien. Vérifiez aussi les indésirables.';
-
-  @override
-  String get accountRecoveryNewPassword => 'Nouveau mot de passe';
-
-  @override
-  String get accountRecoveryConfirmPassword => 'Confirmer le mot de passe';
-
-  @override
-  String get accountRecoveryUpdate => 'Choisir ce mot de passe';
-
-  @override
-  String get accountRecoveryUpdating => 'Mise à jour…';
-
-  @override
-  String get accountRecoveryMismatch =>
-      'Les mots de passe ne correspondent pas.';
-
-  @override
-  String get accountRecoveryUpdated => 'Votre mot de passe a été mis à jour.';
-
-  @override
-  String get accountRecoveryError =>
-      'La demande n’a pas abouti. Réessayez plus tard.';
 
   @override
   String get accountErrorInvalidCredentials =>
@@ -1219,96 +1025,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get accountSignedIn => 'Compte lié.';
-
-  @override
-  String accountConnectedAs(String email) {
-    return 'Compte lié : $email';
-  }
-
-  @override
-  String get accountMyProfile => 'Mon profil';
-
-  @override
-  String get accountFirstNameLabel => 'Prénom';
-
-  @override
-  String get accountFirstNameHint => 'Votre prénom';
-
-  @override
-  String get accountLastNameLabel => 'Nom de famille';
-
-  @override
-  String get accountLastNameHint => 'Votre nom de famille';
-
-  @override
-  String get accountProfileSaved => 'Profil mis à jour.';
-
-  @override
-  String get accountRoleParent => 'Parent';
-
-  @override
-  String get accountRoleContributor => 'Contributeur';
-
-  @override
   String get accountSignOut => 'Se déconnecter';
-
-  @override
-  String get accountSignOutTitle => 'Se déconnecter ?';
-
-  @override
-  String get accountSignOutBody => 'Vos dessins restent sur cet appareil.';
-
-  @override
-  String get accountDelete => 'Supprimer mon compte';
-
-  @override
-  String get accountDeleteTitle => 'Supprimer votre compte ?';
-
-  @override
-  String get accountDeleteBody =>
-      'Cela supprime votre identifiant de connexion. Les enfants et les œuvres de votre foyer ne sont jamais touchés — les autres membres du foyer gardent un accès complet.';
-
-  @override
-  String get accountDeleteConfirmCheck =>
-      'J\'ai compris que cette action est définitive.';
-
-  @override
-  String get accountDeleteLastMemberWarning =>
-      'Vous êtes le dernier membre actif de votre foyer. Supprimer votre compte effacera aussi, immédiatement et définitivement, tous les enfants, toutes les œuvres et tout le contenu cloud de ce foyer.';
-
-  @override
-  String get accountDeleteLocalChoiceTitle =>
-      'Que faire du coffre sur cet appareil ?';
-
-  @override
-  String get accountDeleteKeepLocal => 'Conserver le coffre local';
-
-  @override
-  String get accountDeleteKeepLocalBody =>
-      'Les dessins déjà sur cet appareil restent utilisables hors ligne.';
-
-  @override
-  String get accountDeleteEraseLocal => 'Effacer aussi le coffre local';
-
-  @override
-  String get accountDeleteEraseLocalBody =>
-      'Tous les dessins de cet appareil sont supprimés, y compris ceux non sauvegardés.';
-
-  @override
-  String get accountDeleting => 'Suppression du compte…';
-
-  @override
-  String get accountDeleteNetworkErrorBody =>
-      'Le compte n\'a pas pu être supprimé (aucune connexion). Réessayez plus tard.';
-
-  @override
-  String get accountDeletePartialTitle =>
-      'La suppression n\'a pas pu être terminée';
-
-  @override
-  String get accountDeletePartialBody =>
-      'Voici ce qui a été supprimé et ce qui reste. Écrivez-nous et nous terminerons l\'opération.';
 
   @override
   String get accountOfflineReason => 'Une connexion est nécessaire.';
@@ -1486,56 +1203,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce dessin a été supprimé sur les autres appareils. Il n\'existe plus que sur celui-ci.';
 
   @override
-  String get backupSummaryHeading => 'État des sauvegardes';
-
-  @override
-  String backupSummarySaved(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins sauvegardés',
-      one: '1 dessin sauvegardé',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String backupSummaryInProgress(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins en cours de sauvegarde',
-      one: '1 dessin en cours de sauvegarde',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String backupSummaryActionNeeded(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins demandent une action',
-      one: '1 dessin demande une action',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String backupSummaryOnDevice(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins uniquement sur cet appareil',
-      one: '1 dessin uniquement sur cet appareil',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupSummaryIssueHeading => 'Dernier problème rencontré';
-
-  @override
   String get trashRestoreError => 'L\'œuvre n\'a pas pu être restaurée.';
 
   @override
@@ -1655,84 +1322,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Réessayez. Si le problème persiste, écrivez-nous.';
 
   @override
-  String get familyHubTitle => 'Espace famille';
-
-  @override
-  String familyHubNamedTitle(String name) {
-    return 'Famille $name';
-  }
-
-  @override
-  String get familyHubSectionArtists => 'Artistes';
-
-  @override
-  String get familyHubAddArtist => 'Ajouter un artiste';
-
-  @override
   String get familyHubFamilyAndSettings => 'Famille et réglages';
 
   @override
-  String get familyHubSectionParents => 'Parents';
-
-  @override
   String get familyHubSectionContributors => 'Contributeurs';
-
-  @override
-  String get familyHubSectionOtherMembers => 'Autres membres';
-
-  @override
-  String get familyHubLeaveFamily => 'Quitter la famille';
-
-  @override
-  String get familyHubLeaveFamilyTitle => 'Quitter cette famille ?';
-
-  @override
-  String get familyHubLeaveFamilyBody =>
-      'Vous perdrez l’accès à cette famille et à son contenu partagé. Vos données locales ne seront pas supprimées.';
-
-  @override
-  String get familyHubLeaveFamilyConfirm => 'Quitter la famille';
-
-  @override
-  String get familyMemberRelationLabel => 'Lien avec la famille';
-
-  @override
-  String get familyMemberRelationHint => 'Ex. : Oncle, Papy, Tata';
-
-  @override
-  String get familyHubAddMember => 'Ajouter un membre';
-
-  @override
-  String get familyHubCreateAccount => 'Créer un compte ou se connecter';
-
-  @override
-  String get familyHubTrashRow => 'Voir les photos supprimés';
-
-  @override
-  String get familyHubSyncPhotos => 'Synchroniser les photos';
-
-  @override
-  String get familySettingsTitle => 'Réglages famille';
-
-  @override
-  String get familySettingsRemoveMemberTitle => 'Retirer ce membre ?';
-
-  @override
-  String get familySettingsRemoveMemberBody =>
-      'Cette personne perdra l\'accès à la famille et à son contenu partagé. Rien n\'est supprimé sur son appareil.';
-
-  @override
-  String get familySettingsRemoveMemberAction => 'Retirer';
-
-  @override
-  String get familySettingsMakeParent => 'Nommer parent';
-
-  @override
-  String get familySettingsMakeContributor => 'Nommer contributeur';
-
-  @override
-  String get familySettingsLastParentError =>
-      'Le foyer doit garder au moins un parent actif.';
 
   @override
   String get settingsAccountRowNeutral => 'Connexion et compte';
@@ -1754,37 +1347,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncUploadSuspendedTitle => 'Sauvegardes suspendues';
 
   @override
-  String get syncUploadSuspendedBody =>
-      'Les nouvelles sauvegardes cloud sont temporairement suspendues afin de maintenir l\'application gratuite.\n\nVos galeries existantes, les restaurations et les suppressions restent pleinement disponibles.';
-
-  @override
   String galleryPeekVoiceOf(String childName) {
     return 'Voix de $childName';
   }
 
   @override
   String get galleryPeekListening => 'Écoute de l’anecdote…';
-
-  @override
-  String get syncProgressPreparing => 'Préparation de la synchronisation…';
-
-  @override
-  String syncProgressReceiving(int n) {
-    String _temp0 = intl.Intl.pluralLogic(
-      n,
-      locale: localeName,
-      other: 'Réception… $n dessins reçus',
-      one: 'Réception… 1 dessin reçu',
-      zero: 'Réception des dessins de la famille…',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get syncProgressUpToDate => 'Galerie à jour';
-
-  @override
-  String get syncProgressDismiss => 'Fermer';
 
   @override
   String get artworkAudioSavedLocal =>
@@ -1925,14 +1493,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonNoChanges => 'Aucune modification à enregistrer.';
 
   @override
-  String get familyHubLeaving => 'Départ en cours…';
-
-  @override
   String get artworkAudioConflictBody =>
       'La version que vous ne choisissez pas sera perdue.';
-
-  @override
-  String get accountDeleteSupportSubject => 'artkiddo — suppression de compte';
 
   @override
   String errorQuotaExceededTitleUntil(DateTime time) {
@@ -1941,68 +1503,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Espace de stockage du foyer atteint (de nouveau disponible à $timeString)';
   }
-
-  @override
-  String galleryOfflineBanner(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Déconnecté · $count œuvres en attente de sauvegarde',
-      one: 'Déconnecté · 1 œuvre en attente de sauvegarde',
-      zero: 'Déconnecté · les nouvelles photos restent sur cet appareil',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get familyHubOfflineTitle => 'Déconnecté';
-
-  @override
-  String familyHubOfflineBody(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other:
-          '$count œuvres ne sont pas encore sauvegardées. Reconnectez-vous pour les envoyer à votre famille.',
-      one:
-          '1 œuvre n’est pas encore sauvegardée. Reconnectez-vous pour l’envoyer à votre famille.',
-      zero:
-          'Les nouvelles photos restent sur cet appareil. Reconnectez-vous pour les synchroniser avec votre famille.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get familyHubOfflineSignIn => 'Se reconnecter';
-
-  @override
-  String get familyHubEraseDevice => 'Tout supprimer de cet appareil';
-
-  @override
-  String get familyHubEraseDeviceTitle => 'Tout supprimer de cet appareil ?';
-
-  @override
-  String get familyHubEraseDeviceBody =>
-      'Les artistes, les œuvres et leurs photos seront définitivement effacés de cet appareil. Tout ce qui n’a pas été sauvegardé dans votre famille ou exporté sera perdu.';
-
-  @override
-  String familyHubEraseDeviceUnsaved(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Attention : $count œuvres n’ont jamais été sauvegardées.',
-      one: 'Attention : 1 œuvre n’a jamais été sauvegardée.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get familyHubEraseDeviceExport => 'Exporter la collection';
-
-  @override
-  String get familyHubEraseDeviceConfirm => 'Tout supprimer';
-
-  @override
-  String get familyHubEraseDeviceFailed =>
-      'La suppression n’a pas abouti. Réessayez.';
 }
