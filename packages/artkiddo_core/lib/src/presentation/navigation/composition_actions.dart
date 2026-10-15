@@ -9,6 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// composition that enables one must supply its matching entry;
 /// `ArtKiddoBootstrap` rejects a container where those two disagree.
 ///
+/// `galleryStatusBanner` is gated the same way but stays optional: it is
+/// information, not a control, so leaving it unbound loses no feature.
+///
 /// Local-default entries (`openFamilyHub`, `openSettings`) are substitutions:
 /// when null, their controls still render and open the core's local
 /// `ChildrenScreen` or `SettingsScreen`. A composition may replace either
@@ -53,6 +56,14 @@ final class CompositionActions {
   /// core recognises it again through `normalizeInviteCode`.
   final String Function(String code, Locale locale)? inviteLinkFor;
 
+  /// A status line the composition renders above the gallery feed, for
+  /// account state this package does not model (for example a vault still
+  /// tied to a remote family while no session is open). Capability-gated on
+  /// `remoteAccount`: the gallery builds it only when that capability is on
+  /// and this entry is bound. The widget decides on its own when it has
+  /// nothing to say and then collapses to zero size.
+  final WidgetBuilder? galleryStatusBanner;
+
   const CompositionActions({
     this.onArtworkSaved,
     this.onArtworkDeleted,
@@ -64,6 +75,7 @@ final class CompositionActions {
     this.syncPhotos,
     this.openQrScanner,
     this.inviteLinkFor,
+    this.galleryStatusBanner,
   });
 
   static const none = CompositionActions();

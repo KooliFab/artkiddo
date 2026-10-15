@@ -3114,6 +3114,72 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Espace de stockage du foyer atteint (de nouveau disponible à {time})'**
   String errorQuotaExceededTitleUntil(DateTime time);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Déconnecté · les nouvelles photos restent sur cet appareil} =1{Déconnecté · 1 œuvre en attente de sauvegarde} other{Déconnecté · {count} œuvres en attente de sauvegarde}}'**
+  String galleryOfflineBanner(int count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecté'**
+  String get familyHubOfflineTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Les nouvelles photos restent sur cet appareil. Reconnectez-vous pour les synchroniser avec votre famille.} =1{1 œuvre n’est pas encore sauvegardée. Reconnectez-vous pour l’envoyer à votre famille.} other{{count} œuvres ne sont pas encore sauvegardées. Reconnectez-vous pour les envoyer à votre famille.}}'**
+  String familyHubOfflineBody(int count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se reconnecter'**
+  String get familyHubOfflineSignIn;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout supprimer de cet appareil'**
+  String get familyHubEraseDevice;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout supprimer de cet appareil ?'**
+  String get familyHubEraseDeviceTitle;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les artistes, les œuvres et leurs photos seront définitivement effacés de cet appareil. Tout ce qui n’a pas été sauvegardé dans votre famille ou exporté sera perdu.'**
+  String get familyHubEraseDeviceBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{Attention : 1 œuvre n’a jamais été sauvegardée.} other{Attention : {count} œuvres n’ont jamais été sauvegardées.}}'**
+  String familyHubEraseDeviceUnsaved(int count);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter la collection'**
+  String get familyHubEraseDeviceExport;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout supprimer'**
+  String get familyHubEraseDeviceConfirm;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'La suppression n’a pas abouti. Réessayez.'**
+  String get familyHubEraseDeviceFailed;
 }
 
 class _AppLocalizationsDelegate

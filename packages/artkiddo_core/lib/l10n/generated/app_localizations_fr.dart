@@ -1941,4 +1941,68 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Espace de stockage du foyer atteint (de nouveau disponible à $timeString)';
   }
+
+  @override
+  String galleryOfflineBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Déconnecté · $count œuvres en attente de sauvegarde',
+      one: 'Déconnecté · 1 œuvre en attente de sauvegarde',
+      zero: 'Déconnecté · les nouvelles photos restent sur cet appareil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubOfflineTitle => 'Déconnecté';
+
+  @override
+  String familyHubOfflineBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count œuvres ne sont pas encore sauvegardées. Reconnectez-vous pour les envoyer à votre famille.',
+      one:
+          '1 œuvre n’est pas encore sauvegardée. Reconnectez-vous pour l’envoyer à votre famille.',
+      zero:
+          'Les nouvelles photos restent sur cet appareil. Reconnectez-vous pour les synchroniser avec votre famille.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubOfflineSignIn => 'Se reconnecter';
+
+  @override
+  String get familyHubEraseDevice => 'Tout supprimer de cet appareil';
+
+  @override
+  String get familyHubEraseDeviceTitle => 'Tout supprimer de cet appareil ?';
+
+  @override
+  String get familyHubEraseDeviceBody =>
+      'Les artistes, les œuvres et leurs photos seront définitivement effacés de cet appareil. Tout ce qui n’a pas été sauvegardé dans votre famille ou exporté sera perdu.';
+
+  @override
+  String familyHubEraseDeviceUnsaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Attention : $count œuvres n’ont jamais été sauvegardées.',
+      one: 'Attention : 1 œuvre n’a jamais été sauvegardée.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubEraseDeviceExport => 'Exporter la collection';
+
+  @override
+  String get familyHubEraseDeviceConfirm => 'Tout supprimer';
+
+  @override
+  String get familyHubEraseDeviceFailed =>
+      'La suppression n’a pas abouti. Réessayez.';
 }

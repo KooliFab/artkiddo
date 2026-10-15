@@ -119,6 +119,35 @@ void main() {
       expect(find.byType(RefreshIndicator), findsNothing);
     });
 
+    testWidgets('the status banner renders above the feed when the account '
+        'capability is on and it is bound', (tester) async {
+      await tester.pumpWidget(
+        appWith(
+          capabilities: AppCapabilities.cloud,
+          actions: CompositionActions(
+            galleryStatusBanner: (_) => const Text('status-banner'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('status-banner'), findsOneWidget);
+    });
+
+    testWidgets('the status banner is never built in the account-free build, '
+        'even when it is bound', (tester) async {
+      await tester.pumpWidget(
+        appWith(
+          actions: CompositionActions(
+            galleryStatusBanner: (_) => const Text('status-banner'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('status-banner'), findsNothing);
+    });
+
     testWidgets('pull-to-refresh needs the binding, not only the capability', (
       tester,
     ) async {

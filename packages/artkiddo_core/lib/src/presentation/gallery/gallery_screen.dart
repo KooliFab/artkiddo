@@ -343,6 +343,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         ? compositionActions.syncPhotos
         : null;
 
+    // Capability-gated like share (ADR 0016), but informational: unbound,
+    // the feed simply starts right under the chrome.
+    final statusBanner = capabilities.remoteAccount
+        ? compositionActions.galleryStatusBanner
+        : null;
+
     Widget feed = NotificationListener<ScrollNotification>(
       onNotification: _onFeedScroll,
       child: CustomScrollView(
@@ -391,6 +397,13 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             )
           else
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s2)),
+          if (statusBanner != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: _margin(width)),
+                child: statusBanner(context),
+              ),
+            ),
           ..._buildGallerySlivers(
             context,
             l10n,

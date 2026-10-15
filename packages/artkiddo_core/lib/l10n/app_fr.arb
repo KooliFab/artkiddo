@@ -2343,5 +2343,64 @@
         "format": "Hm"
       }
     }
+  },
+  "galleryOfflineBanner": "{count, plural, =0{Déconnecté · les nouvelles photos restent sur cet appareil} =1{Déconnecté · 1 œuvre en attente de sauvegarde} other{Déconnecté · {count} œuvres en attente de sauvegarde}}",
+  "@galleryOfflineBanner": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familyHubOfflineTitle": "Déconnecté",
+  "@familyHubOfflineTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubOfflineBody": "{count, plural, =0{Les nouvelles photos restent sur cet appareil. Reconnectez-vous pour les synchroniser avec votre famille.} =1{1 œuvre n’est pas encore sauvegardée. Reconnectez-vous pour l’envoyer à votre famille.} other{{count} œuvres ne sont pas encore sauvegardées. Reconnectez-vous pour les envoyer à votre famille.}}",
+  "@familyHubOfflineBody": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familyHubOfflineSignIn": "Se reconnecter",
+  "@familyHubOfflineSignIn": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDevice": "Tout supprimer de cet appareil",
+  "@familyHubEraseDevice": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDeviceTitle": "Tout supprimer de cet appareil ?",
+  "@familyHubEraseDeviceTitle": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDeviceBody": "Les artistes, les œuvres et leurs photos seront définitivement effacés de cet appareil. Tout ce qui n’a pas été sauvegardé dans votre famille ou exporté sera perdu.",
+  "@familyHubEraseDeviceBody": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDeviceUnsaved": "{count, plural, =1{Attention : 1 œuvre n’a jamais été sauvegardée.} other{Attention : {count} œuvres n’ont jamais été sauvegardées.}}",
+  "@familyHubEraseDeviceUnsaved": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familyHubEraseDeviceExport": "Exporter la collection",
+  "@familyHubEraseDeviceExport": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDeviceConfirm": "Tout supprimer",
+  "@familyHubEraseDeviceConfirm": {
+    "description": "Localized user-facing copy."
+  },
+  "familyHubEraseDeviceFailed": "La suppression n’a pas abouti. Réessayez.",
+  "@familyHubEraseDeviceFailed": {
+    "description": "Localized user-facing copy."
   }
 }

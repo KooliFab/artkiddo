@@ -1912,4 +1912,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return 'Household storage is full (available again at $timeString)';
   }
+
+  @override
+  String galleryOfflineBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Signed out · $count artworks waiting to be backed up',
+      one: 'Signed out · 1 artwork waiting to be backed up',
+      zero: 'Signed out · new photos stay on this device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubOfflineTitle => 'Signed out';
+
+  @override
+  String familyHubOfflineBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count artworks are not backed up yet. Sign back in to send them to your family.',
+      one:
+          '1 artwork is not backed up yet. Sign back in to send it to your family.',
+      zero:
+          'New photos stay on this device. Sign back in to sync them with your family.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubOfflineSignIn => 'Sign back in';
+
+  @override
+  String get familyHubEraseDevice => 'Erase everything on this device';
+
+  @override
+  String get familyHubEraseDeviceTitle => 'Erase everything on this device?';
+
+  @override
+  String get familyHubEraseDeviceBody =>
+      'Artists, artworks and their photos will be permanently erased from this device. Anything not backed up to your family or exported will be lost.';
+
+  @override
+  String familyHubEraseDeviceUnsaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Warning: $count artworks were never backed up.',
+      one: 'Warning: 1 artwork was never backed up.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get familyHubEraseDeviceExport => 'Export the collection';
+
+  @override
+  String get familyHubEraseDeviceConfirm => 'Erase everything';
+
+  @override
+  String get familyHubEraseDeviceFailed =>
+      'Erasing did not complete. Try again.';
 }

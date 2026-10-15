@@ -62,7 +62,9 @@ Optional providers default to honest local implementations
 state. `CompositionActions` entries are either capability-gated (`openGalleryShare`,
 `syncPhotos`, `openAccount`: control hidden without the pair) or local defaults
 (`openSettings`, `openFamilyHub`: they substitute a core destination, so the
-control always renders). See ADR 0016.
+control always renders). `galleryStatusBanner` is gated on `remoteAccount` like
+the first group but optional, because it carries information rather than a
+control. See ADR 0016.
 
 Dependency direction: `presentation -> domain/contracts -> local repositories ->
 database + vault`; compositions depend on the core, external implementations on
