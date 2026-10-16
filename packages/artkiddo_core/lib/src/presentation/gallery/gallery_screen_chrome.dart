@@ -23,11 +23,15 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
 
 class _FilterBar extends StatelessWidget {
   final List<Child> children;
+
+  /// Children of followed households, listed after the user's own.
+  final List<FollowedChildInfo> followed;
   final GalleryFilter filter;
   final double margin;
   final ValueChanged<GalleryFilter> onSelect;
   const _FilterBar({
     required this.children,
+    this.followed = const [],
     required this.filter,
     required this.margin,
     required this.onSelect,
@@ -38,6 +42,15 @@ class _FilterBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final sorted = [...children]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final followedSorted = [...followed]
+      ..sort(
+        (a, b) =>
+            a.child.name.toLowerCase().compareTo(b.child.name.toLowerCase()),
+      );
+    bool isSelected(String id) => switch (filter) {
+      OneChild(childId: final selectedId) => selectedId == id,
+      _ => false,
+    };
     return ColoredBox(
       color: AppColors.paper,
       child: ListView(
@@ -59,6 +72,18 @@ class _FilterBar extends StatelessWidget {
                   _ => false,
                 },
                 onTap: () => onSelect(OneChild(child.id)),
+              ),
+            ),
+          for (final info in followedSorted)
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.s2),
+              child: AppFilterChip(
+                label: l10n.galleryFollowedFilterChip(
+                  info.child.name,
+                  followedFamilyLabel(l10n, info.family.familyName),
+                ),
+                selected: isSelected(info.child.id),
+                onTap: () => onSelect(OneChild(info.child.id)),
               ),
             ),
         ],

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../async_action.dart';
 import '../../local/logging/log.dart';
 import '../../domain/action_result.dart';
+import '../navigation/composition_actions.dart';
+import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/app_button.dart';
 import '../ui/discard_guard.dart';
@@ -134,6 +136,12 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
               : state.errors.contains(ChildFieldError.birthDateTooOld)
               ? l10n.childEditorErrorBirthDateTooOld
               : null)
+        : null;
+
+    // Capability-gated seam (ADR 0016): an existing child of a household
+    // may carry extra settings the composition owns.
+    final footer = !isCreate && ref.watch(appCapabilitiesProvider).household
+        ? ref.watch(compositionActionsProvider).childEditorFooter
         : null;
 
     final missingRequired =
@@ -295,6 +303,8 @@ class _ChildEditorScreenState extends ConsumerState<ChildEditorScreen> {
                                 color: AppColors.inkMuted,
                               ),
                             ),
+                            if (footer != null)
+                              footer(context, widget.args.childId!),
                           ],
                         ),
                       ),

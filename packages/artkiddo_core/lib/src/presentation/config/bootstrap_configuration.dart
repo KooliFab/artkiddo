@@ -70,6 +70,12 @@ final class ArtKiddoBootstrapConfig {
       }
       requireService(CloudService.galleryLinks, 'webGalleryLinks');
     }
+    if (capabilities.followedHouseholds) {
+      if (!capabilities.household) {
+        failures.add('followedHouseholds requires household');
+      }
+      requireService(CloudService.household, 'followedHouseholds');
+    }
     if (capabilities.trash == TrashCapability.sharedRemote) {
       if (!capabilities.remoteAccount) {
         failures.add('sharedRemote trash requires remoteAccount');

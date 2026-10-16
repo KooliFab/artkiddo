@@ -1503,4 +1503,48 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Espace de stockage du foyer atteint (de nouveau disponible à $timeString)';
   }
+
+  @override
+  String a11yFollowedGalleryCard(
+    String childName,
+    String familyLabel,
+    DateTime date,
+  ) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return 'Dessin de $childName, $familyLabel, du $dateString.';
+  }
+
+  @override
+  String galleryFollowedFilterChip(String childName, String familyLabel) {
+    return '$childName · $familyLabel';
+  }
+
+  @override
+  String followedFamilyNamed(String familyName) {
+    return 'Famille $familyName';
+  }
+
+  @override
+  String get followedFamilyUnnamed => 'Famille suivie';
+
+  @override
+  String get followedArtworkImageUnavailable =>
+      'L\'image de ce dessin n\'est pas disponible pour le moment.';
+
+  @override
+  String get galleryEmptyFollowedBody =>
+      'La famille n\'a pas encore partagé de dessin de cet artiste.';
+
+  @override
+  String get galleryFollowedLoadFailed =>
+      'Impossible de charger les dessins des familles suivies.';
+
+  @override
+  String get galleryFollowedLoadMoreRetry => 'Charger plus de dessins';
+
+  @override
+  String get familyInviteCodeUnsupported =>
+      'Ce code ne permet pas de rejoindre une famille ici.';
 }

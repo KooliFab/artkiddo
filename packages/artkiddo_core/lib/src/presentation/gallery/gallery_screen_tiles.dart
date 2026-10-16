@@ -13,8 +13,10 @@ class MosaicArtworkTile extends ConsumerStatefulWidget {
   /// The ratio a tile is displayed at. Extreme drawings are clamped (and
   /// shown uncropped inside that frame) so one panorama or scroll cannot
   /// dominate the wall. The feed's layout plan uses this same value.
-  static double ratioOf(ArtworkTile tile) =>
-      tile.aspectRatio.clamp(_minRatio, _maxRatio);
+  static double ratioOf(ArtworkTile tile) => clampRatio(tile.aspectRatio);
+
+  /// The same clamp for any tile of the wall, local or followed.
+  static double clampRatio(double ratio) => ratio.clamp(_minRatio, _maxRatio);
 
   @override
   ConsumerState<MosaicArtworkTile> createState() => _MosaicArtworkTileState();

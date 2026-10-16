@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../contracts/following.dart';
 import '../../domain/action_result.dart';
 import '../../domain/backup_status.dart';
 import '../../domain/child.dart';
@@ -30,6 +31,8 @@ import '../ui/filter_chip_row.dart';
 import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import 'artwork_screen.dart';
+import 'followed_artwork_screen.dart';
+import 'followed_feed_providers.dart';
 import 'capture_controller.dart';
 import 'capture_screen.dart';
 import 'masonry_layout.dart';
@@ -39,6 +42,7 @@ import 'gallery_providers.dart';
 part 'gallery_screen_tiles.dart';
 part 'gallery_screen_peek.dart';
 part 'gallery_screen_chrome.dart';
+part 'gallery_screen_followed.dart';
 
 /// ArtKiddo's product surface: a calm, chronological wall of artwork.
 class GalleryScreen extends ConsumerStatefulWidget {
@@ -55,7 +59,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   /// The feed exactly as laid out, newest first, and the delegate that
   /// placed it: together they map a scroll offset back to a tile's month.
-  List<ArtworkTile> _feed = const [];
+  List<GalleryFeedItem> _feed = const [];
   SliverGridDelegateWithMasonryPlan? _gridDelegate;
 
   /// The month label is transient: it names where the parent is while the
@@ -65,15 +69,24 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   final ValueNotifier<bool> _scrollMonthVisible = ValueNotifier(false);
   Timer? _hideScrollMonth;
 
+  /// Followed artworks come with temporary URIs: back in the foreground, the
+  /// feed reloads if they have expired meanwhile.
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _restoreScroll());
     _scrollController.addListener(_saveScroll);
+    _lifecycle = AppLifecycleListener(
+      onResume: () =>
+          ref.read(followedFeedProvider.notifier).refreshIfExpired(),
+    );
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _hideScrollMonth?.cancel();
     _scrollMonth.dispose();
     _scrollMonthVisible.dispose();
@@ -90,6 +103,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       return false;
     }
     if (notification is ScrollUpdateNotification) {
+      // Followed households are paged: ask for more a screen before the end.
+      if (notification.metrics.extentAfter <
+          notification.metrics.viewportDimension) {
+        ref.read(followedFeedProvider.notifier).loadMore();
+      }
       _hideScrollMonth?.cancel();
       final month = _monthAt(notification.metrics.pixels);
       _scrollMonth.value = month;
@@ -327,10 +345,16 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final childrenAsync = ref.watch(allChildrenStreamProvider);
     final children = childrenAsync.value ?? const <Child>[];
     final tilesAsync = ref.watch(galleryTilesProvider);
+    final followedChildren = ref.watch(followedChildrenProvider);
     // An unreadable vault is not an empty first-launch state.
     final vaultUnreadable = childrenAsync.hasError;
     final hasArtists = children.isNotEmpty;
-    final showFilter = children.length > 1;
+    final filterIsFollowed = switch (filter) {
+      OneChild(childId: final id) =>
+        followedChildren.containsKey(id) && !children.any((c) => c.id == id),
+      _ => false,
+    };
+    final showFilter = children.length + followedChildren.length > 1;
     // Pinned chrome above the feed: the app bar, plus the filter bar when
     // there is more than one artist to filter by.
     final chromeExtent =
@@ -383,6 +407,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               delegate: _FilterHeaderDelegate(
                 child: _FilterBar(
                   children: children,
+                  followed: followedChildren.values.toList(),
                   filter: filter,
                   margin: _margin(width),
                   onSelect: (next) {
@@ -410,6 +435,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             tilesAsync,
             filter,
             children,
+            followedChildren,
             vaultUnreadable: vaultUnreadable,
             columns: _columns(width),
             gutter: _gutter(width),
@@ -427,7 +453,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         // Resolves as soon as the sync is launched: the composition owns
         // progress and outcome (see `CompositionActions.syncPhotos`), so a
         // spinner held for the whole run would be a second, mute indicator.
-        onRefresh: () async => syncPhotos(context),
+        onRefresh: () async {
+          ref.read(followedFeedProvider.notifier).refresh();
+          syncPhotos(context);
+        },
         child: feed,
       );
     }
@@ -452,7 +481,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           ],
         ),
       ),
-      floatingActionButton: hasArtists && !vaultUnreadable
+      // Artworks are only ever added to the user's own household.
+      floatingActionButton: hasArtists && !vaultUnreadable && !filterIsFollowed
           ? FloatingActionButton(
               heroTag: 'gallery-capture',
               onPressed: () => _openCapture(
@@ -478,7 +508,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     AppLocalizations l10n,
     AsyncValue<GalleryTilesState> tilesAsync,
     GalleryFilter filter,
-    List<Child> children, {
+    List<Child> children,
+    Map<String, FollowedChildInfo> followedChildren, {
     required bool vaultUnreadable,
     required int columns,
     required double gutter,
@@ -508,7 +539,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ];
     }
 
-    if (children.isEmpty) {
+    if (children.isEmpty && followedChildren.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -523,6 +554,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ];
     }
 
+    final followedAsync = ref.watch(followedFeedProvider);
     return tilesAsync.when(
       loading: () => [
         SliverPadding(
@@ -568,7 +600,40 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         ),
       ],
       data: (data) {
-        if (data.tiles.isEmpty) {
+        final followedItems = followedAsync.value?.items ?? const [];
+        final selectedFollowed = filter is OneChild
+            ? followedChildren[filter.childId]
+            : null;
+        if (data.tiles.isEmpty &&
+            followedItems.isEmpty &&
+            followedAsync.isLoading) {
+          // Only followed households can fill this wall: wait for them
+          // rather than flashing an empty state.
+          return [
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ];
+        }
+        if (data.tiles.isEmpty &&
+            followedItems.isEmpty &&
+            selectedFollowed != null) {
+          return [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: EmptyStateView(
+                icon: Icons.auto_awesome_outlined,
+                title: l10n.galleryEmptyFilteredTitle(
+                  selectedFollowed.child.name,
+                ),
+                body: l10n.galleryEmptyFollowedBody,
+              ),
+            ),
+            SliverToBoxAdapter(child: _FollowedFeedFooter(margin: margin)),
+          ];
+        }
+        if (data.tiles.isEmpty && followedItems.isEmpty) {
           final selectedChild = filter is OneChild
               ? children
                     .where((child) => child.id == filter.childId)
@@ -596,10 +661,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         }
         // One continuous wall, newest first: no month headers. Where the
         // parent is in time shows only while scrolling (`_ScrollMonthLabel`).
-        final feed = [...data.tiles]
-          ..sort((a, b) => _dateFor(b).compareTo(_dateFor(a)));
+        final feed = mergeGalleryFeed(data.tiles, followedItems);
         final ratios = [
-          for (final tile in feed) MosaicArtworkTile.ratioOf(tile),
+          for (final item in feed)
+            MosaicArtworkTile.clampRatio(item.aspectRatio),
         ];
         final previous = _gridDelegate;
         // Reusing an equivalent delegate keeps its computed plan instead of
@@ -617,9 +682,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               );
         _feed = feed;
         _gridDelegate = delegate;
-        final indexById = {
-          for (var i = 0; i < feed.length; i++) feed[i].artworkId: i,
-        };
+        final indexById = {for (var i = 0; i < feed.length; i++) feed[i].id: i};
         return [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
@@ -631,10 +694,16 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             sliver: SliverGrid(
               gridDelegate: delegate,
               delegate: SliverChildBuilderDelegate(
-                (context, index) => MosaicArtworkTile(
-                  key: ValueKey(feed[index].artworkId),
-                  tile: feed[index],
-                ),
+                (context, index) => switch (feed[index]) {
+                  LocalFeedItem(:final tile) => MosaicArtworkTile(
+                    key: ValueKey(tile.artworkId),
+                    tile: tile,
+                  ),
+                  FollowedFeedItem(:final artwork) => FollowedMosaicTile(
+                    key: ValueKey(artwork.id),
+                    artwork: artwork,
+                  ),
+                },
                 childCount: feed.length,
                 // A new capture lands at index 0; keyed lookup keeps each
                 // mounted tile (and a peek in progress) on its artwork.
@@ -643,12 +712,13 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               ),
             ),
           ),
+          SliverToBoxAdapter(child: _FollowedFeedFooter(margin: margin)),
         ];
       },
     );
   }
 
-  DateTime _dateFor(ArtworkTile tile) => tile.drawnAt ?? tile.addedAt;
+  DateTime _dateFor(GalleryFeedItem item) => item.date;
 
   String _capitalize(String value) =>
       value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';

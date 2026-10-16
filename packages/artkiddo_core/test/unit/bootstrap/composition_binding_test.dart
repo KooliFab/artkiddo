@@ -55,6 +55,10 @@ void main() {
               contains('household requires a FamilyApi binding'),
               contains('webGalleryLinks requires a SharingService binding'),
               contains('webGalleryLinks requires a ShareBackup binding'),
+              contains('followedHouseholds requires a FollowingApi binding'),
+              contains(
+                'followedHouseholds requires a CompositionActions.familyInviteOtherCode',
+              ),
             ]),
           ),
         ),
@@ -68,6 +72,9 @@ void main() {
           () => ArtKiddoBootstrap.createContainer(
             cloudConfig(
               overrides: [
+                followingApiProvider.overrideWithValue(
+                  const _StubFollowingApi(),
+                ),
                 remoteMediaFetcherProvider.overrideWithValue(
                   _StubRemoteMediaFetcher(),
                 ),
@@ -77,6 +84,7 @@ void main() {
                 ),
                 compositionActionsProvider.overrideWithValue(
                   CompositionActions(
+                    familyInviteOtherCode: (context, code) async {},
                     openAccount: (context) {},
                     openFamilyHub: (context) {},
                     openGalleryShare: (context, childId, childName) {},
@@ -102,6 +110,7 @@ void main() {
         () => ArtKiddoBootstrap.createContainer(
           cloudConfig(
             overrides: [
+              followingApiProvider.overrideWithValue(const _StubFollowingApi()),
               remoteMediaFetcherProvider.overrideWithValue(
                 _StubRemoteMediaFetcher(),
               ),
@@ -112,6 +121,7 @@ void main() {
               ),
               compositionActionsProvider.overrideWithValue(
                 CompositionActions(
+                  familyInviteOtherCode: (context, code) async {},
                   openAccount: (context) {},
                   openFamilyHub: (context) {},
                   syncPhotos: (context) {},
@@ -140,6 +150,7 @@ void main() {
         () => ArtKiddoBootstrap.createContainer(
           cloudConfig(
             overrides: [
+              followingApiProvider.overrideWithValue(const _StubFollowingApi()),
               remoteMediaFetcherProvider.overrideWithValue(
                 _StubRemoteMediaFetcher(),
               ),
@@ -150,6 +161,7 @@ void main() {
               ),
               compositionActionsProvider.overrideWithValue(
                 CompositionActions(
+                  familyInviteOtherCode: (context, code) async {},
                   openAccount: (context) {},
                   openFamilyHub: (context) {},
                   openGalleryShare: (context, childId, childName) {},
@@ -168,10 +180,73 @@ void main() {
       );
     });
 
+    test(
+      'a cloud composition missing only the FollowingApi binding is rejected',
+      () {
+        expect(
+          () => ArtKiddoBootstrap.createContainer(
+            cloudConfig(
+              overrides: [
+                remoteMediaFetcherProvider.overrideWithValue(
+                  _StubRemoteMediaFetcher(),
+                ),
+                familyApiProvider.overrideWithValue(_StubFamilyApi()),
+                sharingServiceProvider.overrideWithValue(_StubSharingService()),
+                shareBackupProvider.overrideWithValue(
+                  (childId) async => const ActionSuccess(null),
+                ),
+                compositionActionsProvider.overrideWithValue(
+                  CompositionActions(
+                    familyInviteOtherCode: (context, code) async {},
+                    openAccount: (context) {},
+                    openFamilyHub: (context) {},
+                    openGalleryShare: (context, childId, childName) {},
+                    syncPhotos: (context) {},
+                  ),
+                ),
+              ],
+            ),
+          ),
+          throwsA(
+            isA<BootstrapConfigurationException>().having(
+              (error) => error.failures,
+              'failures',
+              equals(['followedHouseholds requires a FollowingApi binding']),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('followedHouseholds without household is a configuration error', () {
+      expect(
+        () => const ArtKiddoBootstrapConfig(
+          capabilities: AppCapabilities(
+            remoteAccount: true,
+            remoteBackup: true,
+            household: false,
+            webGalleryLinks: false,
+            trash: TrashCapability.local,
+            followedHouseholds: true,
+          ),
+          cloudServices: CloudServices.production,
+          environment: AppEnvironment.test,
+        ).validate(),
+        throwsA(
+          isA<BootstrapConfigurationException>().having(
+            (error) => error.failures,
+            'failures',
+            contains('followedHouseholds requires household'),
+          ),
+        ),
+      );
+    });
+
     test('a fully bound cloud composition is accepted', () {
       final container = ArtKiddoBootstrap.createContainer(
         cloudConfig(
           overrides: [
+            followingApiProvider.overrideWithValue(const _StubFollowingApi()),
             remoteMediaFetcherProvider.overrideWithValue(
               _StubRemoteMediaFetcher(),
             ),
@@ -182,6 +257,7 @@ void main() {
             ),
             compositionActionsProvider.overrideWithValue(
               CompositionActions(
+                familyInviteOtherCode: (context, code) async {},
                 openAccount: (context) {},
                 openFamilyHub: (context) {},
                 openGalleryShare: (context, childId, childName) {},
@@ -303,4 +379,26 @@ final class _StubSharingService implements SharingService {
   @override
   Future<ActionResult<void>> revokeLink(String linkId) async =>
       const ActionCancelled();
+}
+
+final class _StubFollowingApi implements FollowingApi {
+  const _StubFollowingApi();
+
+  @override
+  Future<List<FollowedFamily>> listFollowedFamilies() async => const [];
+
+  @override
+  Future<FollowedFeedPage> feedPage({
+    String? cursor,
+    int limit = 30,
+    String? childId,
+  }) async => FollowedFeedPage(
+    items: const [],
+    nextCursor: null,
+    hasMore: false,
+    urisExpireAt: DateTime.utc(9999),
+  );
+
+  @override
+  Future<void> unfollow(String familyId) async {}
 }

@@ -2406,6 +2406,64 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Espace de stockage du foyer atteint (de nouveau disponible à {time})'**
   String errorQuotaExceededTitleUntil(DateTime time);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dessin de {childName}, {familyLabel}, du {date}.'**
+  String a11yFollowedGalleryCard(
+    String childName,
+    String familyLabel,
+    DateTime date,
+  );
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{childName} · {familyLabel}'**
+  String galleryFollowedFilterChip(String childName, String familyLabel);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Famille {familyName}'**
+  String followedFamilyNamed(String familyName);
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Famille suivie'**
+  String get followedFamilyUnnamed;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'image de ce dessin n\'est pas disponible pour le moment.'**
+  String get followedArtworkImageUnavailable;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'La famille n\'a pas encore partagé de dessin de cet artiste.'**
+  String get galleryEmptyFollowedBody;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger les dessins des familles suivies.'**
+  String get galleryFollowedLoadFailed;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charger plus de dessins'**
+  String get galleryFollowedLoadMoreRetry;
+
+  /// Localized user-facing copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code ne permet pas de rejoindre une famille ici.'**
+  String get familyInviteCodeUnsupported;
 }
 
 class _AppLocalizationsDelegate

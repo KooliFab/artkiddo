@@ -6,6 +6,11 @@ import '../logging/log.dart';
 
 abstract class AudioPlayerService {
   Future<void> setFilePath(String filePath);
+
+  /// Streams a remote recording from a temporary authorized [uri]. Used for
+  /// the read-only artworks of a followed household, which are never stored
+  /// in the local vault.
+  Future<void> setUrl(Uri uri);
   Future<void> play();
   Future<void> pause();
   Future<void> stop();
@@ -68,6 +73,14 @@ class JustAudioPlayerService implements AudioPlayerService {
       );
     }
     await _player.setFilePath(filePath);
+  }
+
+  @override
+  Future<void> setUrl(Uri uri) async {
+    await _ensureSession();
+    // Never log the URI: it carries a temporary authorization.
+    _currentFilePath = null;
+    await _player.setUrl(uri.toString());
   }
 
   @override
@@ -137,6 +150,7 @@ class FakeAudioPlayerService implements AudioPlayerService {
   Duration _position = Duration.zero;
   final Duration _duration = const Duration(seconds: 15);
   String? currentFilePath;
+  Uri? currentUri;
 
   @override
   Duration get position => _position;
@@ -163,6 +177,16 @@ class FakeAudioPlayerService implements AudioPlayerService {
   @override
   Future<void> setFilePath(String filePath) async {
     currentFilePath = filePath;
+    _position = Duration.zero;
+    _positionController.add(_position);
+    _durationController.add(_duration);
+    _processingStateController.add(ProcessingState.ready);
+  }
+
+  @override
+  Future<void> setUrl(Uri uri) async {
+    currentUri = uri;
+    currentFilePath = null;
     _position = Duration.zero;
     _positionController.add(_position);
     _durationController.add(_duration);

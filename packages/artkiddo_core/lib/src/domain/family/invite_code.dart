@@ -10,11 +10,26 @@ library;
 /// ambiguous when read aloud or typed.
 const String _alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
-/// Accepted code shapes by kind. Add an entry (for example a 10-character
-/// circle code) to accept a new kind; [normalizeInviteCode] checks them all.
+/// Accepted code shapes by kind; [normalizeInviteCode] checks them all.
+/// `family` joins the household (and may leave the current one); `circle`
+/// only follows a household, read-only.
 final Map<String, RegExp> kInviteCodePatterns = {
   'family': RegExp('^[$_alphabet]{8}\$'),
+  'circle': RegExp('^[$_alphabet]{10}\$'),
 };
+
+/// Longest accepted code, for input fields.
+const int kInviteCodeMaxLength = 10;
+
+/// The kind of a normalized [code] (`family`, `circle`), or null when it
+/// matches no pattern.
+String? inviteCodeKind(String code) {
+  final normalized = code.trim().toUpperCase();
+  for (final entry in kInviteCodePatterns.entries) {
+    if (entry.value.hasMatch(normalized)) return entry.key;
+  }
+  return null;
+}
 
 /// Custom scheme used by the web join page to open the app.
 const String kInviteAppScheme = 'artkiddo';

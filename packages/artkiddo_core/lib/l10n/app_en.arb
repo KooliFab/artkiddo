@@ -1807,5 +1807,67 @@
         "format": "Hm"
       }
     }
+  },
+  "a11yFollowedGalleryCard": "Drawing from {childName}, {familyLabel}, from {date}.",
+  "@a11yFollowedGalleryCard": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "familyLabel": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "galleryFollowedFilterChip": "{childName} · {familyLabel}",
+  "@galleryFollowedFilterChip": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "familyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "followedFamilyNamed": "{familyName} family",
+  "@followedFamilyNamed": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "familyName": {
+        "type": "String"
+      }
+    }
+  },
+  "followedFamilyUnnamed": "Followed family",
+  "@followedFamilyUnnamed": {
+    "description": "Localized user-facing copy."
+  },
+  "followedArtworkImageUnavailable": "This drawing's image is not available right now.",
+  "@followedArtworkImageUnavailable": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyFollowedBody": "The family has not shared a drawing from this artist yet.",
+  "@galleryEmptyFollowedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFollowedLoadFailed": "The drawings of the families you follow could not be loaded.",
+  "@galleryFollowedLoadFailed": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFollowedLoadMoreRetry": "Load more drawings",
+  "@galleryFollowedLoadMoreRetry": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteCodeUnsupported": "This code cannot be used to join a family here.",
+  "@familyInviteCodeUnsupported": {
+    "description": "Localized user-facing copy."
   }
 }

@@ -12,6 +12,8 @@ import '../navigation/composition_actions.dart';
 import '../../contracts/remote_media.dart';
 import '../../contracts/household.dart';
 import '../../contracts/gallery_sharing.dart';
+import '../../contracts/following.dart';
+import '../gallery/followed_feed_providers.dart' show followingApiProvider;
 import '../family/family_controller.dart' show familyApiProvider;
 import '../sharing/share_controller.dart'
     show sharingServiceProvider, shareBackupProvider;
@@ -84,6 +86,18 @@ abstract final class ArtKiddoBootstrap {
     if (capabilities.household &&
         container.read(familyApiProvider) is NoFamilyApi) {
       failures.add('household requires a FamilyApi binding');
+    }
+    if (capabilities.followedHouseholds &&
+        container.read(followingApiProvider) is NoFollowingApi) {
+      failures.add('followedHouseholds requires a FollowingApi binding');
+    }
+    // Following starts from an invite code the household join must never
+    // take: without this entry such a code would dead-end on "not supported".
+    if (capabilities.followedHouseholds &&
+        actions.familyInviteOtherCode == null) {
+      failures.add(
+        'followedHouseholds requires a CompositionActions.familyInviteOtherCode',
+      );
     }
     if (capabilities.webGalleryLinks &&
         container.read(sharingServiceProvider) is NoSharingService) {

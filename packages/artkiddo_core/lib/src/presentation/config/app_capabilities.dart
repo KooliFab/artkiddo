@@ -19,12 +19,17 @@ final class AppCapabilities {
   final bool webGalleryLinks;
   final TrashCapability trash;
 
+  /// Read-only access to other households the user follows, merged into the
+  /// gallery feed. Defaults to false so a composition opts in explicitly.
+  final bool followedHouseholds;
+
   const AppCapabilities({
     required this.remoteAccount,
     required this.remoteBackup,
     required this.household,
     required this.webGalleryLinks,
     required this.trash,
+    this.followedHouseholds = false,
   });
 
   /// The complete account-free, offline-first composition.
@@ -43,6 +48,7 @@ final class AppCapabilities {
     household: true,
     webGalleryLinks: true,
     trash: TrashCapability.sharedRemote,
+    followedHouseholds: true,
   );
 
   bool get usesCloud =>
@@ -50,6 +56,7 @@ final class AppCapabilities {
       remoteBackup ||
       household ||
       webGalleryLinks ||
+      followedHouseholds ||
       trash == TrashCapability.sharedRemote;
 
   @override
@@ -59,7 +66,8 @@ final class AppCapabilities {
       other.remoteBackup == remoteBackup &&
       other.household == household &&
       other.webGalleryLinks == webGalleryLinks &&
-      other.trash == trash;
+      other.trash == trash &&
+      other.followedHouseholds == followedHouseholds;
 
   @override
   int get hashCode => Object.hash(
@@ -68,11 +76,13 @@ final class AppCapabilities {
     household,
     webGalleryLinks,
     trash,
+    followedHouseholds,
   );
 
   @override
   String toString() =>
       'AppCapabilities(remoteAccount: $remoteAccount, '
       'remoteBackup: $remoteBackup, household: $household, '
-      'webGalleryLinks: $webGalleryLinks, trash: $trash)';
+      'webGalleryLinks: $webGalleryLinks, trash: $trash, '
+      'followedHouseholds: $followedHouseholds)';
 }

@@ -118,6 +118,27 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
   /// the QR scanner: shows the destructive-confirmation dialog first, and
   /// only calls [FamilyController.redeem] if the user actually confirms.
   Future<void> _confirmAndJoin(String code) async {
+    // A code that is not a household code never reaches the destructive
+    // join: the composition takes it over, or the user is told it is not
+    // supported here.
+    final kind = inviteCodeKind(code);
+    if (kind != null && kind != 'family') {
+      final takeOver = ref.read(appCapabilitiesProvider).followedHouseholds
+          ? ref.read(compositionActionsProvider).familyInviteOtherCode
+          : null;
+      if (takeOver == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).familyInviteCodeUnsupported,
+            ),
+          ),
+        );
+        return;
+      }
+      await takeOver(context, code.trim().toUpperCase());
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => _JoinFamilyDialog(code: code),
@@ -248,7 +269,7 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                                 autofocus: true,
                                 textCapitalization:
                                     TextCapitalization.characters,
-                                maxLength: 8,
+                                maxLength: kInviteCodeMaxLength,
                                 enabled:
                                     !state.redeem.isBusy &&
                                     !state.convergence.isBusy,

@@ -1807,5 +1807,67 @@
         "format": "Hm"
       }
     }
+  },
+  "a11yFollowedGalleryCard": "Dessin de {childName}, {familyLabel}, du {date}.",
+  "@a11yFollowedGalleryCard": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "familyLabel": {
+        "type": "String"
+      },
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "galleryFollowedFilterChip": "{childName} · {familyLabel}",
+  "@galleryFollowedFilterChip": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "childName": {
+        "type": "String"
+      },
+      "familyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "followedFamilyNamed": "Famille {familyName}",
+  "@followedFamilyNamed": {
+    "description": "Localized user-facing copy.",
+    "placeholders": {
+      "familyName": {
+        "type": "String"
+      }
+    }
+  },
+  "followedFamilyUnnamed": "Famille suivie",
+  "@followedFamilyUnnamed": {
+    "description": "Localized user-facing copy."
+  },
+  "followedArtworkImageUnavailable": "L'image de ce dessin n'est pas disponible pour le moment.",
+  "@followedArtworkImageUnavailable": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryEmptyFollowedBody": "La famille n'a pas encore partagé de dessin de cet artiste.",
+  "@galleryEmptyFollowedBody": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFollowedLoadFailed": "Impossible de charger les dessins des familles suivies.",
+  "@galleryFollowedLoadFailed": {
+    "description": "Localized user-facing copy."
+  },
+  "galleryFollowedLoadMoreRetry": "Charger plus de dessins",
+  "@galleryFollowedLoadMoreRetry": {
+    "description": "Localized user-facing copy."
+  },
+  "familyInviteCodeUnsupported": "Ce code ne permet pas de rejoindre une famille ici.",
+  "@familyInviteCodeUnsupported": {
+    "description": "Localized user-facing copy."
   }
 }

@@ -110,4 +110,31 @@ void main() {
       );
     });
   });
+
+  group('circle codes', () {
+    test('a 10-character code is accepted, bare or in a join link', () {
+      expect(normalizeInviteCode('k7mpq2rxza'), 'K7MPQ2RXZA');
+      expect(
+        normalizeInviteCode('https://example.test/join/?code=K7MPQ2RXZA'),
+        'K7MPQ2RXZA',
+      );
+      expect(
+        normalizeInviteCode('artkiddo://join?code=k7mpq2rxza'),
+        'K7MPQ2RXZA',
+      );
+    });
+
+    test('9 or 11 characters, or an ambiguous letter, are not codes', () {
+      expect(normalizeInviteCode('K7MPQ2RXZ'), isNull);
+      expect(normalizeInviteCode('K7MPQ2RXZAB'), isNull);
+      expect(normalizeInviteCode('K7MPQ2RXZO'), isNull);
+    });
+
+    test('inviteCodeKind tells a household code from a circle code', () {
+      expect(inviteCodeKind('ABCD2345'), 'family');
+      expect(inviteCodeKind(' k7mpq2rxza '), 'circle');
+      expect(inviteCodeKind('ABC'), isNull);
+      expect(kInviteCodeMaxLength, 10);
+    });
+  });
 }

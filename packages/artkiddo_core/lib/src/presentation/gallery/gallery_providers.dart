@@ -11,7 +11,9 @@ import '../ui/formatters.dart';
 import '../../domain/child.dart';
 import '../children/children_providers.dart';
 import '../../local/repositories/artworks_repository.dart';
+import '../../contracts/following.dart';
 import '../../domain/artwork.dart';
+import 'followed_feed_providers.dart';
 
 final artworksRepositoryProvider = Provider<ArtworksRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
@@ -68,7 +70,8 @@ class GalleryFilterNotifier extends Notifier<GalleryFilter> {
       if (children == null) return;
       final current = state;
       if (current is OneChild &&
-          !children.any((c) => c.id == current.childId)) {
+          !children.any((c) => c.id == current.childId) &&
+          !_mayBeFollowed(current.childId)) {
         final removedName = _lastKnownName(current.childId, previous?.value);
         state = const AllChildren();
         // Post the one-shot filter-reset banner through its own provider
@@ -80,7 +83,28 @@ class GalleryFilterNotifier extends Notifier<GalleryFilter> {
             .show(removedName ?? '');
       }
     });
+    // A followed child the user stops seeing (unfollowed, or no longer in
+    // the audience) resets the filter the same way a deleted child does.
+    ref.listen(followedChildrenProvider, (previous, next) {
+      final current = state;
+      if (current is! OneChild || next.containsKey(current.childId)) return;
+      final lost = previous?[current.childId];
+      if (lost == null) return;
+      final local = ref.read(allChildrenStreamProvider).value;
+      if (local != null && local.any((c) => c.id == current.childId)) return;
+      state = const AllChildren();
+      ref.read(galleryFilterResetBannerProvider.notifier).show(lost.child.name);
+    });
     return const AllChildren();
+  }
+
+  /// True when [childId] is a followed child, or when the followed households
+  /// are not known yet: a filter is never reset on missing information.
+  bool _mayBeFollowed(String childId) {
+    if (!ref.read(appCapabilitiesProvider).followedHouseholds) return false;
+    final families = ref.read(followedFamiliesProvider);
+    if (!families.hasValue) return families.isLoading;
+    return ref.read(followedChildrenProvider).containsKey(childId);
   }
 
   String? _lastKnownName(String childId, List<Child>? previous) {
@@ -167,6 +191,67 @@ class ArtworkTile {
   });
 
   bool get hasAudio => artwork.hasAudio;
+}
+
+/// One tile of the gallery wall: an artwork of the user's own household
+/// ([LocalFeedItem]) or a read-only one from a followed household
+/// ([FollowedFeedItem]).
+sealed class GalleryFeedItem {
+  const GalleryFeedItem();
+
+  String get id;
+
+  /// The date the wall is ordered by: when the child drew it if known, else
+  /// when it was added.
+  DateTime get date;
+
+  /// Natural width / height, 1 when unknown.
+  double get aspectRatio;
+}
+
+final class LocalFeedItem extends GalleryFeedItem {
+  final ArtworkTile tile;
+  const LocalFeedItem(this.tile);
+
+  @override
+  String get id => tile.artworkId;
+  @override
+  DateTime get date => tile.drawnAt ?? tile.addedAt;
+  @override
+  double get aspectRatio => tile.aspectRatio;
+}
+
+final class FollowedFeedItem extends GalleryFeedItem {
+  final FollowedArtwork artwork;
+  const FollowedFeedItem(this.artwork);
+
+  @override
+  String get id => artwork.id;
+  @override
+  DateTime get date => artwork.drawnAt ?? artwork.addedAt;
+  @override
+  double get aspectRatio {
+    final width = artwork.imageWidth;
+    final height = artwork.imageHeight;
+    return width != null && height != null && height > 0 ? width / height : 1;
+  }
+}
+
+/// The user's own artworks and the loaded followed ones on one wall, newest
+/// first. Ties keep a stable order (by id) so a rebuild never reshuffles.
+List<GalleryFeedItem> mergeGalleryFeed(
+  List<ArtworkTile> local,
+  List<FollowedArtwork> followed,
+) {
+  final items = <GalleryFeedItem>[
+    for (final tile in local) LocalFeedItem(tile),
+    for (final artwork in followed) FollowedFeedItem(artwork),
+  ];
+  items.sort((a, b) {
+    final byDate = b.date.compareTo(a.date);
+    return byDate != 0 ? byDate : a.id.compareTo(b.id);
+  });
+  return items;
 }
 
 /// Keeps the gallery stable while images load. Ratios are computed

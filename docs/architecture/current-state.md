@@ -53,7 +53,8 @@ flowchart TD
    a real binding. `remoteAccount` needs `openAccount`; `household` needs
    `openFamilyHub` and a `FamilyApi`; `webGalleryLinks` needs
    `openGalleryShare`, a `SharingService` and a `ShareBackup`; `remoteBackup`
-   needs a `RemoteMediaFetcher` and `syncPhotos`. This blocks the silent
+   needs a `RemoteMediaFetcher` and `syncPhotos`; `followedHouseholds` needs a
+   `FollowingApi` and `familyInviteOtherCode`. This blocks the silent
    local/remote fallback forbidden by ADR 0003.
 
 Optional providers default to honest local implementations
@@ -74,7 +75,8 @@ Composition slots by core surface — check this list before adding a seam:
 | Artwork screen and capture | `onArtworkSaved`, `onArtworkDeleted`, `resolveAudioConflict`, `openGalleryShare`, `syncPhotos` |
 | Share sheet | `openAccount` |
 | Settings | `openSettings` |
-| Family invite | `openQrScanner`, `inviteLinkFor` |
+| Family invite | `openQrScanner`, `inviteLinkFor`, `familyInviteOtherCode` (codes that are not household codes) |
+| Child editor | `childEditorFooter` (existing child, gated on `household`) |
 
 Strings belong to the surface that renders them: a composition's own screens
 carry their own localizations and add no key to the core (see
@@ -143,6 +145,10 @@ public contracts only. Rules: `dependency-rules.md`.
 - `CompositionActions.syncPhotos` is the only trigger for `remoteBackup`; the
   gallery binds it to pull-to-refresh only when the capability is enabled and
   the action is bound.
+- `FollowingApi` (capability `followedHouseholds`, requires `household`):
+  read-only households the user follows. `FollowedFamily`/`FollowedChild`,
+  and `FollowedFeedPage`s of `FollowedArtwork` with temporary authorized
+  URIs and an opaque cursor. Default `NoFollowingApi` follows nobody.
 - Contracts never name a database, object store, endpoint, auth system,
   transport or payload format.
 
@@ -184,3 +190,32 @@ Artwork deletion emits the capability-gated `CompositionActions.onArtworkDeleted
 ## Backup statuses (2026-10-01)
 
 `backupStatusFor(ArtworkBackupFacts)` (`domain/backup_status.dart`) is the one pure answer to "is this artwork protected": on this device, backup in progress, saved (optimized quality), or action needed. `BackupStatusRepository` reads its facts from existing data only (artwork row, `sync_outbox`, a real existence check of the files the row points at) for artworks outside the trash; no table was added. "Saved" needs an acknowledged row, nothing queued, and no voice waiting; it never means the original is in the cloud. An artwork with `remote_purged_at` is never saved. A missing file changes the status, never the row or the files. Without `remoteBackup` the answer is "on this device" or "action needed". The gallery marker, the artwork sheet line and the cloud summary all read `artworkBackupStatusesProvider`; `countUnsavedArtworks` agrees with it.
+
+## Followed households (2026-10-15)
+
+Classification: capability-gated (`followedHouseholds`, off in
+`AppCapabilities.local`). The local app is unaffected: no provider reads the
+contract without the capability, and the feed, filter and invite screen
+behave as before.
+
+- Feed: `galleryTilesProvider` stays local (Drift + vault). `followedFeedProvider`
+  pages `FollowingApi.feedPage` for the current filter (all, one followed
+  child, or nothing when a local child is selected); `mergeGalleryFeed` puts
+  `LocalFeedItem`s and `FollowedFeedItem`s on one wall, newest first. The next
+  page loads a screen before the end; a failed page keeps the loaded items and
+  shows a retry. Back in the foreground the feed reloads when its URIs have
+  expired (`followedFeedClockProvider`).
+- Filter: a followed child is a regular `OneChild` filter. It is reset only
+  when the child leaves both the local list and `followedChildrenProvider`,
+  never while the followed households are still loading.
+- Followed artworks are never written to the database or the vault. They open
+  `FollowedArtworkScreen` (read-only: no edit, delete, record or share), play
+  audio through `AudioPlayerService.setUrl`, and get no backup status. Capture
+  is hidden while a followed child is selected.
+- Invite codes: `inviteCodeKind` tells `family` (8 characters) from `circle`
+  (10). A non-household code never reaches `_JoinFamilyDialog`:
+  `FamilyInviteScreen` hands it to `familyInviteOtherCode`, or says it is not
+  supported when the capability or the binding is absent.
+- Rollback: turn `followedHouseholds` off in the composition; nothing local
+  was migrated.
+
