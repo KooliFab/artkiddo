@@ -25,7 +25,7 @@ Future<void> showChildActionsSheet(
   Child child,
   int artworkCount,
 ) async {
-  final width = MediaQuery.of(context).size.width;
+  final width = MediaQuery.sizeOf(context).width;
   if (AppBreakpoints.isCompact(width)) {
     await showModalBottomSheet<void>(
       context: context,

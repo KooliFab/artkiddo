@@ -106,6 +106,57 @@ void main() {
     expect(last, findsOneWidget);
   });
 
+  // A foldable changes width under the parent's eyes (cover screen to inner
+  // screen, or a split view resize). Columns and tile sizes change, so the
+  // same scroll offset lands on different artworks unless the feed keeps
+  // the one at the top of the viewport.
+  testWidgets('a resize keeps the artwork at the top of the viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(466, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(app(tiles(150)));
+    await tester.pumpAndSettle();
+
+    final target = find.byWidgetPredicate(
+      (w) => w is Hero && w.tag == 'artwork-a60',
+    );
+    await tester.scrollUntilVisible(
+      target,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    // Masonry places tiles by column height, so the artwork may move a row
+    // within the new layout; it must stay in the upper half of the screen.
+    void expectNearTop(double screenHeight) {
+      expect(target, findsOneWidget);
+      final top = tester.getTopLeft(target).dy;
+      expect(top, greaterThanOrEqualTo(0));
+      expect(top, lessThan(screenHeight / 2));
+    }
+
+    expectNearTop(900);
+
+    // Unfolded inner screen: two columns become three.
+    tester.view.physicalSize = const Size(626, 890);
+    await tester.pumpAndSettle();
+    expectNearTop(890);
+
+    // Turned to landscape: four columns.
+    tester.view.physicalSize = const Size(890, 626);
+    await tester.pumpAndSettle();
+    expectNearTop(626);
+
+    // Folded back: two columns again, same artwork.
+    tester.view.physicalSize = const Size(466, 900);
+    await tester.pumpAndSettle();
+    expectNearTop(900);
+  });
+
   testWidgets('the month shows only while the feed moves', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;

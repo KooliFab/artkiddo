@@ -731,7 +731,7 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * (wide ? 0.75 : 0.6),
+            maxHeight: MediaQuery.sizeOf(context).height * (wide ? 0.75 : 0.6),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.artwork),

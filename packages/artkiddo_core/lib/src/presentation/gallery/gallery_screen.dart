@@ -62,6 +62,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   List<GalleryFeedItem> _feed = const [];
   SliverGridDelegateWithMasonryPlan? _gridDelegate;
 
+  /// Width of the last build, to notice a fold, unfold or split view resize.
+  double? _builtWidth;
+
   /// The month label is transient: it names where the parent is while the
   /// feed moves and fades out once it rests, so the feed itself stays one
   /// continuous wall with no headers.
@@ -160,6 +163,43 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     if (offset > 0 && offset <= _scrollController.position.maxScrollExtent) {
       _scrollController.jumpTo(offset);
     }
+  }
+
+  /// A new width re-places every tile (columns and tile sizes change), so
+  /// the same scroll offset would land on other artworks. Once the new plan
+  /// is laid out, scroll back to the tile that was at the top of the
+  /// viewport, at the same fraction of its height. Offsets use the same
+  /// feed coordinates as [_monthAt].
+  void _keepTopTileOnResize() {
+    final plan = _gridDelegate?.lastPlan;
+    if (plan == null ||
+        plan.length == 0 ||
+        plan.length != _feed.length ||
+        !_scrollController.hasClients) {
+      return;
+    }
+    final feedOffset = _scrollController.offset - AppSpacing.s3;
+    if (feedOffset <= 0) return;
+    final anchor = math.min(plan.firstIndexBelow(feedOffset), plan.length - 1);
+    final height = plan.heightOf(anchor);
+    final fraction = height > 0
+        ? ((feedOffset - plan.topOf(anchor)) / height).clamp(0.0, 1.0)
+        : 0.0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final next = _gridDelegate?.lastPlan;
+      if (!mounted ||
+          next == null ||
+          identical(next, plan) ||
+          anchor >= next.length ||
+          !_scrollController.hasClients) {
+        return;
+      }
+      final target =
+          next.topOf(anchor) + next.heightOf(anchor) * fraction + AppSpacing.s3;
+      _scrollController.jumpTo(
+        target.clamp(0.0, _scrollController.position.maxScrollExtent),
+      );
+    });
   }
 
   Future<void> _openCapture(BuildContext context, {String? childId}) async {
@@ -341,6 +381,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final capabilities = ref.watch(appCapabilitiesProvider);
     final compositionActions = ref.watch(compositionActionsProvider);
     final width = MediaQuery.sizeOf(context).width;
+    if (_builtWidth != null && _builtWidth != width) _keepTopTileOnResize();
+    _builtWidth = width;
     final filter = ref.watch(galleryFilterProvider);
     final childrenAsync = ref.watch(allChildrenStreamProvider);
     final children = childrenAsync.value ?? const <Child>[];
