@@ -19,19 +19,3 @@ class GlobalUploadsSuspendedException implements Exception {
   @override
   String toString() => 'GlobalUploadsSuspendedException: $message';
 }
-
-enum ObjectVariant { display, thumbnail, audio }
-
-abstract class ObjectUploader {
-  Future<String> uploadDerivative({
-    required List<int> bytes,
-    required String artworkId,
-    required ObjectVariant variant,
-    String? childId,
-    String? fileName,
-  });
-}
-
-abstract class ObjectDownloader {
-  Future<List<int>> downloadByKey(String key);
-}

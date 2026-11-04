@@ -36,7 +36,6 @@ void main() {
       int attempts = 0,
       bool missingFile = false,
       bool audioPending = false,
-      bool audioConflict = false,
     }) => backupStatusFor(
       ArtworkBackupFacts(
         remoteBackup: remoteBackup,
@@ -46,7 +45,6 @@ void main() {
         maxAttempts: attempts,
         missingFile: missingFile,
         audioSyncPending: audioPending,
-        audioConflict: audioConflict,
       ),
     );
 
@@ -86,7 +84,6 @@ void main() {
       expect(status(SyncState.remoteThumbnail, pending: 1), _inProgress);
       // Voice not confirmed by the server: not saved.
       expect(status(SyncState.synced, audioPending: true), _onDevice);
-      expect(status(SyncState.synced, audioConflict: true), _onDevice);
       expect(
         status(SyncState.synced, audioPending: true, pending: 1),
         _inProgress,

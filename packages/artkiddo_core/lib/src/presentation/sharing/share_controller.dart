@@ -379,9 +379,6 @@ class ShareController extends Notifier<ShareState> {
     return result;
   }
 
-  void consumeRevokeError() =>
-      state = state.copyWith(revoke: const ActionIdle());
-
   /// Retries the list and persisted backup status without overlapping commands.
   Future<void> refresh() async {
     if (!ref.mounted ||
@@ -396,9 +393,6 @@ class ShareController extends Notifier<ShareState> {
     state = state.copyWith(loading: true);
     await _load(lifetime);
   }
-
-  /// Kept for callers that explicitly resume a pending share intent.
-  Future<void> refreshAfterSignIn() => refresh();
 }
 
 final shareControllerProvider = NotifierProvider.autoDispose

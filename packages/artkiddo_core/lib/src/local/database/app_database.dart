@@ -71,6 +71,9 @@ class ArtworksTable extends Table {
   IntColumn get audioRevision => integer().withDefault(const Constant(0))();
   TextColumn get audioSyncIntent =>
       text().withDefault(const Constant('keep'))();
+
+  /// Unused: no code path ever sets it. Kept so the v1 schema of existing
+  /// vaults needs no migration; drop it with the next schema change.
   BoolColumn get audioConflict =>
       boolean().withDefault(const Constant(false))();
 

@@ -131,12 +131,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Retour'**
-  String get commonBack;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Suivant'**
   String get commonNext;
 
@@ -151,12 +145,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Suppression…'**
   String get commonDeleting;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Modifier'**
-  String get commonEdit;
 
   /// Localized user-facing copy.
   ///
@@ -209,26 +197,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Exemple'**
-  String get commonExampleLabel;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Chargement…'**
   String get commonLoading;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'facultatif'**
-  String get commonOptional;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'requis'**
-  String get commonRequired;
 
   /// Localized user-facing copy.
   ///
@@ -251,68 +221,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'yMMMMd'**
-  String get commonDateFormat;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'yMMMd'**
-  String get commonDateFormatShort;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Galerie'**
-  String get navGallery;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Enfants'**
-  String get navChildren;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Réglages'**
-  String get navSettings;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'{label}, sélectionné'**
-  String a11yNavSelected(String label);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Galerie'**
-  String get galleryTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'{count, plural, =0{Aucun dessin} =1{1 dessin} other{{count} dessins}}'**
-  String galleryCount(num count);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'{count, plural, =0{Aucun dessin de {childName}} =1{1 dessin de {childName}} other{{count} dessins de {childName}}}'**
-  String galleryCountForChild(num count, String childName);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Tous'**
   String get galleryFilterAll;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Filtrer par enfant'**
-  String get galleryFilterLabel;
 
   /// Localized user-facing copy.
   ///
@@ -371,20 +281,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Voir tous les dessins'**
-  String get galleryEmptyFilteredShowAll;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Impossible d\'ouvrir votre galerie'**
   String get galleryErrorTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Vos dessins sont toujours sur l\'appareil.'**
-  String get galleryErrorBody;
 
   /// Localized user-facing copy.
   ///
@@ -419,12 +317,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.'**
-  String get vaultRescueExportBody;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'La photo en cours sera incluse dans l’export.'**
   String get vaultRescueExportIncludesDraft;
 
@@ -433,18 +325,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Impossible de créer l’export : environ {required} d’espace libre sont nécessaires.'**
   String vaultRescueInsufficientSpace(String required);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'{childName} a été supprimé. La galerie affiche de nouveau tous les dessins.'**
-  String galleryFilterReset(String childName);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Image introuvable'**
-  String get galleryImageMissing;
 
   /// Localized user-facing copy.
   ///
@@ -468,12 +348,6 @@ abstract class AppLocalizations {
     String age,
     String story,
   );
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Filtre : {label}. {count} dessins.'**
-  String a11yGalleryFilterChanged(String label, int count);
 
   /// Localized user-facing copy.
   ///
@@ -568,18 +442,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Le dessin est-il bien visible ?'**
-  String get captureReviewTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Utiliser cette photo'**
-  String get captureReviewUse;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Reprendre'**
   String get captureReviewRetake;
 
@@ -594,12 +456,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Cette image est très volumineuse et pourrait ralentir l\'application.'**
   String get captureReviewTooLarge;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'À qui est ce dessin ?'**
-  String get captureDetailsTitle;
 
   /// Localized user-facing copy.
   ///
@@ -642,12 +498,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ajoutez un enfant : votre dessin est conservé pendant ce temps.'**
   String get captureNoChildBody;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Anecdote (facultatif)'**
-  String get captureStoryLabel;
 
   /// Localized user-facing copy.
   ///
@@ -808,18 +658,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Le dessin n\'a pas été enregistré'**
-  String get captureErrorWriteTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Rien n\'a été perdu. Vous pouvez réessayer.'**
-  String get captureErrorWriteBody;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Il n\'y a plus assez d\'espace sur l\'appareil'**
   String get captureErrorStorageFullTitle;
 
@@ -922,20 +760,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Ajouter une anecdote'**
-  String get artworkStoryAdd;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Modifier l\'anecdote'**
   String get artworkStoryEdit;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Effacer l\'anecdote'**
-  String get artworkStoryClear;
 
   /// Localized user-facing copy.
   ///
@@ -952,32 +778,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Anecdote effacée.'**
-  String get artworkStoryCleared;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Effacer l\'anecdote ?'**
-  String get artworkStoryClearConfirmTitle;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Le texte sera retiré de ce dessin.'**
-  String get artworkStoryClearConfirmBody;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'L\'anecdote n\'a pas été enregistrée. Votre texte est conservé.'**
   String get artworkStoryError;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Ajouter la date du dessin'**
-  String get artworkDrawnAtAdd;
 
   /// Localized user-facing copy.
   ///
@@ -1068,12 +870,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Un dessin de {childName}, ajouté le {date}.'**
   String artworkShareText(String childName, DateTime date);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Agrandir'**
-  String get artworkZoom;
 
   /// Localized user-facing copy.
   ///
@@ -1255,12 +1051,6 @@ abstract class AppLocalizations {
   /// **'Nouvel enfant'**
   String get childEditorTitleCreate;
 
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Modifier le profil'**
-  String get childEditorTitleEdit;
-
   /// Title shown while editing an artist profile.
   ///
   /// In fr, this message translates to:
@@ -1378,26 +1168,8 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Sauvegarde et partage'**
-  String get settingsGroupBackup;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Application'**
   String get settingsGroupApp;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Documents'**
-  String get settingsGroupDocuments;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Non activée'**
-  String get settingsAccountOff;
 
   /// Localized user-facing copy.
   ///
@@ -1410,12 +1182,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'La sauvegarde a besoin de votre intervention pour continuer.'**
   String get settingsBackupBlocked;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'La restauration sur un nouvel appareil n\'est pas encore disponible.'**
-  String get settingsRestoreNotice;
 
   /// Localized user-facing copy.
   ///
@@ -1492,12 +1258,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Code copié.'**
-  String get familyInviteCopied;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Vous avez un code ? Saisissez-le ou scannez le QR pour rejoindre une famille.'**
   String get familyJoinExplain;
 
@@ -1564,7 +1324,7 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Vous vouliez plutôt partager vos œuvres avec quelqu\'un ? Donnez-lui votre code d\'invitation, affiché plus haut — vous garderez tout.'**
+  /// **'Vous vouliez seulement voir les dessins de cette famille ? Suivez-la plutôt : rien n\'est supprimé ici.'**
   String get familyJoinInviteInsteadHint;
 
   /// Localized user-facing copy.
@@ -1674,12 +1434,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Se déconnecter'**
   String get accountSignOut;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Une connexion est nécessaire.'**
-  String get accountOfflineReason;
 
   /// Localized user-facing copy.
   ///
@@ -1818,18 +1572,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Le lien n\'a pas pu être révoqué.'**
   String get shareRevokeError;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Le lien n\'a pas été créé : aucune connexion.'**
-  String get shareErrorNetwork;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Le lien n\'a pas été créé.'**
-  String get shareErrorService;
 
   /// Localized user-facing copy.
   ///
@@ -2152,24 +1894,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'Famille et réglages'**
-  String get familyHubFamilyAndSettings;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Contributeurs'**
-  String get familyHubSectionContributors;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connexion et compte'**
-  String get settingsAccountRowNeutral;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Ajouter une anecdote'**
   String get captureAnecdoteTitle;
 
@@ -2239,24 +1963,6 @@ abstract class AppLocalizations {
   /// **'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.'**
   String get artworkAudioBackupFailed;
 
-  /// No description provided for @artworkAudioConflict.
-  ///
-  /// In fr, this message translates to:
-  /// **'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.'**
-  String get artworkAudioConflict;
-
-  /// No description provided for @artworkAudioKeepRemote.
-  ///
-  /// In fr, this message translates to:
-  /// **'Conserver la voix partagée'**
-  String get artworkAudioKeepRemote;
-
-  /// No description provided for @artworkAudioUseLocal.
-  ///
-  /// In fr, this message translates to:
-  /// **'Utiliser ma nouvelle version'**
-  String get artworkAudioUseLocal;
-
   /// No description provided for @trashPreviewOpen.
   ///
   /// In fr, this message translates to:
@@ -2268,18 +1974,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aperçu indisponible'**
   String get trashPreviewUnavailable;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Activité de la famille'**
-  String get pushChannelFamilyActivityName;
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
-  /// **'Nouvelles œuvres ajoutées par les membres de votre famille.'**
-  String get pushChannelFamilyActivityDescription;
 
   /// Archive export and import (settings).
   ///
@@ -2394,12 +2088,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucune modification à enregistrer.'**
   String get commonNoChanges;
-
-  /// Artwork: consequence of resolving a voice-story conflict.
-  ///
-  /// In fr, this message translates to:
-  /// **'La version que vous ne choisissez pas sera perdue.'**
-  String get artworkAudioConflictBody;
 
   /// Error title when storage quota is reached, with the reset time.
   ///

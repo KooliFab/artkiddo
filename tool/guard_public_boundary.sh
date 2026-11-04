@@ -53,29 +53,36 @@ run() {
   fi
 }
 
-run "[1/7] legacy vocabulary (word-boundary, case-insensitive)" \
+run "[1/8] legacy vocabulary (word-boundary, case-insensitive)" \
   -inIP '\b(foyer|masterpiece|contributeur)' -- . "${L10N_EXCLUDES[@]}" "${SELF_EXCLUDES[@]}"
 
-run "[2/7] legacy vocabulary (boundary-free, catches camelCase carriers)" \
+run "[2/8] legacy vocabulary (boundary-free, catches camelCase carriers)" \
   -inIE 'foyer|masterpiece|contributeur' -- . "${L10N_EXCLUDES[@]}" "${SELF_EXCLUDES[@]}"
 
-run "[3/7] public/private boundary — vendor and sibling-repo names (word-boundary)" \
+run "[3/8] public/private boundary — vendor and sibling-repo names (word-boundary)" \
   -inIP '\b(r2|supabase|cloudflare|artkiddo-cloud|artkiddo-backend|artkiddo-web)\b' -- . "${SELF_EXCLUDES[@]}"
 
-run "[4/7] public/private boundary (boundary-free, catches camelCase carriers)" \
+run "[4/8] public/private boundary (boundary-free, catches camelCase carriers)" \
   -inIE 'r2|supabase|cloudflare|artkiddo-cloud|artkiddo-backend|artkiddo-web' -- . "${SELF_EXCLUDES[@]}"
 
-run "[5/7] private architecture vocabulary (server runtimes, hosting, sibling layout)" \
+run "[5/8] private architecture vocabulary (server runtimes, hosting, sibling layout)" \
   -inIP 'edge.?functions?\b|\bdata api\b|\bastro\b|\bdeno\b|postgres|\bplpgsql\b|\brls\b|row.level.security|private backend|backend (contract|ticket|documentation)|pubspec_overrides|sibling (repo|checkout)|workspace split|firebase|\bfcm\b' \
   -- . "${SELF_EXCLUDES[@]}"
 
 # Concrete credentials and hosted endpoints. Unlike the scans above this one
 # has no ADR exclusion: no file in a public repository may hold a secret.
-run "[6/7] secrets and hosted endpoints" \
+run "[6/8] secrets and hosted endpoints" \
   -nIP 'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}|sb_(publishable|secret)_[A-Za-z0-9_-]{10,}|service_role|AIza[0-9A-Za-z_-]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|\.supabase\.co\b|r2\.cloudflarestorage\.com|\.r2\.dev\b|(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*["\x27][A-Za-z0-9_\-/+=]{16,}["\x27]' \
   -- . ':!tool/guard_public_boundary.sh'
 
-echo "== [7/7] filenames =="
+# Followed households replaced named audiences ("circles") and per-child
+# audiences; the public model never names them. Narrow on purpose: Flutter's
+# CircleAvatar, CircleBorder, BoxShape.circle and Icons.*circle* stay legal.
+run "[7/8] retired audience model (circles, child audience)" \
+  -nIP '\b[Cc]ercles?\b|\b[Cc]ircle(Api|Rpc|Error|Code|Name|s?Sheet)\b|\bcircle_id\b|\bchild_?[Aa]udience|\baudienceName\b|childEditorFooter' \
+  -- . "${SELF_EXCLUDES[@]}"
+
+echo "== [8/8] filenames =="
 if git ls-files -z | tr '\0' '\n' | grep -inE 'foyer|masterpiece|contributeur|r2|supabase|cloudflare|artkiddo-cloud|artkiddo-backend|artkiddo-web'; then
   echo "FAIL: a tracked filename contains a legacy or vendor/sibling-repo token" >&2
   fail=1

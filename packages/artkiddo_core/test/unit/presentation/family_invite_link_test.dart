@@ -170,46 +170,6 @@ void main() {
     expect(failed, 1);
   });
 
-  testWidgets('joinTitle and joinFooter replace the defaults in joinMode', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      appWith(
-        const FamilyInviteScreen(
-          joinMode: true,
-          joinTitle: 'Titre composé',
-          joinFooter: Text('Pied composé'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Titre composé'), findsOneWidget);
-    expect(find.text('Rejoindre une famille'), findsOneWidget); // the button
-    expect(find.text('Pied composé'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('Pied composé')).dy,
-      greaterThan(tester.getTopLeft(find.text('Rejoindre une famille')).dy),
-    );
-  });
-
-  testWidgets('joinTitle and joinFooter are ignored outside joinMode', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      appWith(
-        const FamilyInviteScreen(
-          joinTitle: 'Titre composé',
-          joinFooter: Text('Pied composé'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Titre composé'), findsNothing);
-    expect(find.text('Pied composé'), findsNothing);
-  });
-
   testWidgets('initialCode is ignored outside joinMode', (tester) async {
     await tester.pumpWidget(
       appWith(const FamilyInviteScreen(initialCode: 'ABCD2345')),

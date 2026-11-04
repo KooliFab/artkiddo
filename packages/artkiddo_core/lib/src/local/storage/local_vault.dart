@@ -128,9 +128,6 @@ class LocalVault {
     return dir;
   }
 
-  /// Retrieves the derivative directory without opening the database.
-  Future<Directory> get derivativesDirectory => _derivativesDirectory;
-
   /// Retrieves the directory where audio recordings are stored.
   Future<Directory> get audioDirectory async {
     final docsDir = await _documentsDirProvider();
@@ -484,29 +481,6 @@ class LocalVault {
     final targetFile = File(p.join(dir.path, fileName));
     await _write(targetFile, bytes: bytes);
     return p.join(derivativesFolder, fileName);
-  }
-
-  /// Counterpart to [deleteFileOrEnqueueCleanup] for an artwork's
-  /// derivatives: called from `delete()` alongside the original's
-  /// cleanup. Either argument may be `null` (no derivative was ever
-  /// generated) — a no-op in that case.
-  Future<void> deleteDerivativeFilesOrEnqueueCleanup({
-    required String? displayRelativePath,
-    required String? thumbnailRelativePath,
-    required AppDatabase db,
-  }) async {
-    if (displayRelativePath != null) {
-      await deleteFileOrEnqueueCleanup(
-        relativePath: displayRelativePath,
-        db: db,
-      );
-    }
-    if (thumbnailRelativePath != null) {
-      await deleteFileOrEnqueueCleanup(
-        relativePath: thumbnailRelativePath,
-        db: db,
-      );
-    }
   }
 
   /// Relative path of audio version [version] of [mediaId]:

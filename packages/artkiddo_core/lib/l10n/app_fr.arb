@@ -20,10 +20,6 @@
   "@commonClose": {
     "description": "Localized user-facing copy."
   },
-  "commonBack": "Retour",
-  "@commonBack": {
-    "description": "Localized user-facing copy."
-  },
   "commonNext": "Suivant",
   "@commonNext": {
     "description": "Localized user-facing copy."
@@ -34,10 +30,6 @@
   },
   "commonDeleting": "Suppression…",
   "@commonDeleting": {
-    "description": "Localized user-facing copy."
-  },
-  "commonEdit": "Modifier",
-  "@commonEdit": {
     "description": "Localized user-facing copy."
   },
   "commonRetry": "Réessayer",
@@ -72,20 +64,8 @@
   "@commonDiscard": {
     "description": "Localized user-facing copy."
   },
-  "commonExampleLabel": "Exemple",
-  "@commonExampleLabel": {
-    "description": "Localized user-facing copy."
-  },
   "commonLoading": "Chargement…",
   "@commonLoading": {
-    "description": "Localized user-facing copy."
-  },
-  "commonOptional": "facultatif",
-  "@commonOptional": {
-    "description": "Localized user-facing copy."
-  },
-  "commonRequired": "requis",
-  "@commonRequired": {
     "description": "Localized user-facing copy."
   },
   "commonContactUs": "Nous écrire",
@@ -100,66 +80,8 @@
   "@commonDiscardBody": {
     "description": "Localized user-facing copy."
   },
-  "commonDateFormat": "yMMMMd",
-  "@commonDateFormat": {
-    "description": "Localized user-facing copy."
-  },
-  "commonDateFormatShort": "yMMMd",
-  "@commonDateFormatShort": {
-    "description": "Localized user-facing copy."
-  },
-  "navGallery": "Galerie",
-  "@navGallery": {
-    "description": "Localized user-facing copy."
-  },
-  "navChildren": "Enfants",
-  "@navChildren": {
-    "description": "Localized user-facing copy."
-  },
-  "navSettings": "Réglages",
-  "@navSettings": {
-    "description": "Localized user-facing copy."
-  },
-  "a11yNavSelected": "{label}, sélectionné",
-  "@a11yNavSelected": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "galleryTitle": "Galerie",
-  "@galleryTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "galleryCount": "{count, plural, =0{Aucun dessin} =1{1 dessin} other{{count} dessins}}",
-  "@galleryCount": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
-  "galleryCountForChild": "{count, plural, =0{Aucun dessin de {childName}} =1{1 dessin de {childName}} other{{count} dessins de {childName}}}",
-  "@galleryCountForChild": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      },
-      "childName": {
-        "type": "String"
-      }
-    }
-  },
   "galleryFilterAll": "Tous",
   "@galleryFilterAll": {
-    "description": "Localized user-facing copy."
-  },
-  "galleryFilterLabel": "Filtrer par enfant",
-  "@galleryFilterLabel": {
     "description": "Localized user-facing copy."
   },
   "galleryAddArtwork": "Ajouter un dessin",
@@ -208,16 +130,8 @@
   "@galleryEmptyFilteredBody": {
     "description": "Localized user-facing copy."
   },
-  "galleryEmptyFilteredShowAll": "Voir tous les dessins",
-  "@galleryEmptyFilteredShowAll": {
-    "description": "Localized user-facing copy."
-  },
   "galleryErrorTitle": "Impossible d'ouvrir votre galerie",
   "@galleryErrorTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "galleryErrorBody": "Vos dessins sont toujours sur l'appareil.",
-  "@galleryErrorBody": {
     "description": "Localized user-facing copy."
   },
   "galleryVaultErrorBody": "Vos dessins n’ont pas été supprimés. Ne désinstallez pas l’application : cela effacerait définitivement les originaux. Redémarrez, puis exportez-les si le problème persiste.",
@@ -240,10 +154,6 @@
   "@vaultRescueExportAction": {
     "description": "Localized user-facing copy."
   },
-  "vaultRescueExportBody": "Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.",
-  "@vaultRescueExportBody": {
-    "description": "Localized user-facing copy."
-  },
   "vaultRescueExportIncludesDraft": "La photo en cours sera incluse dans l’export.",
   "@vaultRescueExportIncludesDraft": {
     "description": "Localized user-facing copy."
@@ -256,19 +166,6 @@
         "type": "String"
       }
     }
-  },
-  "galleryFilterReset": "{childName} a été supprimé. La galerie affiche de nouveau tous les dessins.",
-  "@galleryFilterReset": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "childName": {
-        "type": "String"
-      }
-    }
-  },
-  "galleryImageMissing": "Image introuvable",
-  "@galleryImageMissing": {
-    "description": "Localized user-facing copy."
   },
   "galleryArtworkAdded": "Dessin ajouté à la galerie.",
   "@galleryArtworkAdded": {
@@ -308,18 +205,6 @@
       },
       "story": {
         "type": "String"
-      }
-    }
-  },
-  "a11yGalleryFilterChanged": "Filtre : {label}. {count} dessins.",
-  "@a11yGalleryFilterChanged": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "label": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
       }
     }
   },
@@ -430,14 +315,6 @@
   "@captureSourceGalleryBody": {
     "description": "Localized user-facing copy."
   },
-  "captureReviewTitle": "Le dessin est-il bien visible ?",
-  "@captureReviewTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "captureReviewUse": "Utiliser cette photo",
-  "@captureReviewUse": {
-    "description": "Localized user-facing copy."
-  },
   "captureReviewRetake": "Reprendre",
   "@captureReviewRetake": {
     "description": "Localized user-facing copy."
@@ -448,10 +325,6 @@
   },
   "captureReviewTooLarge": "Cette image est très volumineuse et pourrait ralentir l'application.",
   "@captureReviewTooLarge": {
-    "description": "Localized user-facing copy."
-  },
-  "captureDetailsTitle": "À qui est ce dessin ?",
-  "@captureDetailsTitle": {
     "description": "Localized user-facing copy."
   },
   "captureDetailsViewLarge": "Voir en grand",
@@ -480,10 +353,6 @@
   },
   "captureNoChildBody": "Ajoutez un enfant : votre dessin est conservé pendant ce temps.",
   "@captureNoChildBody": {
-    "description": "Localized user-facing copy."
-  },
-  "captureStoryLabel": "Anecdote (facultatif)",
-  "@captureStoryLabel": {
     "description": "Localized user-facing copy."
   },
   "captureStoryHint": "Ce que l'enfant raconte sur son dessin.",
@@ -602,14 +471,6 @@
       }
     }
   },
-  "captureErrorWriteTitle": "Le dessin n'a pas été enregistré",
-  "@captureErrorWriteTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "captureErrorWriteBody": "Rien n'a été perdu. Vous pouvez réessayer.",
-  "@captureErrorWriteBody": {
-    "description": "Localized user-facing copy."
-  },
   "captureErrorStorageFullTitle": "Il n'y a plus assez d'espace sur l'appareil",
   "@captureErrorStorageFullTitle": {
     "description": "Localized user-facing copy."
@@ -683,16 +544,8 @@
   "@artworkStoryEmpty": {
     "description": "Localized user-facing copy."
   },
-  "artworkStoryAdd": "Ajouter une anecdote",
-  "@artworkStoryAdd": {
-    "description": "Localized user-facing copy."
-  },
   "artworkStoryEdit": "Modifier l'anecdote",
   "@artworkStoryEdit": {
-    "description": "Localized user-facing copy."
-  },
-  "artworkStoryClear": "Effacer l'anecdote",
-  "@artworkStoryClear": {
     "description": "Localized user-facing copy."
   },
   "artworkStoryHint": "Ce que l'enfant raconte sur son dessin.",
@@ -703,24 +556,8 @@
   "@artworkStorySaved": {
     "description": "Localized user-facing copy."
   },
-  "artworkStoryCleared": "Anecdote effacée.",
-  "@artworkStoryCleared": {
-    "description": "Localized user-facing copy."
-  },
-  "artworkStoryClearConfirmTitle": "Effacer l'anecdote ?",
-  "@artworkStoryClearConfirmTitle": {
-    "description": "Localized user-facing copy."
-  },
-  "artworkStoryClearConfirmBody": "Le texte sera retiré de ce dessin.",
-  "@artworkStoryClearConfirmBody": {
-    "description": "Localized user-facing copy."
-  },
   "artworkStoryError": "L'anecdote n'a pas été enregistrée. Votre texte est conservé.",
   "@artworkStoryError": {
-    "description": "Localized user-facing copy."
-  },
-  "artworkDrawnAtAdd": "Ajouter la date du dessin",
-  "@artworkDrawnAtAdd": {
     "description": "Localized user-facing copy."
   },
   "artworkDrawnAtEdit": "Modifier la date du dessin",
@@ -792,10 +629,6 @@
         "isCustomDateFormat": "true"
       }
     }
-  },
-  "artworkZoom": "Agrandir",
-  "@artworkZoom": {
-    "description": "Localized user-facing copy."
   },
   "artworkZoomIn": "Agrandir davantage",
   "@artworkZoomIn": {
@@ -957,10 +790,6 @@
   "@childEditorTitleCreate": {
     "description": "Localized user-facing copy."
   },
-  "childEditorTitleEdit": "Modifier le profil",
-  "@childEditorTitleEdit": {
-    "description": "Localized user-facing copy."
-  },
   "childEditorTitleArtist": "Artiste",
   "@childEditorTitleArtist": {
     "description": "Title shown while editing an artist profile."
@@ -1042,20 +871,8 @@
   "@settingsLocalNotice": {
     "description": "Localized user-facing copy."
   },
-  "settingsGroupBackup": "Sauvegarde et partage",
-  "@settingsGroupBackup": {
-    "description": "Localized user-facing copy."
-  },
   "settingsGroupApp": "Application",
   "@settingsGroupApp": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsGroupDocuments": "Documents",
-  "@settingsGroupDocuments": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsAccountOff": "Non activée",
-  "@settingsAccountOff": {
     "description": "Localized user-facing copy."
   },
   "settingsBackupFailed": "La sauvegarde n'a pas abouti.",
@@ -1064,10 +881,6 @@
   },
   "settingsBackupBlocked": "La sauvegarde a besoin de votre intervention pour continuer.",
   "@settingsBackupBlocked": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsRestoreNotice": "La restauration sur un nouvel appareil n'est pas encore disponible.",
-  "@settingsRestoreNotice": {
     "description": "Localized user-facing copy."
   },
   "settingsLanguageRow": "Langue",
@@ -1118,10 +931,6 @@
   },
   "familyInviteCopy": "Inviter",
   "@familyInviteCopy": {
-    "description": "Localized user-facing copy."
-  },
-  "familyInviteCopied": "Code copié.",
-  "@familyInviteCopied": {
     "description": "Localized user-facing copy."
   },
   "familyJoinExplain": "Vous avez un code ? Saisissez-le ou scannez le QR pour rejoindre une famille.",
@@ -1178,7 +987,7 @@
       }
     }
   },
-  "familyJoinInviteInsteadHint": "Vous vouliez plutôt partager vos œuvres avec quelqu'un ? Donnez-lui votre code d'invitation, affiché plus haut — vous garderez tout.",
+  "familyJoinInviteInsteadHint": "Vous vouliez seulement voir les dessins de cette famille ? Suivez-la plutôt : rien n'est supprimé ici.",
   "@familyJoinInviteInsteadHint": {
     "description": "Localized user-facing copy."
   },
@@ -1265,10 +1074,6 @@
   },
   "accountSignOut": "Se déconnecter",
   "@accountSignOut": {
-    "description": "Localized user-facing copy."
-  },
-  "accountOfflineReason": "Une connexion est nécessaire.",
-  "@accountOfflineReason": {
     "description": "Localized user-facing copy."
   },
   "shareTitle": "Partager la galerie de {childName}",
@@ -1378,14 +1183,6 @@
   },
   "shareRevokeError": "Le lien n'a pas pu être révoqué.",
   "@shareRevokeError": {
-    "description": "Localized user-facing copy."
-  },
-  "shareErrorNetwork": "Le lien n'a pas été créé : aucune connexion.",
-  "@shareErrorNetwork": {
-    "description": "Localized user-facing copy."
-  },
-  "shareErrorService": "Le lien n'a pas été créé.",
-  "@shareErrorService": {
     "description": "Localized user-facing copy."
   },
   "trashTitle": "Corbeille",
@@ -1629,18 +1426,6 @@
   "@errorUnknownBody": {
     "description": "Localized user-facing copy."
   },
-  "familyHubFamilyAndSettings": "Famille et réglages",
-  "@familyHubFamilyAndSettings": {
-    "description": "Localized user-facing copy."
-  },
-  "familyHubSectionContributors": "Contributeurs",
-  "@familyHubSectionContributors": {
-    "description": "Localized user-facing copy."
-  },
-  "settingsAccountRowNeutral": "Connexion et compte",
-  "@settingsAccountRowNeutral": {
-    "description": "Localized user-facing copy."
-  },
   "captureAnecdoteTitle": "Ajouter une anecdote",
   "@captureAnecdoteTitle": {
     "description": "Localized user-facing copy."
@@ -1679,19 +1464,8 @@
   "artworkAudioBackupPending": "Voix en attente de sauvegarde.",
   "artworkAudioBackedUp": "Voix sauvegardée.",
   "artworkAudioBackupFailed": "Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.",
-  "artworkAudioConflict": "La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.",
-  "artworkAudioKeepRemote": "Conserver la voix partagée",
-  "artworkAudioUseLocal": "Utiliser ma nouvelle version",
   "trashPreviewOpen": "Voir la photo supprimée",
   "trashPreviewUnavailable": "Aperçu indisponible",
-  "pushChannelFamilyActivityName": "Activité de la famille",
-  "@pushChannelFamilyActivityName": {
-    "description": "Localized user-facing copy."
-  },
-  "pushChannelFamilyActivityDescription": "Nouvelles œuvres ajoutées par les membres de votre famille.",
-  "@pushChannelFamilyActivityDescription": {
-    "description": "Localized user-facing copy."
-  },
   "vaultArchiveTitle": "Exporter et importer",
   "@vaultArchiveTitle": {
     "description": "Archive export and import (settings)."
@@ -1793,10 +1567,6 @@
   "commonNoChanges": "Aucune modification à enregistrer.",
   "@commonNoChanges": {
     "description": "Why Save is disabled on an unchanged form."
-  },
-  "artworkAudioConflictBody": "La version que vous ne choisissez pas sera perdue.",
-  "@artworkAudioConflictBody": {
-    "description": "Artwork: consequence of resolving a voice-story conflict."
   },
   "errorQuotaExceededTitleUntil": "Espace de stockage du foyer atteint (de nouveau disponible à {time})",
   "@errorQuotaExceededTitleUntil": {

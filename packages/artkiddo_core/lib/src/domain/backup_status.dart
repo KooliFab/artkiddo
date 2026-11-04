@@ -81,7 +81,6 @@ class ArtworkBackupFacts {
   final bool missingFile;
 
   final bool audioSyncPending;
-  final bool audioConflict;
 
   const ArtworkBackupFacts({
     required this.remoteBackup,
@@ -91,7 +90,6 @@ class ArtworkBackupFacts {
     this.maxAttempts = 0,
     this.missingFile = false,
     this.audioSyncPending = false,
-    this.audioConflict = false,
   });
 }
 
@@ -130,7 +128,7 @@ ArtworkBackupStatus backupStatusFor(ArtworkBackupFacts facts) {
   }
   // An audio the server has not confirmed, with nothing queued to send it,
   // is not saved and not on its way either.
-  if (facts.audioSyncPending || facts.audioConflict) {
+  if (facts.audioSyncPending) {
     return const ArtworkBackupStatus(ArtworkBackupState.onDevice);
   }
   return switch (facts.syncState) {

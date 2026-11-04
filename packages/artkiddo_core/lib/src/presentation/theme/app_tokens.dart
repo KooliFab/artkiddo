@@ -291,7 +291,6 @@ abstract final class AppBreakpoints {
   static const expandedMax = 1279.0;
 
   static bool isCompact(double width) => width < 600;
-  static bool isMedium(double width) => width >= 600 && width < 840;
   static bool isExpanded(double width) => width >= 840;
 }
 

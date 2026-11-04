@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
+Verified on: 2026-11-05 (followed households with requests and chosen children; dead code and unused strings removed). Earlier: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
 
 ## Repository shape
 
@@ -72,7 +72,7 @@ Composition slots by core surface — check this list before adding a seam:
 | Core surface | Entries it reads |
 |---|---|
 | Gallery | `openGalleryShare`, `openFamilyHub`, `openSettings`, `syncPhotos` (pull-to-refresh), `galleryStatusBanner` (above the feed) |
-| Artwork screen and capture | `onArtworkSaved`, `onArtworkDeleted`, `resolveAudioConflict`, `openGalleryShare`, `syncPhotos` |
+| Artwork screen and capture | `onArtworkSaved`, `onArtworkDeleted`, `openGalleryShare`, `syncPhotos` |
 | Share sheet | `openAccount` |
 | Settings | `openSettings` |
 | Family invite | `openQrScanner`, `inviteLinkFor`, `familyInviteOtherCode` (codes that are not household codes) |

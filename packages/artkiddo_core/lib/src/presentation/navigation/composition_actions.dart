@@ -25,9 +25,6 @@ final class CompositionActions {
   /// Best-effort propagation after the local deletion/outbox transaction.
   final Future<void> Function(String artworkId)? onArtworkDeleted;
 
-  final Future<bool> Function(String artworkId, bool keepLocal)?
-  resolveAudioConflict;
-
   final void Function(BuildContext context)? openFamilyHub;
 
   /// Opens the remote gallery-link surface for one child. The name travels
@@ -74,7 +71,6 @@ final class CompositionActions {
   const CompositionActions({
     this.onArtworkSaved,
     this.onArtworkDeleted,
-    this.resolveAudioConflict,
     this.openFamilyHub,
     this.openGalleryShare,
     this.openAccount,

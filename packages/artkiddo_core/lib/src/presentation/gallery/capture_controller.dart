@@ -161,7 +161,6 @@ class CaptureState {
     PermissionStatusPair? permissions,
     PermissionStatus? micPermission,
     String? childCreatedBanner,
-    bool clearBanner = false,
     bool? reviewUnreadable,
     bool? reviewTooLarge,
     bool? reviewLoading,
@@ -187,9 +186,7 @@ class CaptureState {
       save: save ?? this.save,
       permissions: permissions ?? this.permissions,
       micPermission: micPermission ?? this.micPermission,
-      childCreatedBanner: clearBanner
-          ? null
-          : (childCreatedBanner ?? this.childCreatedBanner),
+      childCreatedBanner: childCreatedBanner ?? this.childCreatedBanner,
       reviewUnreadable: reviewUnreadable ?? this.reviewUnreadable,
       reviewTooLarge: reviewTooLarge ?? this.reviewTooLarge,
       reviewLoading: reviewLoading ?? this.reviewLoading,
@@ -562,10 +559,6 @@ class CaptureController extends Notifier<CaptureState> {
     if (state.step != CaptureStep.details) return;
     selectChild(childId);
     state = state.copyWith(childCreatedBanner: childName);
-  }
-
-  void consumeChildCreatedBanner() {
-    state = state.copyWith(clearBanner: true);
   }
 
   Future<ActionResult<String>> save() async {

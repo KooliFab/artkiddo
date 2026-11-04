@@ -18,6 +18,13 @@ This document defines the stable vocabulary used in public code.
 - **Member**: a person in a family. Their access `role` (parent, contributor)
   is the authorization model; their `relationLabel` ("Papy", "Tata") is a
   display label only and authorizes nothing.
+- **Followed family**: another household the user follows, read-only, without
+  being a member of it. Following starts as a **request** that sees nothing
+  until that household accepts it; once accepted, the user sees every child
+  of that household and **chooses which children they follow** — a
+  preference that filters their feed, never a permission. Followed artworks
+  are never written to the local vault (`FollowingApi`, capability
+  `followedHouseholds`).
 - **Attribution** (`Artwork.addedBy`): which member photographed a piece. It
   is a member identifier, not a name — names are resolved from the roster at
   render time, and an artwork with no known author shows none rather than

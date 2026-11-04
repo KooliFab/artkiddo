@@ -135,21 +135,6 @@ class VaultMetaRepository {
         );
   }
 
-  /// Verifies (without writing) that `familyId` is compatible with this
-  /// vault: either unattached yet, or already attached to exactly this
-  /// household. Throws [FamilyMismatchException] otherwise. Callers
-  /// that only want to check before deciding whether to proceed use
-  /// this instead of [attachFamily].
-  Future<void> assertCompatible(String familyId) async {
-    final current = await getFamilyId();
-    if (current != null && current != familyId) {
-      throw FamilyMismatchException(
-        vaultFamilyId: current,
-        authenticatedFamilyId: familyId,
-      );
-    }
-  }
-
   /// Called after a successful account deletion when the member chose
   /// to keep their local vault. The member no longer belongs to any
   /// household server-side (the deletion flow already removed that

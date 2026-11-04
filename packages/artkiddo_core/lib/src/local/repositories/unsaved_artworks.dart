@@ -18,7 +18,7 @@ Future<int> countUnsavedArtworks(AppDatabase db, {String? childId}) async {
         'SELECT COUNT(*) AS n FROM artworks a '
         "WHERE (a.sync_state NOT IN ('synced', 'remoteThumbnail') "
         "OR a.remote_purged_at IS NOT NULL OR a.audio_sync_intent <> 'keep' "
-        'OR a.audio_conflict = 1 OR EXISTS ('
+        'OR EXISTS ('
         "SELECT 1 FROM sync_outbox o WHERE o.entity = 'artwork' "
         'AND o.entity_id = a.id)) '
         'AND (?1 IS NULL OR a.child_id = ?1)',

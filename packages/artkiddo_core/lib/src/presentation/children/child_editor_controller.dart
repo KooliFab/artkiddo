@@ -68,9 +68,6 @@ class ChildEditorState {
       loading: loading ?? this.loading,
     );
   }
-
-  bool get hasBlockingErrors =>
-      errors.any((e) => e != ChildFieldError.nameDuplicate);
 }
 
 class ChildEditorController extends Notifier<ChildEditorState> {

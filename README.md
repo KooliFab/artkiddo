@@ -86,7 +86,12 @@ No environment file, account, database, or storage service is required.
 
 ## Verify a change
 
+Same steps as CI (`.github/workflows/quality.yml`):
+
 ```sh
+bash tool/guard_public_boundary.sh
+bash tool/guard_design_tokens.sh
+dart format --set-exit-if-changed app packages tool
 flutter analyze
 (cd packages/artkiddo_core && flutter test)
 (cd app && flutter test)

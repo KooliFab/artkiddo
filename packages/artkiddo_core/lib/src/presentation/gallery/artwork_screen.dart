@@ -60,7 +60,6 @@ class ArtworkScreen extends ConsumerStatefulWidget {
 class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
   Artwork? _artwork;
   bool _loading = true;
-  bool _resolvingAudio = false;
   StreamSubscription<List<Artwork>>? _artworkSubscription;
 
   @override
@@ -103,26 +102,6 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
             'ArtworkScreen',
           );
         }),
-      );
-    }
-  }
-
-  Future<void> _resolveAudio(bool keepLocal) async {
-    if (_resolvingAudio) return;
-    final callback = ref.read(compositionActionsProvider).resolveAudioConflict;
-    if (callback == null) return;
-    setState(() => _resolvingAudio = true);
-    final resolved = await callback(widget.artworkId, keepLocal);
-    if (!mounted) return;
-    setState(() => _resolvingAudio = false);
-    if (resolved) {
-      _scheduleAudioBackup();
-      await _load();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).artworkAudioBackupFailed),
-        ),
       );
     }
   }
@@ -856,42 +835,27 @@ class _ArtworkScreenState extends ConsumerState<ArtworkScreen> {
       ],
       if (ref.watch(appCapabilitiesProvider).remoteBackup &&
           (m.hasAudio || m.audioSyncPending)) ...[
-        if (m.audioConflict) ...[
-          // A decision with a loss on either side: a warning that says so,
-          // with the two versions as its two actions (hidden while the
-          // choice is being applied).
-          StateBlock(
-            intent: StateBlockIntent.warning,
-            title: l10n.artworkAudioConflict,
-            body: l10n.artworkAudioConflictBody,
-            actionLabel: l10n.artworkAudioKeepRemote,
-            onAction: _resolvingAudio ? null : () => _resolveAudio(false),
-            secondaryLabel: l10n.artworkAudioUseLocal,
-            onSecondary: _resolvingAudio ? null : () => _resolveAudio(true),
+        // "Backed up" is only said of an artwork whose status is saved: a
+        // restored artwork the server no longer holds never reads so.
+        if (m.syncState == SyncState.syncError ||
+            m.audioSyncPending ||
+            backup?.state == ArtworkBackupState.saved)
+          Text(
+            m.syncState == SyncState.syncError
+                ? l10n.artworkAudioBackupFailed
+                : m.audioSyncPending
+                ? l10n.artworkAudioBackupPending
+                : l10n.artworkAudioBackedUp,
+            style: AppTypography.caption,
           ),
-        ] else ...[
-          // "Backed up" is only said of an artwork whose status is saved: a
-          // restored artwork the server no longer holds never reads so.
-          if (m.syncState == SyncState.syncError ||
-              m.audioSyncPending ||
-              backup?.state == ArtworkBackupState.saved)
-            Text(
-              m.syncState == SyncState.syncError
-                  ? l10n.artworkAudioBackupFailed
-                  : m.audioSyncPending
-                  ? l10n.artworkAudioBackupPending
-                  : l10n.artworkAudioBackedUp,
-              style: AppTypography.caption,
-            ),
-          if (m.syncState == SyncState.syncError)
-            TextButton(
-              onPressed: () {
-                _scheduleAudioBackup();
-                ref.read(compositionActionsProvider).syncPhotos?.call(context);
-              },
-              child: Text(l10n.artworkAudioRetry),
-            ),
-        ],
+        if (m.syncState == SyncState.syncError)
+          TextButton(
+            onPressed: () {
+              _scheduleAudioBackup();
+              ref.read(compositionActionsProvider).syncPhotos?.call(context);
+            },
+            child: Text(l10n.artworkAudioRetry),
+          ),
         const SizedBox(height: AppSpacing.s2),
       ],
       if (m.hasAudio) ...[

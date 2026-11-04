@@ -37,14 +37,6 @@ class FamilyInviteScreen extends ConsumerStatefulWidget {
   /// Called after a redeem was rejected as an invalid code.
   final VoidCallback? onRedeemFailed;
 
-  /// In [joinMode], replaces the default title, so a composition that adds
-  /// actions through [joinFooter] can name the screen after all of them.
-  final String? joinTitle;
-
-  /// In [joinMode], rendered below the join form, set apart from it. A
-  /// composition places its other membership actions there.
-  final Widget? joinFooter;
-
   const FamilyInviteScreen({
     super.key,
     this.presentedAsSheet = false,
@@ -52,8 +44,6 @@ class FamilyInviteScreen extends ConsumerStatefulWidget {
     this.initialCode,
     this.onJoined,
     this.onRedeemFailed,
-    this.joinTitle,
-    this.joinFooter,
   });
 
   @override
@@ -327,10 +317,6 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
                           onPressed: () =>
                               _confirmAndJoin(_codeController.text.trim()),
                         ),
-                        if (widget.joinFooter case final footer?) ...[
-                          const Divider(height: AppSpacing.s8),
-                          footer,
-                        ],
                       ],
                     ],
                   ),
@@ -400,9 +386,7 @@ class _FamilyInviteScreenState extends ConsumerState<FamilyInviteScreen> {
 
   AppBar _buildAppBar(AppLocalizations l10n) => AppBar(
     title: Text(
-      widget.joinMode
-          ? widget.joinTitle ?? l10n.familyJoinButton
-          : l10n.familyInviteTitle,
+      widget.joinMode ? l10n.familyJoinButton : l10n.familyInviteTitle,
     ),
     automaticallyImplyLeading: !widget.presentedAsSheet,
     actions: [

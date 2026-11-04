@@ -51,7 +51,6 @@ class Artwork {
   final int? audioDurationMs;
   final int audioByteSize;
 
-  final bool audioConflict;
   final bool audioSyncPending;
 
   final String? addedBy;
@@ -73,7 +72,6 @@ class Artwork {
     this.audioDurationMs,
     this.audioByteSize = 0,
     this.addedBy,
-    this.audioConflict = false,
     this.audioSyncPending = false,
     this.syncState = SyncState.localOnly,
   });
@@ -93,15 +91,6 @@ class Artwork {
   /// grid.
   String? get bestThumbnailImagePath =>
       thumbnailImagePath ?? relativeImagePath ?? displayImagePath;
-
-  /// True once every image this artwork will ever have on this
-  /// device (original, display, or thumbnail) is definitively absent
-  /// and not pending — i.e. [syncState] is [SyncState.downloadFailed].
-  /// Used by the gallery to distinguish "still downloading" (show a
-  /// pending tile) from "gave up" (show a retry affordance) — both
-  /// cases already fall back to the same "no path yet" state, `null`,
-  /// from [bestThumbnailImagePath].
-  bool get imageDownloadFailed => syncState == SyncState.downloadFailed;
 
   /// True if this artwork has an audio story attached (either
   /// locally or remotely).
@@ -131,7 +120,6 @@ class Artwork {
     int? audioByteSize,
     Object? addedBy = _unset,
     SyncState? syncState,
-    bool? audioConflict,
     bool? audioSyncPending,
   }) {
     return Artwork(
@@ -152,7 +140,6 @@ class Artwork {
           ? this.audioDurationMs
           : audioDurationMs as int?,
       audioByteSize: audioByteSize ?? this.audioByteSize,
-      audioConflict: audioConflict ?? this.audioConflict,
       audioSyncPending: audioSyncPending ?? this.audioSyncPending,
       addedBy: identical(addedBy, _unset) ? this.addedBy : addedBy as String?,
       syncState: syncState ?? this.syncState,

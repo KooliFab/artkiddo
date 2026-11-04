@@ -11,7 +11,7 @@ numbering is shared with decisions recorded outside this repository.
 | `0003-capabilities-and-neutral-adapters.md` | Optional remote behavior through neutral contracts and explicit capabilities validated at boot | Current; boot validation extended by 0016 |
 | `0004-neutral-object-keys.md` | Artworks store opaque `displayObjectKey`/`thumbnailObjectKey`/`audioObjectKey` | Current |
 | `0006-staggered-grid-dependency.md` | Rules and justification for every third-party dependency of `artkiddo_core` | Current |
-| `0007-family-artwork-vocabulary-and-clean-schema-baseline.md` | English `family`/`artwork`/`contributor` vocabulary, clean schema v1 baseline | Current; schema has since grown to v3 by additive migrations |
+| `0007-family-artwork-vocabulary-and-clean-schema-baseline.md` | English `family`/`artwork`/`contributor` vocabulary, clean schema v1 baseline | Current; the local schema is the v1 baseline |
 | `0014-immediate-native-background-upload.md` | `CompositionActions.onArtworkSaved` fires best-effort after the local commit | Current |
 | `0015-discard-previous-family-on-join.md` | Joining another family requires confirmation, then discards the previous one | Current |
 | `0016-local-default-destinations.md` | Capability-gated vs local-default `CompositionActions`; local features never disappear | Current |

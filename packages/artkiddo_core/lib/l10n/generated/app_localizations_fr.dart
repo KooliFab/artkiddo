@@ -24,9 +24,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonClose => 'Fermer';
 
   @override
-  String get commonBack => 'Retour';
-
-  @override
   String get commonNext => 'Suivant';
 
   @override
@@ -34,9 +31,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonDeleting => 'Suppression…';
-
-  @override
-  String get commonEdit => 'Modifier';
 
   @override
   String get commonRetry => 'Réessayer';
@@ -63,16 +57,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonDiscard => 'Abandonner';
 
   @override
-  String get commonExampleLabel => 'Exemple';
-
-  @override
   String get commonLoading => 'Chargement…';
-
-  @override
-  String get commonOptional => 'facultatif';
-
-  @override
-  String get commonRequired => 'requis';
 
   @override
   String get commonContactUs => 'Nous écrire';
@@ -85,57 +70,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce que vous avez saisi ne sera pas conservé.';
 
   @override
-  String get commonDateFormat => 'yMMMMd';
-
-  @override
-  String get commonDateFormatShort => 'yMMMd';
-
-  @override
-  String get navGallery => 'Galerie';
-
-  @override
-  String get navChildren => 'Enfants';
-
-  @override
-  String get navSettings => 'Réglages';
-
-  @override
-  String a11yNavSelected(String label) {
-    return '$label, sélectionné';
-  }
-
-  @override
-  String get galleryTitle => 'Galerie';
-
-  @override
-  String galleryCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins',
-      one: '1 dessin',
-      zero: 'Aucun dessin',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String galleryCountForChild(num count, String childName) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count dessins de $childName',
-      one: '1 dessin de $childName',
-      zero: 'Aucun dessin de $childName',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get galleryFilterAll => 'Tous';
-
-  @override
-  String get galleryFilterLabel => 'Filtrer par enfant';
 
   @override
   String get galleryAddArtwork => 'Ajouter un dessin';
@@ -172,13 +107,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ajoutez-en un, ou revenez à l\'ensemble de la galerie.';
 
   @override
-  String get galleryEmptyFilteredShowAll => 'Voir tous les dessins';
-
-  @override
   String get galleryErrorTitle => 'Impossible d\'ouvrir votre galerie';
-
-  @override
-  String get galleryErrorBody => 'Vos dessins sont toujours sur l\'appareil.';
 
   @override
   String get galleryVaultErrorBody =>
@@ -200,10 +129,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vaultRescueExportAction => 'Exporter mes photos';
 
   @override
-  String get vaultRescueExportBody =>
-      'Crée un fichier à partager avec vos originaux et la photo en cours, même si le coffre est illisible.';
-
-  @override
   String get vaultRescueExportIncludesDraft =>
       'La photo en cours sera incluse dans l’export.';
 
@@ -211,14 +136,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String vaultRescueInsufficientSpace(String required) {
     return 'Impossible de créer l’export : environ $required d’espace libre sont nécessaires.';
   }
-
-  @override
-  String galleryFilterReset(String childName) {
-    return '$childName a été supprimé. La galerie affiche de nouveau tous les dessins.';
-  }
-
-  @override
-  String get galleryImageMissing => 'Image introuvable';
 
   @override
   String get galleryArtworkAdded => 'Dessin ajouté à la galerie.';
@@ -242,11 +159,6 @@ class AppLocalizationsFr extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return 'Dessin de $childName, ajouté le $dateString, $age lors de l\'ajout. Anecdote : $story';
-  }
-
-  @override
-  String a11yGalleryFilterChanged(String label, int count) {
-    return 'Filtre : $label. $count dessins.';
   }
 
   @override
@@ -341,12 +253,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get captureSourceGalleryBody => 'Le dessin est déjà photographié.';
 
   @override
-  String get captureReviewTitle => 'Le dessin est-il bien visible ?';
-
-  @override
-  String get captureReviewUse => 'Utiliser cette photo';
-
-  @override
   String get captureReviewRetake => 'Reprendre';
 
   @override
@@ -355,9 +261,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get captureReviewTooLarge =>
       'Cette image est très volumineuse et pourrait ralentir l\'application.';
-
-  @override
-  String get captureDetailsTitle => 'À qui est ce dessin ?';
 
   @override
   String get captureDetailsViewLarge => 'Voir en grand';
@@ -381,9 +284,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get captureNoChildBody =>
       'Ajoutez un enfant : votre dessin est conservé pendant ce temps.';
-
-  @override
-  String get captureStoryLabel => 'Anecdote (facultatif)';
 
   @override
   String get captureStoryHint => 'Ce que l\'enfant raconte sur son dessin.';
@@ -478,13 +378,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get captureErrorWriteTitle => 'Le dessin n\'a pas été enregistré';
-
-  @override
-  String get captureErrorWriteBody =>
-      'Rien n\'a été perdu. Vous pouvez réessayer.';
-
-  @override
   String get captureErrorStorageFullTitle =>
       'Il n\'y a plus assez d\'espace sur l\'appareil';
 
@@ -548,13 +441,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get artworkStoryEmpty => 'Aucune anecdote pour ce dessin.';
 
   @override
-  String get artworkStoryAdd => 'Ajouter une anecdote';
-
-  @override
   String get artworkStoryEdit => 'Modifier l\'anecdote';
-
-  @override
-  String get artworkStoryClear => 'Effacer l\'anecdote';
 
   @override
   String get artworkStoryHint => 'Ce que l\'enfant raconte sur son dessin.';
@@ -563,21 +450,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get artworkStorySaved => 'Anecdote enregistrée.';
 
   @override
-  String get artworkStoryCleared => 'Anecdote effacée.';
-
-  @override
-  String get artworkStoryClearConfirmTitle => 'Effacer l\'anecdote ?';
-
-  @override
-  String get artworkStoryClearConfirmBody =>
-      'Le texte sera retiré de ce dessin.';
-
-  @override
   String get artworkStoryError =>
       'L\'anecdote n\'a pas été enregistrée. Votre texte est conservé.';
-
-  @override
-  String get artworkDrawnAtAdd => 'Ajouter la date du dessin';
 
   @override
   String get artworkDrawnAtEdit => 'Modifier la date du dessin';
@@ -634,9 +508,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return 'Un dessin de $childName, ajouté le $dateString.';
   }
-
-  @override
-  String get artworkZoom => 'Agrandir';
 
   @override
   String get artworkZoomIn => 'Agrandir davantage';
@@ -768,9 +639,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get childEditorTitleCreate => 'Nouvel enfant';
 
   @override
-  String get childEditorTitleEdit => 'Modifier le profil';
-
-  @override
   String get childEditorTitleArtist => 'Artiste';
 
   @override
@@ -838,16 +706,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vos dessins sont sur cet appareil. Aucun compte n\'est nécessaire.';
 
   @override
-  String get settingsGroupBackup => 'Sauvegarde et partage';
-
-  @override
   String get settingsGroupApp => 'Application';
-
-  @override
-  String get settingsGroupDocuments => 'Documents';
-
-  @override
-  String get settingsAccountOff => 'Non activée';
 
   @override
   String get settingsBackupFailed => 'La sauvegarde n\'a pas abouti.';
@@ -855,10 +714,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsBackupBlocked =>
       'La sauvegarde a besoin de votre intervention pour continuer.';
-
-  @override
-  String get settingsRestoreNotice =>
-      'La restauration sur un nouvel appareil n\'est pas encore disponible.';
 
   @override
   String get settingsLanguageRow => 'Langue';
@@ -898,9 +753,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get familyInviteCopy => 'Inviter';
-
-  @override
-  String get familyInviteCopied => 'Code copié.';
 
   @override
   String get familyJoinExplain =>
@@ -958,7 +810,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get familyJoinInviteInsteadHint =>
-      'Vous vouliez plutôt partager vos œuvres avec quelqu\'un ? Donnez-lui votre code d\'invitation, affiché plus haut — vous garderez tout.';
+      'Vous vouliez seulement voir les dessins de cette famille ? Suivez-la plutôt : rien n\'est supprimé ici.';
 
   @override
   String get familyJoinConfirmPurgeWarning =>
@@ -1026,9 +878,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accountSignOut => 'Se déconnecter';
-
-  @override
-  String get accountOfflineReason => 'Une connexion est nécessaire.';
 
   @override
   String shareTitle(String childName) {
@@ -1114,13 +963,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shareRevokeError => 'Le lien n\'a pas pu être révoqué.';
-
-  @override
-  String get shareErrorNetwork =>
-      'Le lien n\'a pas été créé : aucune connexion.';
-
-  @override
-  String get shareErrorService => 'Le lien n\'a pas été créé.';
 
   @override
   String get trashTitle => 'Corbeille';
@@ -1322,15 +1164,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Réessayez. Si le problème persiste, écrivez-nous.';
 
   @override
-  String get familyHubFamilyAndSettings => 'Famille et réglages';
-
-  @override
-  String get familyHubSectionContributors => 'Contributeurs';
-
-  @override
-  String get settingsAccountRowNeutral => 'Connexion et compte';
-
-  @override
   String get captureAnecdoteTitle => 'Ajouter une anecdote';
 
   @override
@@ -1372,27 +1205,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Sauvegarde de la voix impossible. Votre enregistrement reste sur cet appareil.';
 
   @override
-  String get artworkAudioConflict =>
-      'La voix a été modifiée sur un autre appareil. Choisissez la version à conserver.';
-
-  @override
-  String get artworkAudioKeepRemote => 'Conserver la voix partagée';
-
-  @override
-  String get artworkAudioUseLocal => 'Utiliser ma nouvelle version';
-
-  @override
   String get trashPreviewOpen => 'Voir la photo supprimée';
 
   @override
   String get trashPreviewUnavailable => 'Aperçu indisponible';
-
-  @override
-  String get pushChannelFamilyActivityName => 'Activité de la famille';
-
-  @override
-  String get pushChannelFamilyActivityDescription =>
-      'Nouvelles œuvres ajoutées par les membres de votre famille.';
 
   @override
   String get vaultArchiveTitle => 'Exporter et importer';
@@ -1491,10 +1307,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonNoChanges => 'Aucune modification à enregistrer.';
-
-  @override
-  String get artworkAudioConflictBody =>
-      'La version que vous ne choisissez pas sera perdue.';
 
   @override
   String errorQuotaExceededTitleUntil(DateTime time) {

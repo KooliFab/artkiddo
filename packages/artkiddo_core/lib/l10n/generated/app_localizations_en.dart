@@ -24,9 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
-  String get commonBack => 'Back';
-
-  @override
   String get commonNext => 'Next';
 
   @override
@@ -34,9 +31,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonDeleting => 'Deleting…';
-
-  @override
-  String get commonEdit => 'Edit';
 
   @override
   String get commonRetry => 'Retry';
@@ -63,16 +57,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDiscard => 'Discard';
 
   @override
-  String get commonExampleLabel => 'Example';
-
-  @override
   String get commonLoading => 'Loading…';
-
-  @override
-  String get commonOptional => 'optional';
-
-  @override
-  String get commonRequired => 'required';
 
   @override
   String get commonContactUs => 'Contact us';
@@ -84,57 +69,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDiscardBody => 'What you entered will not be kept.';
 
   @override
-  String get commonDateFormat => 'yMMMMd';
-
-  @override
-  String get commonDateFormatShort => 'yMMMd';
-
-  @override
-  String get navGallery => 'Gallery';
-
-  @override
-  String get navChildren => 'Children';
-
-  @override
-  String get navSettings => 'Settings';
-
-  @override
-  String a11yNavSelected(String label) {
-    return '$label, selected';
-  }
-
-  @override
-  String get galleryTitle => 'Gallery';
-
-  @override
-  String galleryCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count drawings',
-      one: '1 drawing',
-      zero: 'No drawings',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String galleryCountForChild(num count, String childName) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count drawings from $childName',
-      one: '1 drawing from $childName',
-      zero: 'No drawings from $childName',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get galleryFilterAll => 'All';
-
-  @override
-  String get galleryFilterLabel => 'Filter by child';
 
   @override
   String get galleryAddArtwork => 'Add a drawing';
@@ -171,13 +106,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add one, or go back to the full gallery.';
 
   @override
-  String get galleryEmptyFilteredShowAll => 'View all drawings';
-
-  @override
   String get galleryErrorTitle => 'Your gallery couldn\'t be opened';
-
-  @override
-  String get galleryErrorBody => 'Your drawings are still on the device.';
 
   @override
   String get galleryVaultErrorBody =>
@@ -198,10 +127,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vaultRescueExportAction => 'Export my photos';
 
   @override
-  String get vaultRescueExportBody =>
-      'Creates a file you can share with your originals and the photo in progress, even if the vault cannot be read.';
-
-  @override
   String get vaultRescueExportIncludesDraft =>
       'The photo in progress will be included in the export.';
 
@@ -209,14 +134,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String vaultRescueInsufficientSpace(String required) {
     return 'The export needs about $required of free space before it can start.';
   }
-
-  @override
-  String galleryFilterReset(String childName) {
-    return '$childName was deleted. The gallery now shows all drawings again.';
-  }
-
-  @override
-  String get galleryImageMissing => 'Image not found';
 
   @override
   String get galleryArtworkAdded => 'Drawing added to the gallery.';
@@ -240,11 +157,6 @@ class AppLocalizationsEn extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return 'Drawing from $childName, added on $dateString, $age when added. Story: $story';
-  }
-
-  @override
-  String a11yGalleryFilterChanged(String label, int count) {
-    return 'Filter: $label. $count drawings.';
   }
 
   @override
@@ -339,12 +251,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureSourceGalleryBody => 'The drawing is already photographed.';
 
   @override
-  String get captureReviewTitle => 'Is the drawing clearly visible?';
-
-  @override
-  String get captureReviewUse => 'Use this photo';
-
-  @override
   String get captureReviewRetake => 'Retake';
 
   @override
@@ -353,9 +259,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get captureReviewTooLarge =>
       'This image is very large and could slow down the app.';
-
-  @override
-  String get captureDetailsTitle => 'Whose drawing is this?';
 
   @override
   String get captureDetailsViewLarge => 'View full size';
@@ -378,9 +281,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get captureNoChildBody =>
       'Add a child: your drawing is kept in the meantime.';
-
-  @override
-  String get captureStoryLabel => 'Story (optional)';
 
   @override
   String get captureStoryHint => 'What the child says about their drawing.';
@@ -474,12 +374,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get captureErrorWriteTitle => 'The drawing wasn\'t saved';
-
-  @override
-  String get captureErrorWriteBody => 'Nothing was lost. You can try again.';
-
-  @override
   String get captureErrorStorageFullTitle =>
       'There isn\'t enough space left on the device';
 
@@ -538,13 +432,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get artworkStoryEmpty => 'No story for this drawing.';
 
   @override
-  String get artworkStoryAdd => 'Add a story';
-
-  @override
   String get artworkStoryEdit => 'Edit the story';
-
-  @override
-  String get artworkStoryClear => 'Clear the story';
 
   @override
   String get artworkStoryHint => 'What the child says about their drawing.';
@@ -553,20 +441,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get artworkStorySaved => 'Story saved.';
 
   @override
-  String get artworkStoryCleared => 'Story cleared.';
-
-  @override
-  String get artworkStoryClearConfirmTitle => 'Clear the story?';
-
-  @override
-  String get artworkStoryClearConfirmBody =>
-      'The text will be removed from this drawing.';
-
-  @override
   String get artworkStoryError => 'The story wasn\'t saved. Your text is kept.';
-
-  @override
-  String get artworkDrawnAtAdd => 'Add the drawing date';
 
   @override
   String get artworkDrawnAtEdit => 'Edit the drawing date';
@@ -620,9 +495,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return 'A drawing from $childName, added on $dateString.';
   }
-
-  @override
-  String get artworkZoom => 'Zoom in';
 
   @override
   String get artworkZoomIn => 'Zoom in further';
@@ -752,9 +624,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childEditorTitleCreate => 'New child';
 
   @override
-  String get childEditorTitleEdit => 'Edit profile';
-
-  @override
   String get childEditorTitleArtist => 'Artist';
 
   @override
@@ -820,16 +689,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your drawings are on this device. No account is needed.';
 
   @override
-  String get settingsGroupBackup => 'Backup and sharing';
-
-  @override
   String get settingsGroupApp => 'App';
-
-  @override
-  String get settingsGroupDocuments => 'Documents';
-
-  @override
-  String get settingsAccountOff => 'Not turned on';
 
   @override
   String get settingsBackupFailed => 'The backup didn\'t complete.';
@@ -837,10 +697,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsBackupBlocked =>
       'Backup needs your attention before it can continue.';
-
-  @override
-  String get settingsRestoreNotice =>
-      'Restoring on a new device isn\'t available yet.';
 
   @override
   String get settingsLanguageRow => 'Language';
@@ -880,9 +736,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyInviteCopy => 'Invite';
-
-  @override
-  String get familyInviteCopied => 'Code copied.';
 
   @override
   String get familyJoinExplain =>
@@ -940,7 +793,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyJoinInviteInsteadHint =>
-      'Wanted to share your artworks with someone instead? Give them your invite code, shown above — you\'ll keep everything.';
+      'Only wanted to see this family\'s drawings? Follow it instead: nothing is deleted here.';
 
   @override
   String get familyJoinConfirmPurgeWarning =>
@@ -1006,9 +859,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountSignOut => 'Sign out';
-
-  @override
-  String get accountOfflineReason => 'A connection is needed.';
 
   @override
   String shareTitle(String childName) {
@@ -1092,12 +942,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareRevokeError => 'The link couldn\'t be revoked.';
-
-  @override
-  String get shareErrorNetwork => 'The link wasn\'t created: no connection.';
-
-  @override
-  String get shareErrorService => 'The link wasn\'t created.';
 
   @override
   String get trashTitle => 'Trash';
@@ -1294,15 +1138,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Try again. If the problem continues, write to us.';
 
   @override
-  String get familyHubFamilyAndSettings => 'Family & settings';
-
-  @override
-  String get familyHubSectionContributors => 'Contributors';
-
-  @override
-  String get settingsAccountRowNeutral => 'Sign-in and account';
-
-  @override
   String get captureAnecdoteTitle => 'Add a note';
 
   @override
@@ -1344,27 +1179,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unable to back up the voice story. Your recording remains on this device.';
 
   @override
-  String get artworkAudioConflict =>
-      'The voice story changed on another device. Choose which version to keep.';
-
-  @override
-  String get artworkAudioKeepRemote => 'Keep the shared voice story';
-
-  @override
-  String get artworkAudioUseLocal => 'Use my new version';
-
-  @override
   String get trashPreviewOpen => 'View deleted photo';
 
   @override
   String get trashPreviewUnavailable => 'Preview unavailable';
-
-  @override
-  String get pushChannelFamilyActivityName => 'Family activity';
-
-  @override
-  String get pushChannelFamilyActivityDescription =>
-      'New artworks added by your family members.';
 
   @override
   String get vaultArchiveTitle => 'Export and import';
@@ -1463,10 +1281,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonNoChanges => 'No changes to save.';
-
-  @override
-  String get artworkAudioConflictBody =>
-      'The version you do not choose will be lost.';
 
   @override
   String errorQuotaExceededTitleUntil(DateTime time) {

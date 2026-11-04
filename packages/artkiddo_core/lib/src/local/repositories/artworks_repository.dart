@@ -214,7 +214,6 @@ class DriftArtworksRepository implements ArtworksRepository {
       relativeAudioPath: entity.relativeAudioPath,
       audioDurationMs: entity.audioDurationMs,
       audioByteSize: entity.audioByteSize,
-      audioConflict: entity.audioConflict,
       audioSyncPending: entity.audioSyncIntent != 'keep',
       addedBy: entity.addedBy,
       syncState: SyncState.values.firstWhere(
@@ -631,7 +630,6 @@ class DriftArtworksRepository implements ArtworksRepository {
                 audioDurationMs: Value(durationMs),
                 audioByteSize: Value(fileSize),
                 audioSyncIntent: const Value('replace'),
-                audioConflict: const Value(false),
                 syncState: const Value('localOnly'),
               ),
             );
@@ -696,7 +694,6 @@ class DriftArtworksRepository implements ArtworksRepository {
                 audioDurationMs: Value(null),
                 audioByteSize: Value(0),
                 audioSyncIntent: Value('delete'),
-                audioConflict: Value(false),
                 syncState: Value('localOnly'),
               ),
             );
@@ -994,7 +991,6 @@ class DriftArtworksRepository implements ArtworksRepository {
               audioObjectKey: Value(audioObjectKey),
               audioRevision: Value(audioRevision),
               audioSyncIntent: const Value('keep'),
-              audioConflict: const Value(false),
               relativeAudioPath: Value(preservedAudioPath),
               audioDurationMs: Value(audioDurationMs),
               audioByteSize: Value(audioByteSize),

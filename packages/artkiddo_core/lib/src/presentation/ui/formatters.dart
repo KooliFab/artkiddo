@@ -28,12 +28,6 @@ class Formatters {
     return DateFormat(pattern, locale).format(date);
   }
 
-  static String dateShort(AppLocalizations l10n, DateTime date) {
-    final locale = _icuLocale(l10n);
-    final pattern = locale == 'fr_CA' ? 'd MMM y' : 'MMM d, y';
-    return DateFormat(pattern, locale).format(date);
-  }
-
   /// Date + time, for the last-backup summary ("Last backup: `date/time`").
   static String dateTime(AppLocalizations l10n, DateTime dateTime) {
     final locale = _icuLocale(l10n);

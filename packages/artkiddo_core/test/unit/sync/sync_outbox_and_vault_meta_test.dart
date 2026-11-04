@@ -148,23 +148,6 @@ void main() {
     );
 
     test(
-      'markTerminal removes the entry without counting it as succeeded',
-      () async {
-        final outbox = SyncOutboxRepository(db);
-        await outbox.enqueue(
-          entity: SyncEntityKind.artwork,
-          entityId: 'm1',
-          op: SyncOutboxOp.upsert,
-        );
-        final entry = (await outbox.listReady()).single;
-
-        await outbox.markTerminal(entry.seq);
-
-        expect(await outbox.countPending(), 0);
-      },
-    );
-
-    test(
       'backoffFor doubles per attempt and caps at 60 minutes; retryAfter overrides it',
       () {
         expect(SyncOutboxRepository.backoffFor(1), const Duration(minutes: 1));
@@ -225,28 +208,6 @@ void main() {
           await vaultMeta.getFamilyId(),
           'family-1',
           reason: 'the mismatch must never silently overwrite',
-        );
-      },
-    );
-
-    test(
-      'assertCompatible mirrors attachFamily without ever writing',
-      () async {
-        final vaultMeta = VaultMetaRepository(db);
-        await vaultMeta.assertCompatible(
-          'family-1',
-        ); // unattached vault: nothing to conflict with
-        expect(
-          await vaultMeta.getFamilyId(),
-          isNull,
-          reason: 'assertCompatible must never write',
-        );
-
-        await vaultMeta.attachFamily('family-1');
-        await vaultMeta.assertCompatible('family-1'); // same family: fine
-        expect(
-          () => vaultMeta.assertCompatible('family-2'),
-          throwsA(isA<FamilyMismatchException>()),
         );
       },
     );

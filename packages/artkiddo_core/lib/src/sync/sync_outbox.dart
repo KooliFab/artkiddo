@@ -395,15 +395,6 @@ class SyncOutboxRepository {
     );
   }
 
-  /// A terminal failure (e.g. `missingFile`) exits the queue without
-  /// being retried — retrying can never succeed on its own; the item
-  /// needs a member's action.
-  Future<void> markTerminal(int seq) async {
-    await (_db.delete(
-      _db.syncOutboxTable,
-    )..where((t) => t.seq.equals(seq))).go();
-  }
-
   /// Exponential backoff, 1 minute -> 1 hour, doubling per attempt.
   /// [retryAfter], when the server sent one (`429 Retry-After`), takes
   /// precedence over the computed delay.

@@ -63,7 +63,6 @@ class BackupStatusRepository {
           maxAttempts: queued?.maxAttempts ?? 0,
           missingFile: missing,
           audioSyncPending: row.audioSyncIntent != 'keep',
-          audioConflict: row.audioConflict,
         ),
       );
     }

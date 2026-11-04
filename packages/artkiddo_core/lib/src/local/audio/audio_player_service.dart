@@ -219,14 +219,6 @@ class FakeAudioPlayerService implements AudioPlayerService {
     _positionController.add(_position);
   }
 
-  void simulateCompletion() {
-    _isPlaying = false;
-    _position = _duration;
-    _playingController.add(false);
-    _positionController.add(_position);
-    _processingStateController.add(ProcessingState.completed);
-  }
-
   @override
   Future<void> dispose() async {
     await _playingController.close();

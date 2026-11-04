@@ -83,8 +83,8 @@ class GalleryFilterNotifier extends Notifier<GalleryFilter> {
             .show(removedName ?? '');
       }
     });
-    // A followed child the user stops seeing (unfollowed, or no longer in
-    // the audience) resets the filter the same way a deleted child does.
+    // A followed child the user stops seeing (household unfollowed, child no
+    // longer chosen) resets the filter the same way a deleted child does.
     ref.listen(followedChildrenProvider, (previous, next) {
       final current = state;
       if (current is! OneChild || next.containsKey(current.childId)) return;

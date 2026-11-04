@@ -13,7 +13,7 @@ const String _alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 /// Accepted code shapes by kind; [normalizeInviteCode] checks them all.
 /// `family` joins the household (and may leave the current one); `follow`
 /// asks to follow a household, read-only.
-final Map<String, RegExp> kInviteCodePatterns = {
+final Map<String, RegExp> _inviteCodePatterns = {
   'family': RegExp('^[$_alphabet]{8}\$'),
   'follow': RegExp('^[$_alphabet]{10}\$'),
 };
@@ -25,14 +25,14 @@ const int kInviteCodeMaxLength = 10;
 /// matches no pattern.
 String? inviteCodeKind(String code) {
   final normalized = code.trim().toUpperCase();
-  for (final entry in kInviteCodePatterns.entries) {
+  for (final entry in _inviteCodePatterns.entries) {
     if (entry.value.hasMatch(normalized)) return entry.key;
   }
   return null;
 }
 
 /// Custom scheme used by the web join page to open the app.
-const String kInviteAppScheme = 'artkiddo';
+const String _inviteAppScheme = 'artkiddo';
 
 /// Returns the normalized (trimmed, uppercase) invite code found in [raw], or
 /// null when nothing valid is there.
@@ -63,7 +63,7 @@ String? normalizeInviteCode(String raw) {
 
 String? _matchCode(String candidate) {
   final code = candidate.trim().toUpperCase();
-  for (final pattern in kInviteCodePatterns.values) {
+  for (final pattern in _inviteCodePatterns.values) {
     if (pattern.hasMatch(code)) return code;
   }
   return null;
@@ -77,7 +77,7 @@ String? _codeFromUri(Uri? uri) {
     if (uri.host.isEmpty) return null;
     final path = uri.path;
     isJoinTarget = path.endsWith('/join') || path.endsWith('/join/');
-  } else if (scheme == kInviteAppScheme) {
+  } else if (scheme == _inviteAppScheme) {
     isJoinTarget =
         uri.host.toLowerCase() == 'join' &&
         (uri.path.isEmpty || uri.path == '/');

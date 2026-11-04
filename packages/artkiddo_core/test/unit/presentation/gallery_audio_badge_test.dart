@@ -5,69 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:artkiddo_core/artkiddo_core.dart';
 
 void main() {
-  testWidgets('ArtworkCard affiche l’icône micro quand hasAudio est true', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: SizedBox(
-              width: 200,
-              child: ArtworkCard(
-                childName: 'Lea',
-                ageLabel: '5 ans',
-                dateLabel: 'Aujourd’hui',
-                story: 'Mon dessin',
-                imageFile: null,
-                imageExists: false,
-                cacheWidth: 400,
-                semanticLabel: 'Dessin de Lea',
-                imageMissingLabel: 'Image introuvable',
-                onTap: () {},
-                hasAudio: true,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
-  });
-
-  testWidgets(
-    'ArtworkCard n’affiche pas l’icône micro quand hasAudio est false',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: SizedBox(
-                width: 200,
-                child: ArtworkCard(
-                  childName: 'Lea',
-                  ageLabel: '5 ans',
-                  dateLabel: 'Aujourd’hui',
-                  story: 'Mon dessin',
-                  imageFile: null,
-                  imageExists: false,
-                  cacheWidth: 400,
-                  semanticLabel: 'Dessin de Lea',
-                  imageMissingLabel: 'Image introuvable',
-                  onTap: () {},
-                  hasAudio: false,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.mic_rounded), findsNothing);
-    },
-  );
-
   test(
     'ArtworkTile.hasAudio reflète fidèlement la présence d’un audio sur le chef-d’œuvre',
     () {
