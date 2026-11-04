@@ -400,5 +400,11 @@ final class _StubFollowingApi implements FollowingApi {
   );
 
   @override
+  Future<void> setFollowedChildren(
+    String familyId,
+    List<String> childIds,
+  ) async {}
+
+  @override
   Future<void> unfollow(String familyId) async {}
 }

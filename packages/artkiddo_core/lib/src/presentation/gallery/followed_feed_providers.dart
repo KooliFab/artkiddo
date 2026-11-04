@@ -16,9 +16,9 @@ final followedFeedClockProvider = Provider<DateTime Function()>(
   (ref) => DateTime.now,
 );
 
-/// The households the user follows, with the children they may see. Empty
-/// without the capability: the provider is never read through the contract
-/// then.
+/// The households the user asked to follow or follows, with their children.
+/// Empty without the capability: the provider is never read through the
+/// contract then.
 final followedFamiliesProvider = FutureProvider<List<FollowedFamily>>((
   ref,
 ) async {
@@ -29,15 +29,18 @@ final followedFamiliesProvider = FutureProvider<List<FollowedFamily>>((
   return ref.watch(followingApiProvider).listFollowedFamilies();
 });
 
-/// Every child the user sees as a follower, keyed by id.
+/// Every child the user chose to follow in an accepted household, keyed by
+/// id. Pending requests list no child.
 final followedChildrenProvider = Provider<Map<String, FollowedChildInfo>>((
   ref,
 ) {
   final families = ref.watch(followedFamiliesProvider).value ?? const [];
   return {
     for (final family in families)
-      for (final child in family.children)
-        child.id: FollowedChildInfo(child: child, family: family),
+      if (!family.isPending)
+        for (final child in family.children)
+          if (child.followed)
+            child.id: FollowedChildInfo(child: child, family: family),
   };
 });
 

@@ -11,17 +11,17 @@ library;
 const String _alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /// Accepted code shapes by kind; [normalizeInviteCode] checks them all.
-/// `family` joins the household (and may leave the current one); `circle`
-/// only follows a household, read-only.
+/// `family` joins the household (and may leave the current one); `follow`
+/// asks to follow a household, read-only.
 final Map<String, RegExp> kInviteCodePatterns = {
   'family': RegExp('^[$_alphabet]{8}\$'),
-  'circle': RegExp('^[$_alphabet]{10}\$'),
+  'follow': RegExp('^[$_alphabet]{10}\$'),
 };
 
 /// Longest accepted code, for input fields.
 const int kInviteCodeMaxLength = 10;
 
-/// The kind of a normalized [code] (`family`, `circle`), or null when it
+/// The kind of a normalized [code] (`family`, `follow`), or null when it
 /// matches no pattern.
 String? inviteCodeKind(String code) {
   final normalized = code.trim().toUpperCase();

@@ -2,17 +2,23 @@ library;
 
 import 'household.dart';
 
-/// A child of a followed household, as far as the follower may see it.
+/// A child of a followed household. The follower may see every child;
+/// [followed] is their own choice of whose drawings they receive.
 class FollowedChild {
   final String id;
   final String name;
+  final bool followed;
 
-  const FollowedChild({required this.id, required this.name});
+  const FollowedChild({
+    required this.id,
+    required this.name,
+    this.followed = true,
+  });
 }
 
-/// A household the user follows: read-only access to the children its
-/// audience lets them see. Following never makes the user a member, and the
-/// household's artworks are never copied into the local vault.
+/// A household the user asked to follow or follows, read-only. Following
+/// never makes the user a member, and the household's artworks are never
+/// copied into the local vault.
 class FollowedFamily {
   final String familyId;
 
@@ -20,16 +26,24 @@ class FollowedFamily {
   /// sets it.
   final String? familyName;
 
-  /// Name of the audience the user joined, as the household named it.
-  final String audienceName;
-  final DateTime followedAt;
+  /// The request waits for a parent of the household: nothing is visible yet
+  /// and [children] is empty.
+  final bool isPending;
+
+  /// Null while [isPending].
+  final DateTime? followedAt;
+
+  /// Every child is followed, future ones included; otherwise only the
+  /// children marked [FollowedChild.followed].
+  final bool followsAll;
   final List<FollowedChild> children;
 
   const FollowedFamily({
     required this.familyId,
     required this.familyName,
-    required this.audienceName,
+    required this.isPending,
     required this.followedAt,
+    required this.followsAll,
     required this.children,
   });
 }
@@ -95,11 +109,17 @@ class FollowedFeedPage {
 
 /// Read-only access to the households the signed-in user follows.
 ///
-/// Joining a household's audience happens in the composition (it owns the
-/// invite flow for codes that are not household codes); this contract only
-/// reads what follows from it and lets the user stop following.
+/// Asking to follow a household happens in the composition (it owns the
+/// invite flow for codes that are not household codes); this contract reads
+/// what follows from it, lets the user choose the children they follow and
+/// stop following.
 abstract class FollowingApi {
+  /// Pending requests and accepted follows.
   Future<List<FollowedFamily>> listFollowedFamilies();
+
+  /// Follows only [childIds] of an accepted [familyId]; an empty list
+  /// follows every child, future ones included.
+  Future<void> setFollowedChildren(String familyId, List<String> childIds);
 
   /// The page after [cursor] (the first page when null), at most [limit]
   /// artworks, optionally for one followed [childId]. The user's own
@@ -110,7 +130,7 @@ abstract class FollowingApi {
     String? childId,
   });
 
-  /// Stops following [familyId]. Idempotent.
+  /// Stops following [familyId], or cancels the pending request. Idempotent.
   Future<void> unfollow(String familyId);
 }
 
@@ -134,6 +154,14 @@ final class NoFollowingApi implements FollowingApi {
     hasMore: false,
     urisExpireAt: DateTime.utc(9999),
   );
+
+  @override
+  Future<void> setFollowedChildren(
+    String familyId,
+    List<String> childIds,
+  ) async {
+    throw const HouseholdUnavailableException();
+  }
 
   @override
   Future<void> unfollow(String familyId) async {

@@ -71,12 +71,6 @@ final class CompositionActions {
   final Future<void> Function(BuildContext context, String code)?
   familyInviteOtherCode;
 
-  /// Extra content the composition renders at the bottom of the child editor
-  /// for an existing child (never during creation). Gated on `household`; it
-  /// collapses to zero size when it has nothing to show.
-  final Widget Function(BuildContext context, String childId)?
-  childEditorFooter;
-
   const CompositionActions({
     this.onArtworkSaved,
     this.onArtworkDeleted,
@@ -90,7 +84,6 @@ final class CompositionActions {
     this.inviteLinkFor,
     this.galleryStatusBanner,
     this.familyInviteOtherCode,
-    this.childEditorFooter,
   });
 
   static const none = CompositionActions();

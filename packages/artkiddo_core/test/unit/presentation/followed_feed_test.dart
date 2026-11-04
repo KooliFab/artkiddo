@@ -59,6 +59,12 @@ class _FakeFollowingApi implements FollowingApi {
   }
 
   @override
+  Future<void> setFollowedChildren(
+    String familyId,
+    List<String> childIds,
+  ) async {}
+
+  @override
   Future<void> unfollow(String familyId) async {}
 }
 
@@ -101,8 +107,9 @@ void main() {
         FollowedFamily(
           familyId: 'family-anne',
           familyName: 'Anne',
-          audienceName: 'Côté Paul',
+          isPending: false,
           followedAt: DateTime.utc(2026, 10, 1),
+          followsAll: true,
           children: const [FollowedChild(id: 'tom', name: 'Tom')],
         ),
       ],
@@ -255,6 +262,37 @@ void main() {
 
       expect(c.read(galleryFilterProvider), const AllChildren());
       expect(c.read(galleryFilterResetBannerProvider), 'Léo');
+    });
+
+    test('only chosen children of accepted households are followed', () async {
+      api.families
+        ..clear()
+        ..addAll([
+          FollowedFamily(
+            familyId: 'family-anne',
+            familyName: 'Anne',
+            isPending: false,
+            followedAt: DateTime.utc(2026, 10, 1),
+            followsAll: false,
+            children: const [
+              FollowedChild(id: 'tom', name: 'Tom'),
+              FollowedChild(id: 'ines', name: 'Inès', followed: false),
+            ],
+          ),
+          const FollowedFamily(
+            familyId: 'family-paul',
+            familyName: 'Paul',
+            isPending: true,
+            followedAt: null,
+            followsAll: true,
+            children: [],
+          ),
+        ]);
+      final c = container();
+      c.listen(followedChildrenProvider, (_, _) {});
+      await c.read(followedFamiliesProvider.future);
+
+      expect(c.read(followedChildrenProvider).keys, ['tom']);
     });
 
     test('unfollowing the filtered child resets the filter', () async {

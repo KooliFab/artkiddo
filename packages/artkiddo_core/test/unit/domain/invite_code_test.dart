@@ -111,7 +111,7 @@ void main() {
     });
   });
 
-  group('circle codes', () {
+  group('follow codes', () {
     test('a 10-character code is accepted, bare or in a join link', () {
       expect(normalizeInviteCode('k7mpq2rxza'), 'K7MPQ2RXZA');
       expect(
@@ -130,9 +130,9 @@ void main() {
       expect(normalizeInviteCode('K7MPQ2RXZO'), isNull);
     });
 
-    test('inviteCodeKind tells a household code from a circle code', () {
+    test('inviteCodeKind tells a household code from a follow code', () {
       expect(inviteCodeKind('ABCD2345'), 'family');
-      expect(inviteCodeKind(' k7mpq2rxza '), 'circle');
+      expect(inviteCodeKind(' k7mpq2rxza '), 'follow');
       expect(inviteCodeKind('ABC'), isNull);
       expect(kInviteCodeMaxLength, 10);
     });

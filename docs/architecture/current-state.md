@@ -76,7 +76,6 @@ Composition slots by core surface — check this list before adding a seam:
 | Share sheet | `openAccount` |
 | Settings | `openSettings` |
 | Family invite | `openQrScanner`, `inviteLinkFor`, `familyInviteOtherCode` (codes that are not household codes) |
-| Child editor | `childEditorFooter` (existing child, gated on `household`) |
 
 Strings belong to the surface that renders them: a composition's own screens
 carry their own localizations and add no key to the core (see
@@ -146,9 +145,11 @@ public contracts only. Rules: `dependency-rules.md`.
   gallery binds it to pull-to-refresh only when the capability is enabled and
   the action is bound.
 - `FollowingApi` (capability `followedHouseholds`, requires `household`):
-  read-only households the user follows. `FollowedFamily`/`FollowedChild`,
-  and `FollowedFeedPage`s of `FollowedArtwork` with temporary authorized
-  URIs and an opaque cursor. Default `NoFollowingApi` follows nobody.
+  read-only households the user asked to follow or follows.
+  `FollowedFamily` (pending or accepted, `followsAll`) and `FollowedChild`
+  (`followed`: the user's own choice), `setFollowedChildren`, and
+  `FollowedFeedPage`s of `FollowedArtwork` with temporary authorized URIs and
+  an opaque cursor. Default `NoFollowingApi` follows nobody.
 - Contracts never name a database, object store, endpoint, auth system,
   transport or payload format.
 
@@ -205,14 +206,16 @@ behave as before.
   page loads a screen before the end; a failed page keeps the loaded items and
   shows a retry. Back in the foreground the feed reloads when its URIs have
   expired (`followedFeedClockProvider`).
-- Filter: a followed child is a regular `OneChild` filter. It is reset only
-  when the child leaves both the local list and `followedChildrenProvider`,
-  never while the followed households are still loading.
+- Filter: a followed child is a regular `OneChild` filter.
+  `followedChildrenProvider` holds the children the user chose to follow in
+  accepted households (a pending request lists none). The filter is reset only
+  when the child leaves both the local list and that provider, never while the
+  followed households are still loading.
 - Followed artworks are never written to the database or the vault. They open
   `FollowedArtworkScreen` (read-only: no edit, delete, record or share), play
   audio through `AudioPlayerService.setUrl`, and get no backup status. Capture
   is hidden while a followed child is selected.
-- Invite codes: `inviteCodeKind` tells `family` (8 characters) from `circle`
+- Invite codes: `inviteCodeKind` tells `family` (8 characters) from `follow`
   (10). A non-household code never reaches `_JoinFamilyDialog`:
   `FamilyInviteScreen` hands it to `familyInviteOtherCode`, or says it is not
   supported when the capability or the binding is absent.
