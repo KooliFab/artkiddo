@@ -3,7 +3,7 @@
 Status: public, offline-first foundation hosting the full account-free gallery
 experience (feed, capture, sharing and household UI behind capability gates).
 Read this before scanning the source tree.
-Verified on: 2026-11-05 (followed households with requests and chosen children; dead code and unused strings removed). Earlier: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
+Verified on: 2026-11-05 (followed households with requests and chosen children, local nicknames of followed artists; dead code and unused strings removed). Earlier: 2026-10-01 (sync protocol v3 contracts, ADR 0017; operation outbox, ADR 0018; change journal pull).
 
 ## Repository shape
 
@@ -211,6 +211,12 @@ behave as before.
   accepted households (a pending request lists none). The filter is reset only
   when the child leaves both the local list and that provider, never while the
   followed households are still loading.
+- Names: the gallery calls a followed artist by the nickname the user gave
+  them (`followedNicknamesProvider`, SharedPreferences on this device only,
+  never synced or sent), else "Tom M." (first name and household initial,
+  `FollowedArtistLabels`). Chips, the read-only artwork screen, the empty
+  state and the filter-reset banner all use that label;
+  `FollowedArtistNames.full` ("Tom Martin") is for the composition's lists.
 - Followed artworks are never written to the database or the vault. They open
   `FollowedArtworkScreen` (read-only: no edit, delete, record or share), play
   audio through `AudioPlayerService.setUrl`, and get no backup status. Capture

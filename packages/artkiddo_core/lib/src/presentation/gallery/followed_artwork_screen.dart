@@ -11,13 +11,14 @@ import '../providers/core_providers.dart';
 import '../theme/app_tokens.dart';
 import '../ui/state_block.dart';
 import 'audio_controls.dart';
+import 'followed_artist_names.dart';
 
 /// Read-only view of an artwork from a followed household.
 ///
 /// The artwork has no local row and no file: the image and the recording
 /// come from temporary authorized URIs. Nothing here edits, deletes, records
 /// or shares; those belong to the household that owns the artwork.
-class FollowedArtworkScreen extends StatelessWidget {
+class FollowedArtworkScreen extends ConsumerWidget {
   final FollowedArtwork artwork;
 
   const FollowedArtworkScreen({super.key, required this.artwork});
@@ -25,10 +26,11 @@ class FollowedArtworkScreen extends StatelessWidget {
   static String heroTag(String artworkId) => 'followed-artwork-$artworkId';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final image = _FollowedImage(artwork: artwork);
-    final panel = _panel(l10n);
+    final label = ref.watch(followedArtistLabelsProvider).ofArtwork(artwork);
+    final image = _FollowedImage(artwork: artwork, label: label);
+    final panel = _panel(l10n, label);
     return Scaffold(
       backgroundColor: AppColors.paper,
       appBar: AppBar(
@@ -75,11 +77,11 @@ class FollowedArtworkScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _panel(AppLocalizations l10n) {
+  List<Widget> _panel(AppLocalizations l10n, String label) {
     final story = artwork.story;
     final hasStory = story != null && story.isNotEmpty;
     return [
-      Text(artwork.childName, style: AppTypography.h1),
+      Text(label, style: AppTypography.h1),
       const SizedBox(height: AppSpacing.s1),
       Text(
         followedFamilyLabel(l10n, artwork.familyName),
@@ -120,8 +122,9 @@ String followedFamilyLabel(AppLocalizations l10n, String? familyName) =>
 
 class _FollowedImage extends StatelessWidget {
   final FollowedArtwork artwork;
+  final String label;
 
-  const _FollowedImage({required this.artwork});
+  const _FollowedImage({required this.artwork, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +145,7 @@ class _FollowedImage extends StatelessWidget {
       tag: FollowedArtworkScreen.heroTag(artwork.id),
       child: Semantics(
         image: true,
-        label: l10n.a11yArtworkImage(artwork.childName, artwork.addedAt),
+        label: l10n.a11yArtworkImage(label, artwork.addedAt),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.6,

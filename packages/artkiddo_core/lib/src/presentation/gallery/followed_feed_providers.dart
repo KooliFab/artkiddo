@@ -45,7 +45,7 @@ final followedChildrenProvider = Provider<Map<String, FollowedChildInfo>>((
 });
 
 /// A followed child with the household it belongs to (for labels such as
-/// "Tom · Anne").
+/// "Tom M.").
 class FollowedChildInfo {
   final FollowedChild child;
   final FollowedFamily family;

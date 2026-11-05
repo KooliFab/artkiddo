@@ -26,12 +26,16 @@ class _FilterBar extends StatelessWidget {
 
   /// Children of followed households, listed after the user's own.
   final List<FollowedChildInfo> followed;
+
+  /// Names the chips of [followed]: the user's nickname, else "Tom M.".
+  final FollowedArtistLabels followedLabels;
   final GalleryFilter filter;
   final double margin;
   final ValueChanged<GalleryFilter> onSelect;
   const _FilterBar({
     required this.children,
     this.followed = const [],
+    this.followedLabels = const FollowedArtistLabels({}),
     required this.filter,
     required this.margin,
     required this.onSelect,
@@ -42,11 +46,10 @@ class _FilterBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final sorted = [...children]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final followedSorted = [...followed]
-      ..sort(
-        (a, b) =>
-            a.child.name.toLowerCase().compareTo(b.child.name.toLowerCase()),
-      );
+    final followedSorted = [
+      for (final info in followed)
+        (info: info, label: followedLabels.ofChild(info)),
+    ]..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
     bool isSelected(String id) => switch (filter) {
       OneChild(childId: final selectedId) => selectedId == id,
       _ => false,
@@ -74,14 +77,11 @@ class _FilterBar extends StatelessWidget {
                 onTap: () => onSelect(OneChild(child.id)),
               ),
             ),
-          for (final info in followedSorted)
+          for (final (:info, :label) in followedSorted)
             Padding(
               padding: const EdgeInsets.only(left: AppSpacing.s2),
               child: AppFilterChip(
-                label: l10n.galleryFollowedFilterChip(
-                  info.child.name,
-                  followedFamilyLabel(l10n, info.family.familyName),
-                ),
+                label: label,
                 selected: isSelected(info.child.id),
                 onTap: () => onSelect(OneChild(info.child.id)),
               ),

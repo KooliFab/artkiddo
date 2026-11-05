@@ -31,6 +31,7 @@ import '../ui/filter_chip_row.dart';
 import '../ui/sheet_handle.dart';
 import '../ui/state_block.dart';
 import 'artwork_screen.dart';
+import 'followed_artist_names.dart';
 import 'followed_artwork_screen.dart';
 import 'followed_feed_providers.dart';
 import 'capture_controller.dart';
@@ -388,6 +389,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final children = childrenAsync.value ?? const <Child>[];
     final tilesAsync = ref.watch(galleryTilesProvider);
     final followedChildren = ref.watch(followedChildrenProvider);
+    final followedLabels = ref.watch(followedArtistLabelsProvider);
     // An unreadable vault is not an empty first-launch state.
     final vaultUnreadable = childrenAsync.hasError;
     final hasArtists = children.isNotEmpty;
@@ -450,6 +452,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                 child: _FilterBar(
                   children: children,
                   followed: followedChildren.values.toList(),
+                  followedLabels: followedLabels,
                   filter: filter,
                   margin: _margin(width),
                   onSelect: (next) {
@@ -667,7 +670,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               child: EmptyStateView(
                 icon: Icons.auto_awesome_outlined,
                 title: l10n.galleryEmptyFilteredTitle(
-                  selectedFollowed.child.name,
+                  ref
+                      .read(followedArtistLabelsProvider)
+                      .ofChild(selectedFollowed),
                 ),
                 body: l10n.galleryEmptyFollowedBody,
               ),

@@ -1329,11 +1329,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String galleryFollowedFilterChip(String childName, String familyLabel) {
-    return '$childName · $familyLabel';
-  }
-
-  @override
   String followedFamilyNamed(String familyName) {
     return 'Famille $familyName';
   }

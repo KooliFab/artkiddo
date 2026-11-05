@@ -11,7 +11,7 @@ Every feature includes this local ownership check in its plan or pull request.
 | Optional synchronization | `capability-gated` | typed contracts, outbox, cursors, honest no-op defaults | application-provided adapter |
 | Household UI | `capability-gated` | invite/join screen, controller (wider than that screen: it also drives a composition's family-settings surface), neutral `FamilyApi` contract | application-provided service |
 | Gallery-link UI | `capability-gated` | screens, controller, neutral `SharingService` contract | application-provided service |
-| Followed households | `capability-gated` (`followedHouseholds`, requires `household`) | merged feed, followed-child filter, read-only artwork screen, neutral `FollowingApi` contract; nothing written locally | application-provided service and invite flow (`familyInviteOtherCode`) |
+| Followed households | `capability-gated` (`followedHouseholds`, requires `household`) | merged feed, followed-child filter, read-only artwork screen, neutral `FollowingApi` contract; nothing written locally but the artists' nicknames (SharedPreferences, this device only) | application-provided service and invite flow (`familyInviteOtherCode`) |
 | Account-free settings | `local-only` | `SettingsScreen` reachable from the gallery app bar with no binding; language, trash, about, debug | composition may substitute the surface, never gate it (ADR 0016) |
 | Local capture and voice notes | `local-only` | camera, crop, audio recording and playback | platform permissions |
 

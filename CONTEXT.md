@@ -25,6 +25,9 @@ This document defines the stable vocabulary used in public code.
   preference that filters their feed, never a permission. Followed artworks
   are never written to the local vault (`FollowingApi`, capability
   `followedHouseholds`).
+- **Nickname** (followed artist): what the follower calls a followed child in
+  their own gallery. It stays on that device, is never sent, and the
+  household never sees it; without one the gallery shows "Tom M.".
 - **Attribution** (`Artwork.addedBy`): which member photographed a piece. It
   is a member identifier, not a name — names are resolved from the roster at
   render time, and an artwork with no known author shows none rather than

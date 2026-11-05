@@ -13,6 +13,7 @@ import '../children/children_providers.dart';
 import '../../local/repositories/artworks_repository.dart';
 import '../../contracts/following.dart';
 import '../../domain/artwork.dart';
+import 'followed_artist_names.dart';
 import 'followed_feed_providers.dart';
 
 final artworksRepositoryProvider = Provider<ArtworksRepository>((ref) {
@@ -93,7 +94,9 @@ class GalleryFilterNotifier extends Notifier<GalleryFilter> {
       final local = ref.read(allChildrenStreamProvider).value;
       if (local != null && local.any((c) => c.id == current.childId)) return;
       state = const AllChildren();
-      ref.read(galleryFilterResetBannerProvider.notifier).show(lost.child.name);
+      ref
+          .read(galleryFilterResetBannerProvider.notifier)
+          .show(ref.read(followedArtistLabelsProvider).ofChild(lost));
     });
     return const AllChildren();
   }

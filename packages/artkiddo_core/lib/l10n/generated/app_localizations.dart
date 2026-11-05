@@ -2108,12 +2108,6 @@ abstract class AppLocalizations {
   /// Localized user-facing copy.
   ///
   /// In fr, this message translates to:
-  /// **'{childName} · {familyLabel}'**
-  String galleryFollowedFilterChip(String childName, String familyLabel);
-
-  /// Localized user-facing copy.
-  ///
-  /// In fr, this message translates to:
   /// **'Famille {familyName}'**
   String followedFamilyNamed(String familyName);
 

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:artkiddo_core/artkiddo_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 FollowedArtwork _artwork(String id, DateTime addedAt, {String child = 'tom'}) =>
     FollowedArtwork(
@@ -100,6 +101,7 @@ void main() {
   }
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     localChildren = StreamController<List<Child>>.broadcast();
     now = DateTime.utc(2026, 10, 15, 10);
     api = _FakeFollowingApi(
@@ -308,7 +310,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(c.read(galleryFilterProvider), const AllChildren());
-      expect(c.read(galleryFilterResetBannerProvider), 'Tom');
+      expect(c.read(galleryFilterResetBannerProvider), 'Tom A.');
     });
   });
 }

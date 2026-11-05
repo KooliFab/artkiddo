@@ -2,12 +2,12 @@ part of 'gallery_screen.dart';
 
 /// A read-only tile for an artwork of a followed household: network image,
 /// audio marker, no backup badge and no peek (the peek plays local files).
-class FollowedMosaicTile extends StatelessWidget {
+class FollowedMosaicTile extends ConsumerWidget {
   final FollowedArtwork artwork;
   const FollowedMosaicTile({super.key, required this.artwork});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final natural = FollowedFeedItem(artwork).aspectRatio;
     final ratio = MosaicArtworkTile.clampRatio(natural);
@@ -15,7 +15,7 @@ class FollowedMosaicTile extends StatelessWidget {
     return Semantics(
       button: true,
       label: l10n.a11yFollowedGalleryCard(
-        artwork.childName,
+        ref.watch(followedArtistLabelsProvider).ofArtwork(artwork),
         followedFamilyLabel(l10n, artwork.familyName),
         artwork.drawnAt ?? artwork.addedAt,
       ),

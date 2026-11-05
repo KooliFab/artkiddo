@@ -1595,18 +1595,6 @@
       }
     }
   },
-  "galleryFollowedFilterChip": "{childName} · {familyLabel}",
-  "@galleryFollowedFilterChip": {
-    "description": "Localized user-facing copy.",
-    "placeholders": {
-      "childName": {
-        "type": "String"
-      },
-      "familyLabel": {
-        "type": "String"
-      }
-    }
-  },
   "followedFamilyNamed": "{familyName} family",
   "@followedFamilyNamed": {
     "description": "Localized user-facing copy.",

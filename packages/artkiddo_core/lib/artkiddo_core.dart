@@ -82,6 +82,7 @@ export 'src/presentation/gallery/artwork_zoom_screen.dart';
 export 'src/presentation/gallery/camera_capture_screen.dart';
 export 'src/presentation/gallery/capture_controller.dart';
 export 'src/presentation/gallery/capture_screen.dart';
+export 'src/presentation/gallery/followed_artist_names.dart';
 export 'src/presentation/gallery/followed_artwork_screen.dart';
 export 'src/presentation/gallery/followed_feed_providers.dart';
 export 'src/presentation/gallery/gallery_providers.dart';

@@ -2,8 +2,11 @@ import 'package:artkiddo_core/artkiddo_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   Widget app(FollowedArtwork artwork, FakeAudioPlayerService player) =>
       ProviderScope(
         overrides: [audioPlayerServiceProvider.overrideWithValue(player)],
@@ -37,7 +40,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Tom'), findsOneWidget);
+    expect(find.text('Tom A.'), findsOneWidget);
     expect(find.text('Famille Anne'), findsOneWidget);
     expect(find.text('« Un dragon »'), findsOneWidget);
     expect(player.currentUri, Uri.parse('https://media.example.test/a1.m4a'));
@@ -71,10 +74,36 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Tom'), findsOneWidget);
     expect(find.text('Famille suivie'), findsOneWidget);
     expect(
       find.text("L'image de ce dessin n'est pas disponible pour le moment."),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a nickname given on this device replaces the name', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      FollowedNicknamesNotifier.prefsKey: '{"tom":"Titou"}',
+    });
+    await tester.pumpWidget(
+      app(
+        FollowedArtwork(
+          id: 'a3',
+          familyId: 'f1',
+          familyName: 'Anne',
+          childId: 'tom',
+          childName: 'Tom',
+          addedAt: DateTime(2026, 10, 12),
+        ),
+        FakeAudioPlayerService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Titou'), findsOneWidget);
+    expect(find.text('Tom A.'), findsNothing);
   });
 }
